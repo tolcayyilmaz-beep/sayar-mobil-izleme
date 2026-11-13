@@ -1,4 +1,4 @@
-import os
+# import os
 import sqlite3
 import tempfile
 import requests
@@ -34,7 +34,6 @@ def check_password():
         st.session_state.authenticated = False
         st.session_state.yetkili_musteri = None  # None = Yönetici (Tüm Müşteriler)
 
-    # URL'den gelen ?musteri=... parametresi varsa yakala
     url_musteri = st.query_params.get("musteri", "")
 
     if not st.session_state.authenticated:
@@ -57,7 +56,6 @@ def check_password():
             eslesen_musteri = None
             for m_adi, m_sifre in musteri_map.items():
                 if pin == str(m_sifre):
-                    # Eğer URL'de özel müşteri belirtilmişse onunla da eşleşmesini zorunlu kıl
                     if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
                         eslesen_musteri = m_adi
                         break
@@ -138,30 +136,18 @@ k3.metric("Onaylandı", len(df_sip[df_sip["operasyon"] == "ONAYLANDI"]))
 st.divider()
 
 # 4. Mobil Filtre Alanı
-arama = st.text_input("🔍 Ara (Sipariş No, Şantiye, Plaka, Fabrika)...", "")
+arama = st.text_input("🔍 Ara (Sipariş No, Tedarikçi, Şantiye, Plaka, Fabrika)...", "")
 
-if aktif_musteri:
-    # Müşteri görünümünde sadece Şantiye ve Operasyon filtresi gösterilir (diğer firmalar/müşteriler gizli)
-    f_col1, f_col2 = st.columns(2)
-    with f_col1:
-        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-        secili_op = st.selectbox("Operasyon", op_listesi)
-    with f_col2:
-        santiye_listesi = ["[TÜMÜ]"] + sorted(df_sip["santiye"].dropna().unique().tolist())
-        secili_santiye = st.selectbox("Şantiye", santiye_listesi)
-    secili_firma = "[TÜMÜ]"
-else:
-    # Yönetici görünümünde tüm filtreler aktif
-    f_col1, f_col2 = st.columns(2)
-    with f_col1:
-        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-        secili_op = st.selectbox("Operasyon", op_listesi)
-    with f_col2:
-        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-        secili_firma = st.selectbox("Firma", firma_listesi)
-    secili_santiye = "[TÜMÜ]"
+f_col1, f_col2 = st.columns(2)
+with f_col1:
+    op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+    secili_op = st.selectbox("Operasyon", op_listesi)
+with f_col2:
+    firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+    secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
 
-gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=False if aktif_musteri else True)
+# Her iki görünümde de varsayılan olarak işaretli
+gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
 gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
 
 # Filtreleme Uygulama
@@ -175,8 +161,6 @@ if secili_op != "[TÜMÜ]":
     filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
     filtered = filtered[filtered["firma"] == secili_firma]
-if secili_santiye != "[TÜMÜ]":
-    filtered = filtered[filtered["santiye"] == secili_santiye]
 if arama.strip():
     q = arama.strip().lower()
     mask = (
@@ -206,7 +190,7 @@ for _, row in filtered.head(50).iterrows():
     renk = OP_RENK.get(op_val.upper(), "#555555")
 
     if aktif_musteri:
-        baslik = f"#{sip_no} | {row['santiye'] or '-'} ({row['tarih'] or '-'})"
+        baslik = f"#{sip_no} | {row['firma'] or '-'} ({row['tarih'] or '-'})"
     else:
         baslik = f"#{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
 
@@ -220,6 +204,7 @@ for _, row in filtered.head(50).iterrows():
 
         c1, c2 = st.columns(2)
         with c1:
+            st.markdown(f"**Tedarikçi Firma:** {row['firma'] or '-'}")
             st.markdown(f"**Şantiye:** {row['santiye'] or '-'}")
             st.markdown(f"**Fabrika:** {row['fabrika'] or '-'}")
             st.markdown(f"**Nakliye:** {row['nakliye'] or '-'}")
@@ -230,7 +215,7 @@ for _, row in filtered.head(50).iterrows():
             st.markdown(f"**Ted. Sip. No:** {row['ted_sip_no'] or '-'}")
             st.markdown(f"**Yetkili / Tel:** {row['yetkili'] or '-'} {row['telefon'] or ''}")
             if not aktif_musteri:
-                st.markdown(f"**Firma:** {row['firma'] or '-'}")
+                st.markdown(f"**Müşteri:** {row['musteri'] or '-'}")
                 st.markdown(f"**Sipariş Veren:** {row['siparis_veren'] or '-'}")
 
         if row["notlar"]:
