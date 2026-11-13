@@ -14,37 +14,77 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Üstteki Fork/GitHub menüsünü ve alttaki Streamlit simgelerini gizleyen özel CSS
+# Özel CSS: Streamlit barlarını gizle + Kompakt KPI şeridi ve başlık kartı
 st.markdown("""
     <style>
-    /* Üstteki Fork, GitHub ve Menü çubuğunu gizle */
-    header[data-testid="stHeader"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    /* Sağ alttaki Streamlit Cloud rozetini ve footer'ı gizle */
-    footer {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    [data-testid="stStatusWidget"] {
-        display: none !important;
-    }
+    header[data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    footer,
+    [data-testid="stStatusWidget"],
     .viewerBadge_container__r5tak,
     .viewerBadge_link__qRIco,
     div[class^="viewerBadge_"] {
         display: none !important;
+        visibility: hidden !important;
     }
-    /* Üst ve alt boşluğu daralt */
     .block-container {
-        padding-top: 0.8rem !important;
+        padding-top: 0.6rem !important;
         padding-bottom: 1.5rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+    /* Renk Kodlu Kurumsal Başlık Şeridi */
+    .header-banner {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-left: 5px solid #007acc;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        color: #f8fafc;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .header-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 0;
+        color: #ffffff;
+        letter-spacing: 0.3px;
+    }
+    .header-sub {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    /* Kompakt Yan Yana 3'lü KPI Şeridi (Mobilde Alt Alta Düşmez) */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    .kpi-card {
+        background-color: #1e1e24;
+        border: 1px solid #32323a;
+        border-radius: 8px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+    .kpi-blue { border-top: 3px solid #007acc; }
+    .kpi-orange { border-top: 3px solid #e67e22; }
+    .kpi-green { border-top: 3px solid #2ecc71; }
+    .kpi-label {
+        font-size: 11px;
+        color: #a1a1aa;
+        font-weight: 600;
+        margin-bottom: 2px;
+        white-space: nowrap;
+    }
+    .kpi-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.2;
     }
     .badge {
         padding: 3px 8px;
@@ -68,13 +108,17 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
-        st.title("🏗️ SAYAR YAPI")
+        st.markdown("""
+            <div class="header-banner">
+                <div class="header-title">🏗️ SAYAR YAPI</div>
+                <div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>
+            </div>
+        """, unsafe_allow_html=True)
+
         if url_musteri:
-            st.subheader(f"Müşteri Sipariş Takip ({url_musteri})")
+            st.caption(f"Müşteri Girişi: **{url_musteri}**")
         elif url_veren:
-            st.subheader(f"Personel Sipariş Takip ({url_veren})")
-        else:
-            st.subheader("Sipariş İzleme Girişi")
+            st.caption(f"Personel Girişi: **{url_veren}**")
 
         pin = st.text_input("Erişim Şifresi:", type="password")
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
@@ -143,18 +187,31 @@ def verileri_getir():
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-# Üst Başlık ve Yenileme / Çıkış Butonları
-col_title, col_btn1, col_btn2 = st.columns([3, 1, 1])
-with col_title:
-    if yetki_tipi in ("MUSTERI", "SIPARIS_VEREN"):
-        st.markdown(f"### 🏗️ SAYAR YAPI | {yetki_deger}")
-    else:
-        st.markdown("### 🏗️ SAYAR YAPI | Sipariş İzleme")
-with col_btn1:
+# Renk Kodlu Üst Başlık Şeridi
+if yetki_tipi == "MUSTERI":
+    baslik_metni = f"🏗️ SAYAR YAPI | {yetki_deger}"
+    alt_metin = "Müşteri Sipariş İzleme Paneli"
+elif yetki_tipi == "SIPARIS_VEREN":
+    baslik_metni = f"🏗️ SAYAR YAPI | {yetki_deger}"
+    alt_metin = "Personel Sipariş İzleme Paneli"
+else:
+    baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
+    alt_metin = "Yönetici Canlı Takip Paneli"
+
+st.markdown(f"""
+    <div class="header-banner">
+        <div class="header-title">{baslik_metni}</div>
+        <div class="header-sub">{alt_metin}</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Yenile ve Çıkış Butonları (Kompakt Yan Yana)
+b1, b2 = st.columns(2)
+with b1:
     if st.button("🔄 Yenile", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
-with col_btn2:
+with b2:
     if st.button("🚪 Çıkış", use_container_width=True):
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None
@@ -173,7 +230,7 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
-# 3. Özet KPI Kartları (Toplam - Muhasebeye İletildi - İptal Edildi = Sevk Bekleyen)
+# 3. Kompakt Yan Yana 3'lü KPI Şeridi (Toplam - Muhasebeye İletildi - İptal Edildi = Sevk Bekleyen)
 toplam_siparis = len(df_sip)
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -184,40 +241,53 @@ sevk_bekleyen = len(
     ]
 )
 
-k1, k2, k3 = st.columns(3)
-k1.metric("Toplam Sipariş", toplam_siparis)
-k2.metric("Onay Bekleyen", onay_bekleyen)
-k3.metric("Sevk Bekleyen", sevk_bekleyen)
+st.markdown(f"""
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-label">Toplam Sipariş</div>
+            <div class="kpi-value">{toplam_siparis}</div>
+        </div>
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-label">Onay Bekleyen</div>
+            <div class="kpi-value">{onay_bekleyen}</div>
+        </div>
+        <div class="kpi-card kpi-green">
+            <div class="kpi-label">Sevk Bekleyen</div>
+            <div class="kpi-value">{sevk_bekleyen}</div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-st.divider()
+# 4. Hızlı Arama + Tek "Filtrele" Çekmecesi
+arama = st.text_input("", placeholder="🔍 Ara (Sipariş No, Tedarikçi, Müşteri, Şantiye, Plaka)...", label_visibility="collapsed")
 
-# 4. Mobil Filtre Alanı
-arama = st.text_input("🔍 Ara (Sipariş No, Tedarikçi, Müşteri, Şantiye, Plaka)...", "")
+with st.expander("⚙️ Filtrele", expanded=False):
+    if yetki_tipi == "MUSTERI":
+        f_col1, f_col2 = st.columns(2)
+        with f_col1:
+            op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+            secili_op = st.selectbox("Operasyon", op_listesi)
+        with f_col2:
+            firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+            secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
+        secili_musteri = "[TÜMÜ]"
+    else:
+        f_col1, f_col2, f_col3 = st.columns(3)
+        with f_col1:
+            op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+            secili_op = st.selectbox("Operasyon", op_listesi)
+        with f_col2:
+            firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+            secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
+        with f_col3:
+            musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
+            secili_musteri = st.selectbox("Müşteri", musteri_listesi)
 
-if yetki_tipi == "MUSTERI":
-    f_col1, f_col2 = st.columns(2)
-    with f_col1:
-        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-        secili_op = st.selectbox("Operasyon", op_listesi)
-    with f_col2:
-        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
-    secili_musteri = "[TÜMÜ]"
-else:
-    f_col1, f_col2, f_col3 = st.columns(3)
-    with f_col1:
-        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-        secili_op = st.selectbox("Operasyon", op_listesi)
-    with f_col2:
-        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
-    with f_col3:
-        musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
-        secili_musteri = st.selectbox("Müşteri", musteri_listesi)
-
-# Varsayılan olarak işaretli
-gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
-gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
+    c_chk1, c_chk2 = st.columns(2)
+    with c_chk1:
+        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
+    with c_chk2:
+        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
 
 # Filtreleme Uygulama
 filtered = df_sip.copy()
