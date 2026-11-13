@@ -173,11 +173,16 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
-# 3. Özet KPI Kartları
+# 3. Özet KPI Kartları (Toplam - Muhasebeye İletildi - İptal Edildi = Sevk Bekleyen)
 toplam_siparis = len(df_sip)
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
-muhasebeye_iletilen = len(df_sip[df_sip["operasyon"] == "MUHASEBEYE İLETİLDİ"])
-sevk_bekleyen = toplam_siparis - muhasebeye_iletilen
+sevk_bekleyen = len(
+    df_sip[
+        (df_sip["operasyon"] != "MUHASEBEYE İLETİLDİ") &
+        (df_sip["operasyon"] != "İPTAL EDİLDİ") &
+        (df_sip["durum"] != "İptal")
+    ]
+)
 
 k1, k2, k3 = st.columns(3)
 k1.metric("Toplam Sipariş", toplam_siparis)
