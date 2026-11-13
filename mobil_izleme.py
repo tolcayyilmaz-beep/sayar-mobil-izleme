@@ -14,9 +14,38 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Üstteki Fork/GitHub menüsünü ve alttaki Streamlit simgelerini gizleyen özel CSS
 st.markdown("""
     <style>
-    .block-container { padding-top: 1.2rem; padding-bottom: 2rem; }
+    /* Üstteki Fork, GitHub ve Menü çubuğunu gizle */
+    header[data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+    /* Sağ alttaki Streamlit Cloud rozetini ve footer'ı gizle */
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+    .viewerBadge_container__r5tak,
+    .viewerBadge_link__qRIco,
+    div[class^="viewerBadge_"] {
+        display: none !important;
+    }
+    /* Üst ve alt boşluğu daralt */
+    .block-container {
+        padding-top: 0.8rem !important;
+        padding-bottom: 1.5rem !important;
+    }
     .badge {
         padding: 3px 8px;
         border-radius: 4px;
@@ -165,7 +194,6 @@ if yetki_tipi == "MUSTERI":
         secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
     secili_musteri = "[TÜMÜ]"
 else:
-    # Yönetici ve Sipariş Veren görünümünde Operasyon, Tedarikçi ve Müşteri filtreleri aktif
     f_col1, f_col2, f_col3 = st.columns(3)
     with f_col1:
         op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
