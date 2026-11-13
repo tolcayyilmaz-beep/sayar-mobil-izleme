@@ -14,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Koyu Tema ve Kart Stilleri
 st.markdown("""
     <style>
     .block-container { padding-top: 1.2rem; padding-bottom: 2rem; }
@@ -29,18 +28,43 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1. Güvenlik / PIN Kontrolü
+# 1. Rol ve Müşteri Bazlı Şifre Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
+        st.session_state.yetkili_musteri = None  # None = Yönetici (Tüm Müşteriler)
+
+    # URL'den gelen ?musteri=... parametresi varsa yakala
+    url_musteri = st.query_params.get("musteri", "")
 
     if not st.session_state.authenticated:
         st.title("🏗️ SAYAR YAPI")
-        st.subheader("Mobil Sipariş İzleme Girişi")
-        pin = st.text_input("Erişim Şifresi / PIN:", type="password")
+        if url_musteri:
+            st.subheader(f"Müşteri Sipariş Takip ({url_musteri})")
+        else:
+            st.subheader("Sipariş İzleme Girişi")
+
+        pin = st.text_input("Erişim Şifresi:", type="password")
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
+            # 1) Yönetici şifresi kontrolü
             if pin == st.secrets["APP_PASSWORD"]:
                 st.session_state.authenticated = True
+                st.session_state.yetkili_musteri = None
+                st.rerun()
+
+            # 2) Müşteri şifreleri kontrolü
+            musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
+            eslesen_musteri = None
+            for m_adi, m_sifre in musteri_map.items():
+                if pin == str(m_sifre):
+                    # Eğer URL'de özel müşteri belirtilmişse onunla da eşleşmesini zorunlu kıl
+                    if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
+                        eslesen_musteri = m_adi
+                        break
+
+            if eslesen_musteri:
+                st.session_state.authenticated = True
+                st.session_state.yetkili_musteri = eslesen_musteri
                 st.rerun()
             else:
                 st.error("Hatalı erişim şifresi!")
@@ -48,8 +72,10 @@ def check_password():
 
 check_password()
 
+aktif_musteri = st.session_state.yetkili_musteri
+
 # 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
-@st.cache_data(ttl=30)  # 30 saniyede bir önbelleği tazeler
+@st.cache_data(ttl=30)
 def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
@@ -61,7 +87,6 @@ def verileri_getir():
     fernet = Fernet(secret_key)
     decrypted_bytes = fernet.decrypt(response.content)
 
-    # Geçici dosya üzerinden SQLite okuma ve anında silme
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
@@ -77,13 +102,21 @@ def verileri_getir():
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-# Üst Başlık ve Yenileme Butonu
-col_title, col_btn = st.columns([3, 1])
+# Üst Başlık ve Yenileme / Çıkış Butonları
+col_title, col_btn1, col_btn2 = st.columns([3, 1, 1])
 with col_title:
-    st.markdown("### 🏗️ SAYAR YAPI | Sipariş İzleme")
-with col_btn:
+    if aktif_musteri:
+        st.markdown(f"### 🏗️ SAYAR YAPI | {aktif_musteri}")
+    else:
+        st.markdown("### 🏗️ SAYAR YAPI | Sipariş İzleme")
+with col_btn1:
     if st.button("🔄 Yenile", use_container_width=True):
         st.cache_data.clear()
+        st.rerun()
+with col_btn2:
+    if st.button("🚪 Çıkış", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.yetkili_musteri = None
         st.rerun()
 
 try:
@@ -91,6 +124,10 @@ try:
 except Exception as e:
     st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
     st.stop()
+
+# Müşteri girişi yapıldıysa veriyi en başta o müşteriye kilitle
+if aktif_musteri:
+    df_sip = df_sip[df_sip["musteri"].fillna("").str.strip().str.upper() == aktif_musteri.strip().upper()]
 
 # 3. Özet KPI Kartları
 k1, k2, k3 = st.columns(3)
@@ -101,17 +138,30 @@ k3.metric("Onaylandı", len(df_sip[df_sip["operasyon"] == "ONAYLANDI"]))
 st.divider()
 
 # 4. Mobil Filtre Alanı
-arama = st.text_input("🔍 Ara (Sipariş No, Firma, Müşteri, Şantiye, Plaka)...", "")
+arama = st.text_input("🔍 Ara (Sipariş No, Şantiye, Plaka, Fabrika)...", "")
 
-f_col1, f_col2 = st.columns(2)
-with f_col1:
-    op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-    secili_op = st.selectbox("Operasyon", op_listesi)
-with f_col2:
-    firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-    secili_firma = st.selectbox("Firma", firma_listesi)
+if aktif_musteri:
+    # Müşteri görünümünde sadece Şantiye ve Operasyon filtresi gösterilir (diğer firmalar/müşteriler gizli)
+    f_col1, f_col2 = st.columns(2)
+    with f_col1:
+        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+        secili_op = st.selectbox("Operasyon", op_listesi)
+    with f_col2:
+        santiye_listesi = ["[TÜMÜ]"] + sorted(df_sip["santiye"].dropna().unique().tolist())
+        secili_santiye = st.selectbox("Şantiye", santiye_listesi)
+    secili_firma = "[TÜMÜ]"
+else:
+    # Yönetici görünümünde tüm filtreler aktif
+    f_col1, f_col2 = st.columns(2)
+    with f_col1:
+        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+        secili_op = st.selectbox("Operasyon", op_listesi)
+    with f_col2:
+        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+        secili_firma = st.selectbox("Firma", firma_listesi)
+    secili_santiye = "[TÜMÜ]"
 
-gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
+gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=False if aktif_musteri else True)
 gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
 
 # Filtreleme Uygulama
@@ -125,6 +175,8 @@ if secili_op != "[TÜMÜ]":
     filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
     filtered = filtered[filtered["firma"] == secili_firma]
+if secili_santiye != "[TÜMÜ]":
+    filtered = filtered[filtered["santiye"] == secili_santiye]
 if arama.strip():
     q = arama.strip().lower()
     mask = (
@@ -138,7 +190,6 @@ if arama.strip():
 
 st.caption(f"Gösterilen sipariş sayısı: **{len(filtered)}**")
 
-# Renk Haritası
 OP_RENK = {
     "İŞLENDİ": "#007acc",
     "ONAY BEKLİYOR": "#e67e22",
@@ -154,7 +205,11 @@ for _, row in filtered.head(50).iterrows():
     op_val = str(row["operasyon"] or "-")
     renk = OP_RENK.get(op_val.upper(), "#555555")
 
-    baslik = f"#{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
+    if aktif_musteri:
+        baslik = f"#{sip_no} | {row['santiye'] or '-'} ({row['tarih'] or '-'})"
+    else:
+        baslik = f"#{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
+
     with st.expander(baslik):
         st.markdown(
             f"<span class='badge' style='background-color:{renk};'>{op_val}</span> &nbsp; "
@@ -165,6 +220,7 @@ for _, row in filtered.head(50).iterrows():
 
         c1, c2 = st.columns(2)
         with c1:
+            st.markdown(f"**Şantiye:** {row['santiye'] or '-'}")
             st.markdown(f"**Fabrika:** {row['fabrika'] or '-'}")
             st.markdown(f"**Nakliye:** {row['nakliye'] or '-'}")
             st.markdown(f"**Araç:** {row['arac'] or '-'}")
@@ -172,13 +228,14 @@ for _, row in filtered.head(50).iterrows():
         with c2:
             st.markdown(f"**Sevk Tarihi:** {row['sevk_tarihi'] or '-'}")
             st.markdown(f"**Ted. Sip. No:** {row['ted_sip_no'] or '-'}")
-            st.markdown(f"**Sipariş Veren:** {row['siparis_veren'] or '-'}")
             st.markdown(f"**Yetkili / Tel:** {row['yetkili'] or '-'} {row['telefon'] or ''}")
+            if not aktif_musteri:
+                st.markdown(f"**Firma:** {row['firma'] or '-'}")
+                st.markdown(f"**Sipariş Veren:** {row['siparis_veren'] or '-'}")
 
         if row["notlar"]:
             st.info(f"📝 **Not:** {row['notlar']}")
 
-        # Sipariş Ürün Kalemleri
         urunler = df_kalem[df_kalem["siparis_no"] == sip_no][["urun", "birim", "miktar"]]
         if not urunler.empty:
             urunler.columns = ["Ürün", "Birim", "Miktar"]
