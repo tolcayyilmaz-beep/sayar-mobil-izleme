@@ -354,6 +354,53 @@ if arama.strip():
     )
     filtered = filtered[mask]
 
+# 5. Ürün Bazlı Hızlı Özet ve Toplam Miktar Hesabı (Filtrelenmiş Siparişlere Göre)
+with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
+    aktif_sip_nolar = filtered["siparis_no"].tolist()
+    ozet_kalemler = df_kalem[df_kalem["siparis_no"].isin(aktif_sip_nolar)].copy()
+
+    if not ozet_kalemler.empty:
+        ozet_kalemler["urun"] = ozet_kalemler["urun"].fillna("-").str.strip()
+        ozet_kalemler["birim"] = ozet_kalemler["birim"].fillna("-").str.strip()
+        ozet_kalemler["miktar_str"] = ozet_kalemler["miktar"].fillna("").astype(str).str.strip()
+
+        # Virgüllü ondalıkları (örn: 12,5 -> 12.5) sayıya çevir
+        temiz_sayi = ozet_kalemler["miktar_str"].str.replace(",", ".", regex=False)
+        ozet_kalemler["miktar_num"] = pd.to_numeric(temiz_sayi, errors="coerce")
+
+        # Sayısal kalemleri Ürün + Birim bazında topla
+        sayisal_df = ozet_kalemler.dropna(subset=["miktar_num"])
+        metin_df = ozet_kalemler[ozet_kalemler["miktar_num"].isna()]
+
+        if not sayisal_df.empty:
+            grup_sayisal = (
+                sayisal_df.groupby(["urun", "birim"], as_index=False)
+                .agg(
+                    Siparis_Sayisi=("siparis_no", "nunique"),
+                    Toplam_Miktar=("miktar_num", "sum")
+                )
+                .sort_values(by=["urun", "birim"])
+            )
+            # Tam sayıları küsuratsız (4.0 -> 4), ondalıkları temiz formatla
+            grup_sayisal["Toplam_Miktar"] = grup_sayisal["Toplam_Miktar"].apply(
+                lambda x: f"{int(x):,}".replace(",", ".") if x == int(x) else f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+            grup_sayisal.columns = ["Ürün", "Birim", "Sipariş", "Toplam Miktar"]
+            st.dataframe(grup_sayisal, use_container_width=True, hide_index=True)
+
+        # Sayısal olmayan (örn: TONAJ, 1 TIR) kalemler varsa ayrıca göster
+        if not metin_df.empty:
+            st.caption("Metin / Özel Miktarlı Kalemler:")
+            grup_metin = (
+                metin_df.groupby(["urun", "birim", "miktar_str"], as_index=False)
+                .agg(Siparis_Sayisi=("siparis_no", "nunique"))
+                .sort_values(by=["urun"])
+            )
+            grup_metin.columns = ["Ürün", "Birim", "Miktar Notu", "Sipariş"]
+            st.dataframe(grup_metin, use_container_width=True, hide_index=True)
+    else:
+        st.caption("Seçili filtrelere ait ürün kalemi bulunmuyor.")
+
 st.caption(f"Gösterilen sipariş sayısı: **{len(filtered)}**")
 
 OP_RENK = {
@@ -365,7 +412,7 @@ OP_RENK = {
     "KISMİ EVRAK": "#8e44ad"
 }
 
-# 5. Mobil Sipariş Kartları ve Detay Açılır Panelleri
+# 6. Mobil Sipariş Kartları ve Detay Açılır Panelleri
 for _, row in filtered.head(50).iterrows():
     sip_no = row["siparis_no"]
     op_val = str(row["operasyon"] or "-")
