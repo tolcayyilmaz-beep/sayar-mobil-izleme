@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS: Streamlit barlarını gizle + Kompakt KPI şeridi ve başlık kartı
+# Özel CSS: Streamlit barlarını gizle + İkonlu Üst Bar + Kompakt KPI Şeridi
 st.markdown("""
     <style>
     header[data-testid="stHeader"],
@@ -34,29 +34,62 @@ st.markdown("""
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
     }
-    /* Renk Kodlu Kurumsal Başlık Şeridi */
+    /* Renk Kodlu Kurumsal Başlık Şeridi (İkon Butonları Sağda) */
     .header-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border-left: 5px solid #007acc;
         border-radius: 8px;
-        padding: 10px 14px;
+        padding: 10px 12px;
         margin-bottom: 10px;
         color: #f8fafc;
         box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        gap: 8px;
+    }
+    .header-info {
+        flex: 1;
+        min-width: 0;
     }
     .header-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         margin: 0;
         color: #ffffff;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .header-sub {
         font-size: 11px;
         color: #94a3b8;
         margin-top: 2px;
     }
-    /* Kompakt Yan Yana 3'lü KPI Şeridi (Mobilde Alt Alta Düşmez) */
+    .header-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: #ffffff !important;
+        text-decoration: none !important;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .icon-btn:active {
+        background-color: #007acc;
+    }
+    /* Kompakt Yan Yana 3'lü KPI Şeridi */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -110,8 +143,10 @@ def check_password():
     if not st.session_state.authenticated:
         st.markdown("""
             <div class="header-banner">
-                <div class="header-title">🏗️ SAYAR YAPI</div>
-                <div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>
+                <div class="header-info">
+                    <div class="header-title">🏗️ SAYAR YAPI</div>
+                    <div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -156,6 +191,19 @@ def check_password():
 
 check_password()
 
+# Üstbar ikon aksiyonlarını yakala (?action=refresh / ?action=logout)
+action = st.query_params.get("action", "")
+if action == "refresh":
+    st.cache_data.clear()
+    del st.query_params["action"]
+    st.rerun()
+elif action == "logout":
+    st.session_state.authenticated = False
+    st.session_state.yetki_tipi = None
+    st.session_state.yetki_deger = None
+    del st.query_params["action"]
+    st.rerun()
+
 yetki_tipi = st.session_state.yetki_tipi
 yetki_deger = st.session_state.yetki_deger
 
@@ -187,7 +235,7 @@ def verileri_getir():
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-# Renk Kodlu Üst Başlık Şeridi
+# Renk Kodlu Üst Başlık Şeridi + Sağda Sadece İkon Butonlar
 if yetki_tipi == "MUSTERI":
     baslik_metni = f"🏗️ SAYAR YAPI | {yetki_deger}"
     alt_metin = "Müşteri Sipariş İzleme Paneli"
@@ -200,23 +248,16 @@ else:
 
 st.markdown(f"""
     <div class="header-banner">
-        <div class="header-title">{baslik_metni}</div>
-        <div class="header-sub">{alt_metin}</div>
+        <div class="header-info">
+            <div class="header-title">{baslik_metni}</div>
+            <div class="header-sub">{alt_metin}</div>
+        </div>
+        <div class="header-actions">
+            <a href="?action=refresh" target="_self" class="icon-btn" title="Yenile">🔄</a>
+            <a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>
+        </div>
     </div>
 """, unsafe_allow_html=True)
-
-# Yenile ve Çıkış Butonları (Kompakt Yan Yana)
-b1, b2 = st.columns(2)
-with b1:
-    if st.button("🔄 Yenile", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-with b2:
-    if st.button("🚪 Çıkış", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.yetki_tipi = None
-        st.session_state.yetki_deger = None
-        st.rerun()
 
 try:
     df_sip, df_kalem = verileri_getir()
