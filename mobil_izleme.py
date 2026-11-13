@@ -28,18 +28,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1. Rol ve Müşteri Bazlı Şifre Kontrolü
+# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-        st.session_state.yetkili_musteri = None  # None = Yönetici (Tüm Müşteriler)
+        st.session_state.yetki_tipi = None   # "YONETICI", "MUSTERI", "SIPARIS_VEREN"
+        st.session_state.yetki_deger = None  # İlgili müşteri veya personel adı
 
     url_musteri = st.query_params.get("musteri", "")
+    url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
         st.title("🏗️ SAYAR YAPI")
         if url_musteri:
             st.subheader(f"Müşteri Sipariş Takip ({url_musteri})")
+        elif url_veren:
+            st.subheader(f"Personel Sipariş Takip ({url_veren})")
         else:
             st.subheader("Sipariş İzleme Girişi")
 
@@ -48,29 +52,39 @@ def check_password():
             # 1) Yönetici şifresi kontrolü
             if pin == st.secrets["APP_PASSWORD"]:
                 st.session_state.authenticated = True
-                st.session_state.yetkili_musteri = None
+                st.session_state.yetki_tipi = "YONETICI"
+                st.session_state.yetki_deger = None
                 st.rerun()
 
             # 2) Müşteri şifreleri kontrolü
-            musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
-            eslesen_musteri = None
-            for m_adi, m_sifre in musteri_map.items():
-                if pin == str(m_sifre):
-                    if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
-                        eslesen_musteri = m_adi
-                        break
+            if not url_veren:
+                musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
+                for m_adi, m_sifre in musteri_map.items():
+                    if pin == str(m_sifre):
+                        if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
+                            st.session_state.authenticated = True
+                            st.session_state.yetki_tipi = "MUSTERI"
+                            st.session_state.yetki_deger = m_adi
+                            st.rerun()
 
-            if eslesen_musteri:
-                st.session_state.authenticated = True
-                st.session_state.yetkili_musteri = eslesen_musteri
-                st.rerun()
-            else:
-                st.error("Hatalı erişim şifresi!")
+            # 3) Sipariş Veren (Personel) şifreleri kontrolü
+            if not url_musteri:
+                veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
+                for v_adi, v_sifre in veren_map.items():
+                    if pin == str(v_sifre):
+                        if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
+                            st.session_state.authenticated = True
+                            st.session_state.yetki_tipi = "SIPARIS_VEREN"
+                            st.session_state.yetki_deger = v_adi
+                            st.rerun()
+
+            st.error("Hatalı erişim şifresi!")
         st.stop()
 
 check_password()
 
-aktif_musteri = st.session_state.yetkili_musteri
+yetki_tipi = st.session_state.yetki_tipi
+yetki_deger = st.session_state.yetki_deger
 
 # 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
 @st.cache_data(ttl=30)
@@ -103,8 +117,8 @@ def verileri_getir():
 # Üst Başlık ve Yenileme / Çıkış Butonları
 col_title, col_btn1, col_btn2 = st.columns([3, 1, 1])
 with col_title:
-    if aktif_musteri:
-        st.markdown(f"### 🏗️ SAYAR YAPI | {aktif_musteri}")
+    if yetki_tipi in ("MUSTERI", "SIPARIS_VEREN"):
+        st.markdown(f"### 🏗️ SAYAR YAPI | {yetki_deger}")
     else:
         st.markdown("### 🏗️ SAYAR YAPI | Sipariş İzleme")
 with col_btn1:
@@ -114,7 +128,8 @@ with col_btn1:
 with col_btn2:
     if st.button("🚪 Çıkış", use_container_width=True):
         st.session_state.authenticated = False
-        st.session_state.yetkili_musteri = None
+        st.session_state.yetki_tipi = None
+        st.session_state.yetki_deger = None
         st.rerun()
 
 try:
@@ -123,9 +138,11 @@ except Exception as e:
     st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
     st.stop()
 
-# Müşteri girişi yapıldıysa veriyi en başta o müşteriye kilitle
-if aktif_musteri:
-    df_sip = df_sip[df_sip["musteri"].fillna("").str.strip().str.upper() == aktif_musteri.strip().upper()]
+# Yetki Tipine Göre Veriyi Kısıtlama
+if yetki_tipi == "MUSTERI":
+    df_sip = df_sip[df_sip["musteri"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
+elif yetki_tipi == "SIPARIS_VEREN":
+    df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
 # 3. Özet KPI Kartları
 k1, k2, k3 = st.columns(3)
@@ -136,17 +153,31 @@ k3.metric("Onaylandı", len(df_sip[df_sip["operasyon"] == "ONAYLANDI"]))
 st.divider()
 
 # 4. Mobil Filtre Alanı
-arama = st.text_input("🔍 Ara (Sipariş No, Tedarikçi, Şantiye, Plaka, Fabrika)...", "")
+arama = st.text_input("🔍 Ara (Sipariş No, Tedarikçi, Müşteri, Şantiye, Plaka)...", "")
 
-f_col1, f_col2 = st.columns(2)
-with f_col1:
-    op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-    secili_op = st.selectbox("Operasyon", op_listesi)
-with f_col2:
-    firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-    secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
+if yetki_tipi == "MUSTERI":
+    f_col1, f_col2 = st.columns(2)
+    with f_col1:
+        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+        secili_op = st.selectbox("Operasyon", op_listesi)
+    with f_col2:
+        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
+    secili_musteri = "[TÜMÜ]"
+else:
+    # Yönetici ve Sipariş Veren görünümünde Operasyon, Tedarikçi ve Müşteri filtreleri aktif
+    f_col1, f_col2, f_col3 = st.columns(3)
+    with f_col1:
+        op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+        secili_op = st.selectbox("Operasyon", op_listesi)
+    with f_col2:
+        firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
+    with f_col3:
+        musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
+        secili_musteri = st.selectbox("Müşteri", musteri_listesi)
 
-# Her iki görünümde de varsayılan olarak işaretli
+# Varsayılan olarak işaretli
 gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
 gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
 
@@ -161,6 +192,8 @@ if secili_op != "[TÜMÜ]":
     filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
     filtered = filtered[filtered["firma"] == secili_firma]
+if secili_musteri != "[TÜMÜ]":
+    filtered = filtered[filtered["musteri"] == secili_musteri]
 if arama.strip():
     q = arama.strip().lower()
     mask = (
@@ -189,7 +222,7 @@ for _, row in filtered.head(50).iterrows():
     op_val = str(row["operasyon"] or "-")
     renk = OP_RENK.get(op_val.upper(), "#555555")
 
-    if aktif_musteri:
+    if yetki_tipi == "MUSTERI":
         baslik = f"#{sip_no} | {row['firma'] or '-'} ({row['tarih'] or '-'})"
     else:
         baslik = f"#{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
@@ -214,7 +247,7 @@ for _, row in filtered.head(50).iterrows():
             st.markdown(f"**Sevk Tarihi:** {row['sevk_tarihi'] or '-'}")
             st.markdown(f"**Ted. Sip. No:** {row['ted_sip_no'] or '-'}")
             st.markdown(f"**Yetkili / Tel:** {row['yetkili'] or '-'} {row['telefon'] or ''}")
-            if not aktif_musteri:
+            if yetki_tipi != "MUSTERI":
                 st.markdown(f"**Müşteri:** {row['musteri'] or '-'}")
                 st.markdown(f"**Sipariş Veren:** {row['siparis_veren'] or '-'}")
 
