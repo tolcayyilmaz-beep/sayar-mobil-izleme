@@ -154,39 +154,12 @@ div[data-testid="stExpander"] summary p {
     font-size: 13px !important;
     margin: 0 !important;
 }
-.stepper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 4px;
-    margin: 4px 0 12px 0;
-    padding: 6px 8px;
-    background: rgba(148, 163, 184, 0.1);
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 600;
-}
-.step-item {
-    flex: 1;
-    text-align: center;
-    padding: 4px 2px;
-    border-radius: 5px;
-    color: #94a3b8;
-    background: rgba(148, 163, 184, 0.08);
-}
-.step-done {
-    background: #007acc;
-    color: #ffffff;
-}
-.step-cancel {
-    background: #e74c3c;
-    color: #ffffff;
-}
 .info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px 12px;
     font-size: 13px;
+    margin-top: 8px;
     margin-bottom: 10px;
 }
 .info-item-label {
@@ -590,30 +563,6 @@ OP_IKON = {
     "KISMİ EVRAK": "🟣"
 }
 
-def stepper_html(op_upper):
-    if op_upper == "İPTAL EDİLDİ":
-        return '<div class="stepper"><div class="step-item step-cancel">❌ Sipariş İptal Edildi</div></div>'
-    adim = 1
-    if op_upper == "ONAYLANDI":
-        adim = 2
-    elif op_upper in ("İŞLENDİ", "KISMİ EVRAK"):
-        adim = 3
-    elif op_upper == "MUHASEBEYE İLETİLDİ":
-        adim = 4
-
-    c1 = "step-done" if adim >= 1 else ""
-    c2 = "step-done" if adim >= 2 else ""
-    c3 = "step-done" if adim >= 3 else ""
-    c4 = "step-done" if adim >= 4 else ""
-    return (
-        f'<div class="stepper">'
-        f'<div class="step-item {c1}">1. Alındı</div>'
-        f'<div class="step-item {c2}">2. Onay</div>'
-        f'<div class="step-item {c3}">3. İşlendi</div>'
-        f'<div class="step-item {c4}">4. Muhasebe</div>'
-        f'</div>'
-    )
-
 # N+1 Optimizasyonu
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
@@ -634,17 +583,16 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
     m_md = md_temizle(musteri_str)
     s_md = md_temizle(santiye_str)
     t_md = md_temizle(tarih_str)
-    op_md = md_temizle(op_val)
 
     if yetki_tipi == "MUSTERI":
         baslik = (
             f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-            f"📍 {s_md}  •  📅 {t_md}  •  *{op_md}*"
+            f"📍 {s_md}  •  📅 {t_md}"
         )
     else:
         baslik = (
             f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-            f"📍 {s_md}  •  📅 {t_md}  •  *{op_md}*"
+            f"📍 {s_md}  •  📅 {t_md}"
         )
 
     with st.expander(baslik):
@@ -653,9 +601,7 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
             f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
             unsafe_allow_html=True
         )
-        st.markdown(stepper_html(op_upper), unsafe_allow_html=True)
 
-        # Tek satırlık (girintisiz) HTML ile Markdown kod bloğu çakışmasını önle
         musteri_blok = "" if yetki_tipi == "MUSTERI" else (
             f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>'
             f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get("siparis_veren") or "-"))}</span></div>'
