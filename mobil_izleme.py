@@ -118,17 +118,10 @@ st.markdown("""
     .kpi-blue { border-top: 3px solid #007acc !important; }
     .kpi-orange { border-top: 3px solid #e67e22 !important; }
     .kpi-green { border-top: 3px solid #2ecc71 !important; }
-    .kpi-active-blue {
-        background-color: rgba(0, 122, 204, 0.18) !important;
-        border: 1px solid #007acc !important;
-    }
-    .kpi-active-orange {
-        background-color: rgba(230, 126, 34, 0.18) !important;
-        border: 1px solid #e67e22 !important;
-    }
-    .kpi-active-green {
-        background-color: rgba(46, 204, 113, 0.18) !important;
-        border: 1px solid #2ecc71 !important;
+    .kpi-active {
+        background-color: #1e1e24 !important;
+        border: 2px solid #ef4444 !important;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
     }
     .kpi-label {
         font-size: 11px;
@@ -377,9 +370,9 @@ sevk_bekleyen = len(
 )
 
 kpi_mod = st.session_state.kpi_mod
-cls_tumu = "kpi-active-blue" if kpi_mod == "TUMU" else ""
-cls_onay = "kpi-active-orange" if kpi_mod == "ONAY" else ""
-cls_sevk = "kpi-active-green" if kpi_mod == "SEVK" else ""
+cls_tumu = "kpi-active" if kpi_mod == "TUMU" else ""
+cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
+cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
 
 st.markdown(f"""
     <div class="kpi-grid">
