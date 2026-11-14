@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS: Streamlit barlarını gizle + İkonlu Üst Bar + Kompakt KPI Şeridi
+# Özel CSS: Streamlit barlarını gizle + İkonlu Üst Bar + Tıklanabilir Kompakt KPI Şeridi
 st.markdown("""
     <style>
     header[data-testid="stHeader"],
@@ -91,23 +91,45 @@ st.markdown("""
     .icon-btn:active {
         background-color: #007acc;
     }
-    /* Kompakt Yan Yana 3'lü KPI Şeridi */
+    /* Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
         margin-bottom: 10px;
     }
-    .kpi-card {
+    a.kpi-card {
+        display: block;
         background-color: #1e1e24;
         border: 1px solid #32323a;
         border-radius: 8px;
         padding: 8px 10px;
         text-align: center;
+        text-decoration: none !important;
+        transition: transform 0.1s ease, background-color 0.15s ease;
+        cursor: pointer;
     }
-    .kpi-blue { border-top: 3px solid #007acc; }
-    .kpi-orange { border-top: 3px solid #e67e22; }
-    .kpi-green { border-top: 3px solid #2ecc71; }
+    a.kpi-card:hover {
+        background-color: #272730;
+    }
+    a.kpi-card:active {
+        transform: scale(0.98);
+    }
+    .kpi-blue { border-top: 3px solid #007acc !important; }
+    .kpi-orange { border-top: 3px solid #e67e22 !important; }
+    .kpi-green { border-top: 3px solid #2ecc71 !important; }
+    .kpi-active-blue {
+        background-color: rgba(0, 122, 204, 0.18) !important;
+        border: 1px solid #007acc !important;
+    }
+    .kpi-active-orange {
+        background-color: rgba(230, 126, 34, 0.18) !important;
+        border: 1px solid #e67e22 !important;
+    }
+    .kpi-active-green {
+        background-color: rgba(46, 204, 113, 0.18) !important;
+        border: 1px solid #2ecc71 !important;
+    }
     .kpi-label {
         font-size: 11px;
         color: #a1a1aa;
@@ -250,10 +272,26 @@ def check_password():
 
 check_password()
 
+# Session State Varsayılanları (KPI Filtre Modu ve Sayfalama Limiti)
+if "kpi_mod" not in st.session_state:
+    st.session_state.kpi_mod = "SEVK"  # Varsayılan: Muhasebe ve İptaller gizli (Sevk Bekleyen)
+if "sayfa_limiti" not in st.session_state:
+    st.session_state.sayfa_limiti = 50
+
 # Üstbar yenileme aksiyonunu yakala (?action=refresh)
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
+    st.session_state.sayfa_limiti = 50
     del st.query_params["action"]
+    st.rerun()
+
+# KPI kartı tıklama aksiyonunu yakala (?kpi=TUMU | ONAY | SEVK)
+if "kpi" in st.query_params:
+    secilen_kpi = st.query_params.get("kpi", "").upper()
+    if secilen_kpi in ("TUMU", "ONAY", "SEVK"):
+        st.session_state.kpi_mod = secilen_kpi
+        st.session_state.sayfa_limiti = 50
+    del st.query_params["kpi"]
     st.rerun()
 
 yetki_tipi = st.session_state.yetki_tipi
@@ -299,7 +337,8 @@ else:
     baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
     alt_metin = "Yönetici Canlı Takip Paneli"
 
-refresh_href = f"?action=refresh&token={aktif_token}" if aktif_token else "?action=refresh"
+token_param = f"&token={aktif_token}" if aktif_token else ""
+refresh_href = f"?action=refresh{token_param}"
 
 st.markdown(f"""
     <div class="header-banner">
@@ -326,7 +365,7 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
-# 3. Kompakt Yan Yana 3'lü KPI Şeridi (Toplam - Muhasebeye İletildi - İptal Edildi = Sevk Bekleyen)
+# 3. Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi
 toplam_siparis = len(df_sip)
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -337,32 +376,43 @@ sevk_bekleyen = len(
     ]
 )
 
+kpi_mod = st.session_state.kpi_mod
+cls_tumu = "kpi-active-blue" if kpi_mod == "TUMU" else ""
+cls_onay = "kpi-active-orange" if kpi_mod == "ONAY" else ""
+cls_sevk = "kpi-active-green" if kpi_mod == "SEVK" else ""
+
 st.markdown(f"""
     <div class="kpi-grid">
-        <div class="kpi-card kpi-blue">
+        <a href="?kpi=TUMU{token_param}" target="_self" class="kpi-card kpi-blue {cls_tumu}" title="Tüm siparişleri göster">
             <div class="kpi-label">Toplam Sipariş</div>
             <div class="kpi-value">{toplam_siparis}</div>
-        </div>
-        <div class="kpi-card kpi-orange">
+        </a>
+        <a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">
             <div class="kpi-label">Onay Bekleyen</div>
             <div class="kpi-value">{onay_bekleyen}</div>
-        </div>
-        <div class="kpi-card kpi-green">
+        </a>
+        <a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece sevk bekleyenleri göster">
             <div class="kpi-label">Sevk Bekleyen</div>
             <div class="kpi-value">{sevk_bekleyen}</div>
-        </div>
+        </a>
     </div>
 """, unsafe_allow_html=True)
 
 # 4. Hızlı Arama + Tek "Filtrele" Çekmecesi
 arama = st.text_input("", placeholder="🔍 Ara (Sipariş No, Tedarikçi, Müşteri, Şantiye, Plaka)...", label_visibility="collapsed")
 
+# KPI seçimine göre filtre çekmecesi varsayılanlarını senkronize et
+varsayilan_op = "ONAY BEKLİYOR" if kpi_mod == "ONAY" else "[TÜMÜ]"
+varsayilan_gizle = (kpi_mod == "SEVK")
+
 with st.expander("⚙️ Filtrele", expanded=False):
+    op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+    op_index = op_listesi.index(varsayilan_op) if varsayilan_op in op_listesi else 0
+
     if yetki_tipi == "MUSTERI":
         f_col1, f_col2 = st.columns(2)
         with f_col1:
-            op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-            secili_op = st.selectbox("Operasyon", op_listesi)
+            secili_op = st.selectbox("Operasyon", op_listesi, index=op_index)
         with f_col2:
             firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
             secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
@@ -370,8 +420,7 @@ with st.expander("⚙️ Filtrele", expanded=False):
     else:
         f_col1, f_col2, f_col3 = st.columns(3)
         with f_col1:
-            op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-            secili_op = st.selectbox("Operasyon", op_listesi)
+            secili_op = st.selectbox("Operasyon", op_listesi, index=op_index)
         with f_col2:
             firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
             secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
@@ -381,9 +430,9 @@ with st.expander("⚙️ Filtrele", expanded=False):
 
     c_chk1, c_chk2 = st.columns(2)
     with c_chk1:
-        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=True)
+        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=varsayilan_gizle)
     with c_chk2:
-        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
+        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=varsayilan_gizle)
 
 # Filtreleme Uygulama
 filtered = df_sip.copy()
@@ -452,7 +501,11 @@ with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
     else:
         st.caption("Seçili filtrelere ait ürün kalemi bulunmuyor.")
 
-st.caption(f"Gösterilen sipariş sayısı: **{len(filtered)}**")
+toplam_filtrelenen = len(filtered)
+gosterilen_limit = st.session_state.sayfa_limiti
+gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
+
+st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
 OP_RENK = {
     "İŞLENDİ": "#007acc",
@@ -463,16 +516,30 @@ OP_RENK = {
     "KISMİ EVRAK": "#8e44ad"
 }
 
-# 6. Mobil Sipariş Kartları ve Detay Açılır Panelleri
-for _, row in filtered.head(50).iterrows():
+OP_IKON = {
+    "İŞLENDİ": "🔵",
+    "ONAY BEKLİYOR": "🟠",
+    "ONAYLANDI": "🟢",
+    "MUHASEBEYE İLETİLDİ": "✅",
+    "İPTAL EDİLDİ": "🔴",
+    "KISMİ EVRAK": "🟣"
+}
+
+# N+1 Optimizasyonu: Tüm sipariş kalemlerini döngü öncesinde tek seferde siparis_no bazında grupla
+kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
+
+# 6. Mobil Sipariş Kartları ve Detay Açılır Panelleri (Sayfalama Limitli)
+for _, row in filtered.head(gosterilen_limit).iterrows():
     sip_no = row["siparis_no"]
     op_val = str(row["operasyon"] or "-")
-    renk = OP_RENK.get(op_val.upper(), "#555555")
+    op_upper = op_val.upper()
+    renk = OP_RENK.get(op_upper, "#555555")
+    durum_ikon = OP_IKON.get(op_upper, "⚪")
 
     if yetki_tipi == "MUSTERI":
-        baslik = f"#{sip_no} | {row['firma'] or '-'} ({row['tarih'] or '-'})"
+        baslik = f"{durum_ikon} #{sip_no} | {row['firma'] or '-'} ({row['tarih'] or '-'})"
     else:
-        baslik = f"#{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
+        baslik = f"{durum_ikon} #{sip_no} | {row['firma'] or '-'} ➔ {row['musteri'] or '-'} ({row['santiye'] or '-'})"
 
     with st.expander(baslik):
         st.markdown(
@@ -501,9 +568,18 @@ for _, row in filtered.head(50).iterrows():
         if row["notlar"]:
             st.info(f"📝 **Not:** {row['notlar']}")
 
-        urunler = df_kalem[df_kalem["siparis_no"] == sip_no][["urun", "birim", "miktar"]]
-        if not urunler.empty:
+        # Gruplanmış sözlükten O(1) erişim
+        sip_kalem_df = kalem_gruplari.get(sip_no)
+        if sip_kalem_df is not None and not sip_kalem_df.empty:
+            urunler = sip_kalem_df[["urun", "birim", "miktar"]].copy()
             urunler.columns = ["Ürün", "Birim", "Miktar"]
             st.dataframe(urunler, use_container_width=True, hide_index=True)
         else:
             st.caption("Bu siparişe ait ürün kalemi bulunmuyor.")
+
+# Sayfalama: Daha Fazla Göster Butonu
+if toplam_filtrelenen > gosterilen_limit:
+    kalan = toplam_filtrelenen - gosterilen_limit
+    if st.button(f"⬇️ Daha Fazla Göster ({kalan} kayıt daha var)", use_container_width=True):
+        st.session_state.sayfa_limiti += 50
+        st.rerun()
