@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS: Streamlit barlarını gizle + İkonlu Üst Bar + Kompakt KPI + Modern Kart ve Tablo Stilleri
+# Özel CSS
 st.markdown("""
     <style>
     header[data-testid="stHeader"],
@@ -37,7 +37,6 @@ st.markdown("""
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
     }
-    /* Renk Kodlu Kurumsal Başlık Şeridi */
     .header-banner {
         display: flex;
         justify-content: space-between;
@@ -92,7 +91,6 @@ st.markdown("""
     .icon-btn:active {
         background-color: #007acc;
     }
-    /* Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -146,15 +144,16 @@ st.markdown("""
         overflow: hidden;
     }
     div[data-testid="stExpander"] summary {
+        display: flex !important;
+        align-items: center !important;
         padding-top: 10px !important;
         padding-bottom: 10px !important;
         line-height: 1.45 !important;
     }
     div[data-testid="stExpander"] summary p {
-        font-size: 13.5px !important;
+        font-size: 13px !important;
         margin: 0 !important;
     }
-    /* Kart İçi Süreç İlerleme Çubuğu (Stepper) */
     .stepper {
         display: flex;
         align-items: center;
@@ -183,7 +182,6 @@ st.markdown("""
         background: #e74c3c;
         color: #ffffff;
     }
-    /* Kart İçi Öne Çıkan Bilgi Kutusu */
     .info-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -199,7 +197,6 @@ st.markdown("""
     .info-item-val {
         font-weight: 600;
     }
-    /* Hafif ve Hızlı HTML Ürün Tablosu */
     .urun-table {
         width: 100%;
         border-collapse: collapse;
@@ -238,6 +235,10 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+def md_temizle(metin):
+    """Expander başlığında Markdown karakterlerinin biçim bozmasını önler."""
+    return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
 
 # Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
@@ -286,7 +287,7 @@ def check_password():
             st.session_state.yetki_deger = t_deger
             st.session_state.active_token = url_token
         else:
-            st.query_params.clear()
+            st.query_params.pop("token", None)
 
     url_musteri = st.query_params.get("musteri", "")
     url_veren = st.query_params.get("veren", "")
@@ -361,15 +362,19 @@ if "sayfa_limiti" not in st.session_state:
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
     st.session_state.sayfa_limiti = 50
-    del st.query_params["action"]
+    st.query_params.pop("action", None)
     st.rerun()
 
 if "kpi" in st.query_params:
     secilen_kpi = st.query_params.get("kpi", "").upper()
     if secilen_kpi in ("TUMU", "ONAY", "SEVK"):
-        st.session_state.kpi_mod = secilen_kpi
+        # Aynı karta tekrar tıklanırsa varsayılan SEVK moduna dön
+        if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
+            st.session_state.kpi_mod = "SEVK"
+        else:
+            st.session_state.kpi_mod = secilen_kpi
         st.session_state.sayfa_limiti = 50
-    del st.query_params["kpi"]
+    st.query_params.pop("kpi", None)
     st.rerun()
 
 yetki_tipi = st.session_state.yetki_tipi
@@ -382,7 +387,7 @@ def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
 
-    download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    download_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
     response = requests.get(download_url, timeout=15)
     response.raise_for_status()
 
@@ -406,10 +411,10 @@ def verileri_getir():
 
 # Renk Kodlu Üst Başlık Şeridi
 if yetki_tipi == "MUSTERI":
-    baslik_metni = f"🏗️ SAYAR YAPI | {yetki_deger}"
+    baslik_metni = f"🏗️ SAYAR YAPI | {html.escape(str(yetki_deger))}"
     alt_metin = "Müşteri Sipariş İzleme Paneli"
 elif yetki_tipi == "SIPARIS_VEREN":
-    baslik_metni = f"🏗️ SAYAR YAPI | {yetki_deger}"
+    baslik_metni = f"🏗️ SAYAR YAPI | {html.escape(str(yetki_deger))}"
     alt_metin = "Personel Sipariş İzleme Paneli"
 else:
     baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
@@ -625,46 +630,51 @@ def stepper_html(op_upper):
         </div>
     """
 
-# N+1 Optimizasyonu: Tüm sipariş kalemlerini döngü öncesinde grupla
+# N+1 Optimizasyonu
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-# 6. Odaklı 2 Satırlı Mobil Sipariş Kartları (Firma, Müşteri, Şantiye ve Sipariş Tarihi Ön Planda)
+# 6. Odaklı 2 Satırlı Mobil Sipariş Kartları
 for _, row in filtered.head(gosterilen_limit).iterrows():
-    sip_no = row["siparis_no"]
-    op_val = str(row["operasyon"] or "-")
+    sip_no = row.get("siparis_no", "-")
+    op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
     renk = OP_RENK.get(op_upper, "#555555")
     durum_ikon = OP_IKON.get(op_upper, "⚪")
 
-    firma_str = row["firma"] or "-"
-    musteri_str = row["musteri"] or "-"
-    santiye_str = row["santiye"] or "-"
-    tarih_str = row["tarih"] or "-"
+    firma_str = row.get("firma") or "-"
+    musteri_str = row.get("musteri") or "-"
+    santiye_str = row.get("santiye") or "-"
+    tarih_str = row.get("tarih") or "-"
 
-    # 2 Satırlı Net Başlık: Üstte Firma & Müşteri, Altta Şantiye & Sipariş Tarihi
+    # Expander başlığı için Markdown-güvenli metinler
+    f_md = md_temizle(firma_str)
+    m_md = md_temizle(musteri_str)
+    s_md = md_temizle(santiye_str)
+    t_md = md_temizle(tarih_str)
+    op_md = md_temizle(op_val)
+
     if yetki_tipi == "MUSTERI":
         baslik = (
-            f"{durum_ikon} **#{sip_no} | {firma_str}**  \n"
-            f"📍 {santiye_str}  •  📅 {tarih_str}  •  *{op_val}*"
+            f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
+            f"📍 {s_md}  •  📅 {t_md}  •  *{op_md}*"
         )
     else:
         baslik = (
-            f"{durum_ikon} **#{sip_no} | {firma_str} ➔ {musteri_str}**  \n"
-            f"📍 {santiye_str}  •  📅 {tarih_str}  •  *{op_val}*"
+            f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
+            f"📍 {s_md}  •  📅 {t_md}  •  *{op_md}*"
         )
 
     with st.expander(baslik):
         st.markdown(
             f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-            f"**Durum:** {html.escape(str(row['durum'] or '-'))}",
+            f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
             unsafe_allow_html=True
         )
         st.markdown(stepper_html(op_upper), unsafe_allow_html=True)
 
-        # Öne Çıkan 4 Ana Bilgi + Ek Detaylar
         musteri_blok = "" if yetki_tipi == "MUSTERI" else f"""
             <div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>
-            <div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row['siparis_veren'] or '-'))}</span></div>
+            <div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get('siparis_veren') or '-'))}</span></div>
         """
 
         st.markdown(f"""
@@ -672,25 +682,25 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
                 <div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>
                 <div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>
                 <div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>
-                <div><span class="info-item-label">Sevk Tarihi</span><span class="info-item-val">{html.escape(str(row['sevk_tarihi'] or '-'))}</span></div>
+                <div><span class="info-item-label">Sevk Tarihi</span><span class="info-item-val">{html.escape(str(row.get('sevk_tarihi') or '-'))}</span></div>
                 {musteri_blok}
-                <div><span class="info-item-label">Fabrika / Nakliye</span><span class="info-item-val">{html.escape(str(row['fabrika'] or '-'))} / {html.escape(str(row['nakliye'] or '-'))}</span></div>
-                <div><span class="info-item-label">Ted. Sip. No</span><span class="info-item-val">{html.escape(str(row['ted_sip_no'] or '-'))}</span></div>
-                <div><span class="info-item-label">Yetkili / Tel</span><span class="info-item-val">{html.escape(str(row['yetkili'] or '-'))} {html.escape(str(row['telefon'] or ''))}</span></div>
+                <div><span class="info-item-label">Fabrika / Nakliye</span><span class="info-item-val">{html.escape(str(row.get('fabrika') or '-'))} / {html.escape(str(row.get('nakliye') or '-'))}</span></div>
+                <div><span class="info-item-label">Ted. Sip. No</span><span class="info-item-val">{html.escape(str(row.get('ted_sip_no') or '-'))}</span></div>
+                <div><span class="info-item-label">Yetkili / Tel</span><span class="info-item-val">{html.escape(str(row.get('yetkili') or '-'))} {html.escape(str(row.get('telefon') or ''))}</span></div>
             </div>
         """, unsafe_allow_html=True)
 
-        if row["notlar"]:
-            st.info(f"📝 **Not:** {row['notlar']}")
+        not_metni = row.get("notlar")
+        if not_metni:
+            st.info(f"📝 **Not:** {not_metni}")
 
-        # Hafif ve Hızlı HTML Ürün Tablosu (st.dataframe yerine)
         sip_kalem_df = kalem_gruplari.get(sip_no)
         if sip_kalem_df is not None and not sip_kalem_df.empty:
             satirlar_html = ""
             for _, k_row in sip_kalem_df.iterrows():
-                u_ad = html.escape(str(k_row["urun"] or "-"))
-                u_birim = html.escape(str(k_row["birim"] or "-"))
-                u_miktar = html.escape(str(k_row["miktar"] or "-"))
+                u_ad = html.escape(str(k_row.get("urun") or "-"))
+                u_birim = html.escape(str(k_row.get("birim") or "-"))
+                u_miktar = html.escape(str(k_row.get("miktar") or "-"))
                 satirlar_html += f"""
                     <tr>
                         <td>{u_ad}</td>
