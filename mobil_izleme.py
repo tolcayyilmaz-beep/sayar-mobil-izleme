@@ -36,6 +36,7 @@ st.markdown("""
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
     }
+    /* Renk Kodlu Kurumsal Başlık Şeridi (İkon Butonları Sağda) */
     .header-banner {
         display: flex;
         justify-content: space-between;
@@ -90,6 +91,7 @@ st.markdown("""
     .icon-btn:active {
         background-color: #007acc;
     }
+    /* Kompakt Yan Yana 3'lü KPI Şeridi */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -130,10 +132,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-APP_BASE_URL = "https://sayar-mobil-izleme-8fhaapjyqsfgku8i9kvt8f.streamlit.app"
-
-# Şifreli Oturum Jetonu Oluşturma ve Doğrulama (URL-safe)
-def token_olustur(yetki_tipi, yetki_deger, gun=180):
+# Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
+def token_olustur(yetki_tipi, yetki_deger, gun=90):
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
     fernet = Fernet(secret_key)
     payload = json.dumps({
@@ -154,7 +154,7 @@ def token_dogrula(token_str):
         pass
     return None, None
 
-# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Kalıcı URL Token Kontrolü
+# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Beni Hatırla Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -162,16 +162,16 @@ def check_password():
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
 
-    # Çıkış aksiyonu varsa ana pencereyi temiz URL'ye yönlendir
+    # Çıkış aksiyonu varsa URL'deki token'ı sil
     if st.query_params.get("action") == "logout":
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
-        st.markdown(f'<meta http-equiv="refresh" content="0; url={APP_BASE_URL}">', unsafe_allow_html=True)
-        st.stop()
+        st.query_params.clear()
+        st.rerun()
 
-    # URL'de ?token=... varsa doğrula ve şifre sormadan içeri al
+    # URL'de ?token=... varsa doğrudan doğrula ve şifre sormadan içeri al
     url_token = st.query_params.get("token", "")
     if url_token:
         t_tip, t_deger = token_dogrula(url_token)
@@ -202,7 +202,7 @@ def check_password():
             st.caption(f"Personel Girişi: **{url_veren}**")
 
         pin = st.text_input("Erişim Şifresi:", type="password")
-        beni_hatirla = st.checkbox("Beni Hatırla (Oturumu Açık Tut)", value=True)
+        beni_hatirla = st.checkbox("Beni Hatırla (Otomatik Giriş Linki Oluştur)", value=True)
 
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
             basarili_tip = None
@@ -238,23 +238,19 @@ def check_password():
                 st.session_state.yetki_tipi = basarili_tip
                 st.session_state.yetki_deger = basarili_deger
                 if beni_hatirla:
-                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=180)
+                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
                     st.session_state.active_token = yeni_token
-                    hedef_url = f"{APP_BASE_URL}/?token={yeni_token}"
-                    # Gerçek tarayıcı adres çubuğunu token'lı URL'ye yönlendir
-                    st.markdown(f'<meta http-equiv="refresh" content="0; url={hedef_url}">', unsafe_allow_html=True)
-                    st.success("Giriş başarılı, yönlendiriliyorsunuz...")
-                    st.stop()
+                    st.query_params["token"] = yeni_token
                 else:
                     st.session_state.active_token = ""
-                    st.rerun()
+                st.rerun()
             else:
                 st.error("Hatalı erişim şifresi!")
         st.stop()
 
 check_password()
 
-# Üstbar yenileme aksiyonunu yakala
+# Üstbar yenileme aksiyonunu yakala (?action=refresh)
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
     del st.query_params["action"]
@@ -304,7 +300,6 @@ else:
     alt_metin = "Yönetici Canlı Takip Paneli"
 
 refresh_href = f"?action=refresh&token={aktif_token}" if aktif_token else "?action=refresh"
-logout_href = f"{APP_BASE_URL}/?action=logout"
 
 st.markdown(f"""
     <div class="header-banner">
@@ -314,7 +309,7 @@ st.markdown(f"""
         </div>
         <div class="header-actions">
             <a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>
-            <a href="{logout_href}" target="_top" class="icon-btn" title="Çıkış">🚪</a>
+            <a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -331,7 +326,7 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
-# 3. Kompakt Yan Yana 3'lü KPI Şeridi
+# 3. Kompakt Yan Yana 3'lü KPI Şeridi (Toplam - Muhasebeye İletildi - İptal Edildi = Sevk Bekleyen)
 toplam_siparis = len(df_sip)
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -390,12 +385,6 @@ with st.expander("⚙️ Filtrele", expanded=False):
     with c_chk2:
         gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=True)
 
-    # Şifresiz kalıcı giriş linki (Ana ekrana eklemek için)
-    if aktif_token:
-        st.divider()
-        st.caption("📌 **Şifresiz Hızlı Giriş Linki** (Bu linki açıp 'Ana Ekrana Ekle' yapabilirsiniz):")
-        st.code(f"{APP_BASE_URL}/?token={aktif_token}", language="text")
-
 # Filtreleme Uygulama
 filtered = df_sip.copy()
 
@@ -420,7 +409,7 @@ if arama.strip():
     )
     filtered = filtered[mask]
 
-# 5. Ürün Bazlı Hızlı Özet ve Toplam Miktar Hesabı
+# 5. Ürün Bazlı Hızlı Özet ve Toplam Miktar Hesabı (Filtrelenmiş Siparişlere Göre)
 with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
     aktif_sip_nolar = filtered["siparis_no"].tolist()
     ozet_kalemler = df_kalem[df_kalem["siparis_no"].isin(aktif_sip_nolar)].copy()
