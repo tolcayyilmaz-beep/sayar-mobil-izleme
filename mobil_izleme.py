@@ -105,8 +105,9 @@ div[class^="viewerBadge_"] {
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin-bottom: 4px;
+    gap: 8px;
+    margin-top: 8px;
+    margin-bottom: 10px;
 }
 a.kpi-card {
     display: block;
