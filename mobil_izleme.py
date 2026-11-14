@@ -1,4 +1,6 @@
 import os
+import json
+import time
 import sqlite3
 import tempfile
 import requests
@@ -130,12 +132,54 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre Kontrolü
+# Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
+def token_olustur(yetki_tipi, yetki_deger, gun=30):
+    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
+    fernet = Fernet(secret_key)
+    payload = json.dumps({
+        "tip": yetki_tipi,
+        "deger": yetki_deger,
+        "exp": int(time.time()) + (gun * 86400)
+    }).encode("utf-8")
+    return fernet.encrypt(payload).decode("utf-8")
+
+def token_dogrula(token_str):
+    try:
+        secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
+        fernet = Fernet(secret_key)
+        data = json.loads(fernet.decrypt(token_str.encode("utf-8")).decode("utf-8"))
+        if data.get("exp", 0) > int(time.time()):
+            return data.get("tip"), data.get("deger")
+    except Exception:
+        pass
+    return None, None
+
+# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Beni Hatırla Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None   # "YONETICI", "MUSTERI", "SIPARIS_VEREN"
         st.session_state.yetki_deger = None  # İlgili müşteri veya personel adı
+
+    # Çıkış aksiyonu varsa token'ı temizle
+    if st.query_params.get("action") == "logout":
+        st.session_state.authenticated = False
+        st.session_state.yetki_tipi = None
+        st.session_state.yetki_deger = None
+        if "token" in st.query_params:
+            del st.query_params["token"]
+        del st.query_params["action"]
+        st.rerun()
+
+    # URL'de geçerli bir "Beni Hatırla" token'ı varsa otomatik giriş yap
+    if not st.session_state.authenticated and "token" in st.query_params:
+        t_tip, t_deger = token_dogrula(st.query_params["token"])
+        if t_tip:
+            st.session_state.authenticated = True
+            st.session_state.yetki_tipi = t_tip
+            st.session_state.yetki_deger = t_deger
+        else:
+            del st.query_params["token"]
 
     url_musteri = st.query_params.get("musteri", "")
     url_veren = st.query_params.get("veren", "")
@@ -156,51 +200,53 @@ def check_password():
             st.caption(f"Personel Girişi: **{url_veren}**")
 
         pin = st.text_input("Erişim Şifresi:", type="password")
+        beni_hatirla = st.checkbox("Beni Hatırla (30 Gün Oturumu Açık Tut)", value=True)
+
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
+            basarili_tip = None
+            basarili_deger = None
+
             # 1) Yönetici şifresi kontrolü
             if pin == st.secrets["APP_PASSWORD"]:
-                st.session_state.authenticated = True
-                st.session_state.yetki_tipi = "YONETICI"
-                st.session_state.yetki_deger = None
-                st.rerun()
+                basarili_tip = "YONETICI"
+                basarili_deger = None
 
             # 2) Müşteri şifreleri kontrolü
-            if not url_veren:
+            if not basarili_tip and not url_veren:
                 musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
                 for m_adi, m_sifre in musteri_map.items():
                     if pin == str(m_sifre):
                         if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
-                            st.session_state.authenticated = True
-                            st.session_state.yetki_tipi = "MUSTERI"
-                            st.session_state.yetki_deger = m_adi
-                            st.rerun()
+                            basarili_tip = "MUSTERI"
+                            basarili_deger = m_adi
+                            break
 
             # 3) Sipariş Veren (Personel) şifreleri kontrolü
-            if not url_musteri:
+            if not basarili_tip and not url_musteri:
                 veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
                 for v_adi, v_sifre in veren_map.items():
                     if pin == str(v_sifre):
                         if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
-                            st.session_state.authenticated = True
-                            st.session_state.yetki_tipi = "SIPARIS_VEREN"
-                            st.session_state.yetki_deger = v_adi
-                            st.rerun()
+                            basarili_tip = "SIPARIS_VEREN"
+                            basarili_deger = v_adi
+                            break
 
-            st.error("Hatalı erişim şifresi!")
+            if basarili_tip:
+                st.session_state.authenticated = True
+                st.session_state.yetki_tipi = basarili_tip
+                st.session_state.yetki_deger = basarili_deger
+                if beni_hatirla:
+                    st.query_params["token"] = token_olustur(basarili_tip, basarili_deger, gun=30)
+                st.rerun()
+            else:
+                st.error("Hatalı erişim şifresi!")
         st.stop()
 
 check_password()
 
-# Üstbar ikon aksiyonlarını yakala (?action=refresh / ?action=logout)
-action = st.query_params.get("action", "")
-if action == "refresh":
+# Üstbar yenileme aksiyonunu yakala (?action=refresh)
+if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
-    del st.query_params["action"]
-    st.rerun()
-elif action == "logout":
-    st.session_state.authenticated = False
-    st.session_state.yetki_tipi = None
-    st.session_state.yetki_deger = None
     del st.query_params["action"]
     st.rerun()
 
@@ -246,6 +292,10 @@ else:
     baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
     alt_metin = "Yönetici Canlı Takip Paneli"
 
+# Yenileme linkinde aktif token varsa koru
+aktif_token = st.query_params.get("token", "")
+refresh_href = f"?action=refresh&token={aktif_token}" if aktif_token else "?action=refresh"
+
 st.markdown(f"""
     <div class="header-banner">
         <div class="header-info">
@@ -253,7 +303,7 @@ st.markdown(f"""
             <div class="header-sub">{alt_metin}</div>
         </div>
         <div class="header-actions">
-            <a href="?action=refresh" target="_self" class="icon-btn" title="Yenile">🔄</a>
+            <a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>
             <a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>
         </div>
     </div>
@@ -364,11 +414,9 @@ with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
         ozet_kalemler["birim"] = ozet_kalemler["birim"].fillna("-").str.strip()
         ozet_kalemler["miktar_str"] = ozet_kalemler["miktar"].fillna("").astype(str).str.strip()
 
-        # Virgüllü ondalıkları (örn: 12,5 -> 12.5) sayıya çevir
         temiz_sayi = ozet_kalemler["miktar_str"].str.replace(",", ".", regex=False)
         ozet_kalemler["miktar_num"] = pd.to_numeric(temiz_sayi, errors="coerce")
 
-        # Sayısal kalemleri Ürün + Birim bazında topla
         sayisal_df = ozet_kalemler.dropna(subset=["miktar_num"])
         metin_df = ozet_kalemler[ozet_kalemler["miktar_num"].isna()]
 
@@ -381,14 +429,12 @@ with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
                 )
                 .sort_values(by=["urun", "birim"])
             )
-            # Tam sayıları küsuratsız (4.0 -> 4), ondalıkları temiz formatla
             grup_sayisal["Toplam_Miktar"] = grup_sayisal["Toplam_Miktar"].apply(
                 lambda x: f"{int(x):,}".replace(",", ".") if x == int(x) else f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             )
             grup_sayisal.columns = ["Ürün", "Birim", "Sipariş", "Toplam Miktar"]
             st.dataframe(grup_sayisal, use_container_width=True, hide_index=True)
 
-        # Sayısal olmayan (örn: TONAJ, 1 TIR) kalemler varsa ayrıca göster
         if not metin_df.empty:
             st.caption("Metin / Özel Miktarlı Kalemler:")
             grup_metin = (
