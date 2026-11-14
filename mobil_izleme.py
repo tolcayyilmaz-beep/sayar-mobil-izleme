@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS: Kurumsal Çelik & Beton (Aydınlık Tema)
+# Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
 st.markdown("""
 <style>
 header[data-testid="stHeader"],
@@ -37,10 +37,14 @@ div[class^="viewerBadge_"] {
     color: #0f172a !important;
 }
 .block-container {
-    padding-top: 0.6rem !important;
+    padding-top: 0.5rem !important;
     padding-bottom: 1.5rem !important;
-    padding-left: 0.8rem !important;
-    padding-right: 0.8rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+/* Streamlit blokları arasındaki genel dikey boşluğu daralt */
+[data-testid="stVerticalBlock"] {
+    gap: 0.45rem !important;
 }
 /* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
 .header-banner {
@@ -50,8 +54,8 @@ div[class^="viewerBadge_"] {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-left: 5px solid #f97316;
     border-radius: 10px;
-    padding: 11px 13px;
-    margin-bottom: 10px;
+    padding: 9px 12px;
+    margin-bottom: 4px;
     color: #f8fafc;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
     gap: 8px;
@@ -73,7 +77,7 @@ div[class^="viewerBadge_"] {
 .header-sub {
     font-size: 11px;
     color: #cbd5e1;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 .header-actions {
     display: flex;
@@ -101,18 +105,18 @@ div[class^="viewerBadge_"] {
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 6px;
+    margin-bottom: 4px;
 }
 a.kpi-card {
     display: block;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    padding: 8px 10px;
+    border-radius: 9px;
+    padding: 7px 8px;
     text-align: center;
     text-decoration: none !important;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     transition: transform 0.1s ease, box-shadow 0.15s ease;
     cursor: pointer;
 }
@@ -134,11 +138,11 @@ a.kpi-card:active {
     font-size: 11px;
     color: #475569;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     white-space: nowrap;
 }
 .kpi-value {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
     color: #0f172a;
     line-height: 1.2;
@@ -147,25 +151,29 @@ a.kpi-card:active {
 div[data-testid="stTextInput"] input {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     color: #0f172a !important;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
 }
-/* Sipariş Kartları ve Çekmeceler: Beyaz Zemin + Çelik Çerçeve */
+/* Sipariş Kartları ve Çekmeceler: Kompakt Beyaz Zemin + Çelik Çerçeve */
 div[data-testid="stExpander"] {
     background-color: #ffffff !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     border: 1px solid #cbd5e1 !important;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05) !important;
-    margin-bottom: 8px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    margin-bottom: 3px !important;
     overflow: hidden;
 }
 div[data-testid="stExpander"] summary {
     display: flex !important;
     align-items: center !important;
     background-color: #ffffff !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    line-height: 1.45 !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    line-height: 1.3 !important;
 }
 div[data-testid="stExpander"] summary:hover {
     background-color: #f8fafc !important;
@@ -174,21 +182,22 @@ div[data-testid="stExpander"] summary p {
     font-size: 13px !important;
     color: #0f172a !important;
     margin: 0 !important;
+    line-height: 1.32 !important;
 }
 .info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px 12px;
-    font-size: 13px;
-    margin-top: 8px;
-    margin-bottom: 10px;
+    gap: 6px 10px;
+    font-size: 12.5px;
+    margin-top: 6px;
+    margin-bottom: 8px;
     padding: 8px;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
 .info-item-label {
-    font-size: 11px;
+    font-size: 10.5px;
     color: #64748b;
     display: block;
 }
@@ -199,7 +208,7 @@ div[data-testid="stExpander"] summary p {
 .urun-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 12.5px;
     border-radius: 8px;
     overflow: hidden;
@@ -209,12 +218,12 @@ div[data-testid="stExpander"] summary p {
     background-color: #1e293b;
     color: #f8fafc;
     text-align: left;
-    padding: 7px 9px;
+    padding: 6px 8px;
     font-weight: 600;
     font-size: 11.5px;
 }
 .urun-table td {
-    padding: 7px 9px;
+    padding: 6px 8px;
     color: #0f172a;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -594,7 +603,7 @@ OP_IKON = {
 # N+1 Optimizasyonu
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-# 6. Odaklı 2 Satırlı Mobil Sipariş Kartları
+# 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
 for _, row in filtered.head(gosterilen_limit).iterrows():
     sip_no = row.get("siparis_no", "-")
     op_val = str(row.get("operasyon") or "-")
