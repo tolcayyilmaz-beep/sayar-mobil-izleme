@@ -202,7 +202,7 @@ def check_password():
             st.caption(f"Personel Girişi: **{url_veren}**")
 
         pin = st.text_input("Erişim Şifresi:", type="password")
-        beni_hatirla = st.checkbox("Beni Hatırla (Otomatik Giriş Linki Oluştur)", value=True)
+        beni_hatirla = st.checkbox("Beni Hatırla", value=True)
 
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
             basarili_tip = None
