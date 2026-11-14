@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS
+# Özel CSS: Kurumsal Çelik & Beton (Aydınlık Tema)
 st.markdown("""
 <style>
 header[data-testid="stHeader"],
@@ -31,23 +31,29 @@ div[class^="viewerBadge_"] {
     display: none !important;
     visibility: hidden !important;
 }
+/* Sayfa Zemini: Taş Grisi */
+.stApp, [data-testid="stAppViewContainer"] {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
 .block-container {
     padding-top: 0.6rem !important;
     padding-bottom: 1.5rem !important;
     padding-left: 0.8rem !important;
     padding-right: 0.8rem !important;
 }
+/* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
 .header-banner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-left: 5px solid #007acc;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-left: 5px solid #f97316;
     border-radius: 10px;
-    padding: 10px 12px;
+    padding: 11px 13px;
     margin-bottom: 10px;
     color: #f8fafc;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
     gap: 8px;
 }
 .header-info {
@@ -66,7 +72,7 @@ div[class^="viewerBadge_"] {
 }
 .header-sub {
     font-size: 11px;
-    color: #94a3b8;
+    color: #cbd5e1;
     margin-top: 2px;
 }
 .header-actions {
@@ -81,16 +87,17 @@ div[class^="viewerBadge_"] {
     width: 34px;
     height: 34px;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: #ffffff !important;
     text-decoration: none !important;
     font-size: 16px;
     cursor: pointer;
 }
 .icon-btn:active {
-    background-color: #007acc;
+    background-color: #f97316;
 }
+/* Tıklanabilir Beyaz KPI Kartları */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -99,32 +106,33 @@ div[class^="viewerBadge_"] {
 }
 a.kpi-card {
     display: block;
-    background-color: #1e1e24;
-    border: 1px solid #32323a;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
     border-radius: 10px;
     padding: 8px 10px;
     text-align: center;
     text-decoration: none !important;
-    transition: transform 0.1s ease, background-color 0.15s ease;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
     cursor: pointer;
 }
 a.kpi-card:hover {
-    background-color: #272730;
+    background-color: #f8fafc;
 }
 a.kpi-card:active {
     transform: scale(0.98);
 }
-.kpi-blue { border-top: 3px solid #007acc !important; }
-.kpi-orange { border-top: 3px solid #e67e22 !important; }
-.kpi-green { border-top: 3px solid #2ecc71 !important; }
+.kpi-blue { border-top: 3px solid #0284c7 !important; }
+.kpi-orange { border-top: 3px solid #f97316 !important; }
+.kpi-green { border-top: 3px solid #16a34a !important; }
 .kpi-active {
-    background-color: #1e1e24 !important;
+    background-color: #ffffff !important;
     border: 2px solid #ef4444 !important;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 .kpi-label {
     font-size: 11px;
-    color: #a1a1aa;
+    color: #475569;
     font-weight: 600;
     margin-bottom: 2px;
     white-space: nowrap;
@@ -132,26 +140,39 @@ a.kpi-card:active {
 .kpi-value {
     font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
+    color: #0f172a;
     line-height: 1.2;
 }
-/* Sipariş Kartları (st.expander Özelleştirmesi) */
-div[data-testid="stExpander"] {
+/* Arama Kutusu Beyaz Zemin */
+div[data-testid="stTextInput"] input {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 10px !important;
-    border: 1px solid rgba(148, 163, 184, 0.28) !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+}
+/* Sipariş Kartları ve Çekmeceler: Beyaz Zemin + Çelik Çerçeve */
+div[data-testid="stExpander"] {
+    background-color: #ffffff !important;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05) !important;
     margin-bottom: 8px !important;
     overflow: hidden;
 }
 div[data-testid="stExpander"] summary {
     display: flex !important;
     align-items: center !important;
+    background-color: #ffffff !important;
     padding-top: 10px !important;
     padding-bottom: 10px !important;
     line-height: 1.45 !important;
 }
+div[data-testid="stExpander"] summary:hover {
+    background-color: #f8fafc !important;
+}
 div[data-testid="stExpander"] summary p {
     font-size: 13px !important;
+    color: #0f172a !important;
     margin: 0 !important;
 }
 .info-grid {
@@ -161,6 +182,10 @@ div[data-testid="stExpander"] summary p {
     font-size: 13px;
     margin-top: 8px;
     margin-bottom: 10px;
+    padding: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
 }
 .info-item-label {
     font-size: 11px;
@@ -169,6 +194,7 @@ div[data-testid="stExpander"] summary p {
 }
 .info-item-val {
     font-weight: 600;
+    color: #0f172a;
 }
 .urun-table {
     width: 100%;
@@ -177,6 +203,7 @@ div[data-testid="stExpander"] summary p {
     font-size: 12.5px;
     border-radius: 8px;
     overflow: hidden;
+    border: 1px solid #e2e8f0;
 }
 .urun-table th {
     background-color: #1e293b;
@@ -188,10 +215,11 @@ div[data-testid="stExpander"] summary p {
 }
 .urun-table td {
     padding: 7px 9px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
 }
 .urun-table tr:nth-child(even) td {
-    background-color: rgba(148, 163, 184, 0.06);
+    background-color: #f8fafc;
 }
 .urun-miktar {
     font-weight: 700;
@@ -546,19 +574,19 @@ gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
 OP_RENK = {
-    "İŞLENDİ": "#007acc",
-    "ONAY BEKLİYOR": "#e67e22",
-    "ONAYLANDI": "#1abc9c",
-    "MUHASEBEYE İLETİLDİ": "#2ecc71",
-    "İPTAL EDİLDİ": "#e74c3c",
-    "KISMİ EVRAK": "#8e44ad"
+    "İŞLENDİ": "#0284c7",
+    "ONAY BEKLİYOR": "#f97316",
+    "ONAYLANDI": "#16a34a",
+    "MUHASEBEYE İLETİLDİ": "#475569",
+    "İPTAL EDİLDİ": "#dc2626",
+    "KISMİ EVRAK": "#7c3aed"
 }
 
 OP_IKON = {
     "İŞLENDİ": "🔵",
     "ONAY BEKLİYOR": "🟠",
     "ONAYLANDI": "🟢",
-    "MUHASEBEYE İLETİLDİ": "✅",
+    "MUHASEBEYE İLETİLDİ": "⚪",
     "İPTAL EDİLDİ": "🔴",
     "KISMİ EVRAK": "🟣"
 }
@@ -571,7 +599,7 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
     sip_no = row.get("siparis_no", "-")
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
-    renk = OP_RENK.get(op_upper, "#555555")
+    renk = OP_RENK.get(op_upper, "#475569")
     durum_ikon = OP_IKON.get(op_upper, "⚪")
 
     firma_str = row.get("firma") or "-"
