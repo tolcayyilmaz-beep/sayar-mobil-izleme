@@ -6,6 +6,7 @@ import tempfile
 import requests
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from cryptography.fernet import Fernet
 
 # Sayfa ve Mobil Görünüm Ayarları
@@ -154,37 +155,91 @@ def token_dogrula(token_str):
         pass
     return None, None
 
+# Tarayıcı localStorage senkronizasyonu (Ana ekrana eklenen kısayolda da oturumu korur)
+def tarayici_hafiza_yonet(kaydet_token=None, temizle=False):
+    if temizle:
+        js = """
+        <script>
+        try {
+            window.parent.localStorage.removeItem('sayar_auth_token');
+            const url = new URL(window.parent.location.href);
+            url.searchParams.delete('token');
+            url.searchParams.delete('action');
+            window.parent.history.replaceState({}, '', url.toString());
+        } catch(e) {}
+        </script>
+        """
+        components.html(js, height=0, width=0)
+    elif kaydet_token:
+        js = f"""
+        <script>
+        try {{
+            window.parent.localStorage.setItem('sayar_auth_token', '{kaydet_token}');
+            const url = new URL(window.parent.location.href);
+            url.searchParams.set('token', '{kaydet_token}');
+            window.parent.history.replaceState({{}}, '', url.toString());
+        }} catch(e) {{}}
+        </script>
+        """
+        components.html(js, height=0, width=0)
+
+def tarayici_hafiza_oku_ve_yonlendir():
+    js = """
+    <script>
+    try {
+        const saved = window.parent.localStorage.getItem('sayar_auth_token');
+        const url = new URL(window.parent.location.href);
+        if (saved && !url.searchParams.get('token') && !url.searchParams.get('ls_checked')) {
+            url.searchParams.set('token', saved);
+            url.searchParams.set('ls_checked', '1');
+            window.parent.location.replace(url.toString());
+        }
+    } catch(e) {}
+    </script>
+    """
+    components.html(js, height=0, width=0)
+
 # 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Beni Hatırla Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-        st.session_state.yetki_tipi = None   # "YONETICI", "MUSTERI", "SIPARIS_VEREN"
-        st.session_state.yetki_deger = None  # İlgili müşteri veya personel adı
+        st.session_state.yetki_tipi = None
+        st.session_state.yetki_deger = None
+        st.session_state.save_token = None
 
-    # Çıkış aksiyonu varsa token'ı temizle
+    # Çıkış aksiyonu varsa hem session hem localStorage'ı temizle
     if st.query_params.get("action") == "logout":
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None
         st.session_state.yetki_deger = None
+        st.session_state.save_token = None
+        tarayici_hafiza_yonet(temizle=True)
         if "token" in st.query_params:
             del st.query_params["token"]
+        if "ls_checked" in st.query_params:
+            del st.query_params["ls_checked"]
         del st.query_params["action"]
         st.rerun()
 
-    # URL'de geçerli bir "Beni Hatırla" token'ı varsa otomatik giriş yap
+    # URL'de geçerli bir token varsa otomatik giriş yap
     if not st.session_state.authenticated and "token" in st.query_params:
         t_tip, t_deger = token_dogrula(st.query_params["token"])
         if t_tip:
             st.session_state.authenticated = True
             st.session_state.yetki_tipi = t_tip
             st.session_state.yetki_deger = t_deger
+            st.session_state.save_token = st.query_params["token"]
         else:
             del st.query_params["token"]
+            tarayici_hafiza_yonet(temizle=True)
 
     url_musteri = st.query_params.get("musteri", "")
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
+        # Önce cihazın localStorage hafızasında kayıtlı token var mı kontrol et
+        tarayici_hafiza_oku_ve_yonlendir()
+
         st.markdown("""
             <div class="header-banner">
                 <div class="header-info">
@@ -200,7 +255,7 @@ def check_password():
             st.caption(f"Personel Girişi: **{url_veren}**")
 
         pin = st.text_input("Erişim Şifresi:", type="password")
-        beni_hatirla = st.checkbox("Beni Hatırla (30 Gün Oturumu Açık Tut)", value=True)
+        beni_hatirla = st.checkbox("Beni Hatırla (Bu Cihazda Oturumu Açık Tut)", value=True)
 
         if st.button("Giriş Yap", use_container_width=True, type="primary"):
             basarili_tip = None
@@ -236,13 +291,21 @@ def check_password():
                 st.session_state.yetki_tipi = basarili_tip
                 st.session_state.yetki_deger = basarili_deger
                 if beni_hatirla:
-                    st.query_params["token"] = token_olustur(basarili_tip, basarili_deger, gun=30)
+                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=30)
+                    st.session_state.save_token = yeni_token
+                    st.query_params["token"] = yeni_token
+                else:
+                    st.session_state.save_token = None
                 st.rerun()
             else:
                 st.error("Hatalı erişim şifresi!")
         st.stop()
 
 check_password()
+
+# Giriş başarılıysa ve Beni Hatırla aktifse token'ı tarayıcı hafızasına da yaz
+if st.session_state.get("save_token"):
+    tarayici_hafiza_yonet(kaydet_token=st.session_state.save_token)
 
 # Üstbar yenileme aksiyonunu yakala (?action=refresh)
 if st.query_params.get("action") == "refresh":
@@ -292,8 +355,7 @@ else:
     baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
     alt_metin = "Yönetici Canlı Takip Paneli"
 
-# Yenileme linkinde aktif token varsa koru
-aktif_token = st.query_params.get("token", "")
+aktif_token = st.session_state.get("save_token") or st.query_params.get("token", "")
 refresh_href = f"?action=refresh&token={aktif_token}" if aktif_token else "?action=refresh"
 
 st.markdown(f"""
