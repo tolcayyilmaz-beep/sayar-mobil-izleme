@@ -19,221 +19,221 @@ st.set_page_config(
 
 # Özel CSS
 st.markdown("""
-    <style>
-    header[data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"],
-    footer,
-    [data-testid="stStatusWidget"],
-    .viewerBadge_container__r5tak,
-    .viewerBadge_link__qRIco,
-    div[class^="viewerBadge_"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    .block-container {
-        padding-top: 0.6rem !important;
-        padding-bottom: 1.5rem !important;
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
-    }
-    .header-banner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-left: 5px solid #007acc;
-        border-radius: 10px;
-        padding: 10px 12px;
-        margin-bottom: 10px;
-        color: #f8fafc;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-        gap: 8px;
-    }
-    .header-info {
-        flex: 1;
-        min-width: 0;
-    }
-    .header-title {
-        font-size: 15px;
-        font-weight: 700;
-        margin: 0;
-        color: #ffffff;
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .header-sub {
-        font-size: 11px;
-        color: #94a3b8;
-        margin-top: 2px;
-    }
-    .header-actions {
-        display: flex;
-        gap: 6px;
-        flex-shrink: 0;
-    }
-    .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        background-color: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        color: #ffffff !important;
-        text-decoration: none !important;
-        font-size: 16px;
-        cursor: pointer;
-    }
-    .icon-btn:active {
-        background-color: #007acc;
-    }
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-    a.kpi-card {
-        display: block;
-        background-color: #1e1e24;
-        border: 1px solid #32323a;
-        border-radius: 10px;
-        padding: 8px 10px;
-        text-align: center;
-        text-decoration: none !important;
-        transition: transform 0.1s ease, background-color 0.15s ease;
-        cursor: pointer;
-    }
-    a.kpi-card:hover {
-        background-color: #272730;
-    }
-    a.kpi-card:active {
-        transform: scale(0.98);
-    }
-    .kpi-blue { border-top: 3px solid #007acc !important; }
-    .kpi-orange { border-top: 3px solid #e67e22 !important; }
-    .kpi-green { border-top: 3px solid #2ecc71 !important; }
-    .kpi-active {
-        background-color: #1e1e24 !important;
-        border: 2px solid #ef4444 !important;
-        box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
-    }
-    .kpi-label {
-        font-size: 11px;
-        color: #a1a1aa;
-        font-weight: 600;
-        margin-bottom: 2px;
-        white-space: nowrap;
-    }
-    .kpi-value {
-        font-size: 20px;
-        font-weight: 800;
-        color: #ffffff;
-        line-height: 1.2;
-    }
-    /* Sipariş Kartları (st.expander Özelleştirmesi) */
-    div[data-testid="stExpander"] {
-        border-radius: 10px !important;
-        border: 1px solid rgba(148, 163, 184, 0.28) !important;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
-        margin-bottom: 8px !important;
-        overflow: hidden;
-    }
-    div[data-testid="stExpander"] summary {
-        display: flex !important;
-        align-items: center !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        line-height: 1.45 !important;
-    }
-    div[data-testid="stExpander"] summary p {
-        font-size: 13px !important;
-        margin: 0 !important;
-    }
-    .stepper {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 4px;
-        margin: 4px 0 12px 0;
-        padding: 6px 8px;
-        background: rgba(148, 163, 184, 0.1);
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 600;
-    }
-    .step-item {
-        flex: 1;
-        text-align: center;
-        padding: 4px 2px;
-        border-radius: 5px;
-        color: #94a3b8;
-        background: rgba(148, 163, 184, 0.08);
-    }
-    .step-done {
-        background: #007acc;
-        color: #ffffff;
-    }
-    .step-cancel {
-        background: #e74c3c;
-        color: #ffffff;
-    }
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px 12px;
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-    .info-item-label {
-        font-size: 11px;
-        color: #64748b;
-        display: block;
-    }
-    .info-item-val {
-        font-weight: 600;
-    }
-    .urun-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 6px;
-        font-size: 12.5px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .urun-table th {
-        background-color: #1e293b;
-        color: #f8fafc;
-        text-align: left;
-        padding: 7px 9px;
-        font-weight: 600;
-        font-size: 11.5px;
-    }
-    .urun-table td {
-        padding: 7px 9px;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-    }
-    .urun-table tr:nth-child(even) td {
-        background-color: rgba(148, 163, 184, 0.06);
-    }
-    .urun-miktar {
-        font-weight: 700;
-        text-align: right;
-        white-space: nowrap;
-    }
-    .badge {
-        padding: 3px 8px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        font-size: 11.5px;
-        display: inline-block;
-    }
-    </style>
+<style>
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+footer,
+[data-testid="stStatusWidget"],
+.viewerBadge_container__r5tak,
+.viewerBadge_link__qRIco,
+div[class^="viewerBadge_"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+.block-container {
+    padding-top: 0.6rem !important;
+    padding-bottom: 1.5rem !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+}
+.header-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-left: 5px solid #007acc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    color: #f8fafc;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    gap: 8px;
+}
+.header-info {
+    flex: 1;
+    min-width: 0;
+}
+.header-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+.header-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 16px;
+    cursor: pointer;
+}
+.icon-btn:active {
+    background-color: #007acc;
+}
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+a.kpi-card {
+    display: block;
+    background-color: #1e1e24;
+    border: 1px solid #32323a;
+    border-radius: 10px;
+    padding: 8px 10px;
+    text-align: center;
+    text-decoration: none !important;
+    transition: transform 0.1s ease, background-color 0.15s ease;
+    cursor: pointer;
+}
+a.kpi-card:hover {
+    background-color: #272730;
+}
+a.kpi-card:active {
+    transform: scale(0.98);
+}
+.kpi-blue { border-top: 3px solid #007acc !important; }
+.kpi-orange { border-top: 3px solid #e67e22 !important; }
+.kpi-green { border-top: 3px solid #2ecc71 !important; }
+.kpi-active {
+    background-color: #1e1e24 !important;
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+}
+.kpi-label {
+    font-size: 11px;
+    color: #a1a1aa;
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+.kpi-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+}
+/* Sipariş Kartları (st.expander Özelleştirmesi) */
+div[data-testid="stExpander"] {
+    border-radius: 10px !important;
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 8px !important;
+    overflow: hidden;
+}
+div[data-testid="stExpander"] summary {
+    display: flex !important;
+    align-items: center !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    line-height: 1.45 !important;
+}
+div[data-testid="stExpander"] summary p {
+    font-size: 13px !important;
+    margin: 0 !important;
+}
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin: 4px 0 12px 0;
+    padding: 6px 8px;
+    background: rgba(148, 163, 184, 0.1);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.step-item {
+    flex: 1;
+    text-align: center;
+    padding: 4px 2px;
+    border-radius: 5px;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.08);
+}
+.step-done {
+    background: #007acc;
+    color: #ffffff;
+}
+.step-cancel {
+    background: #e74c3c;
+    color: #ffffff;
+}
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 12px;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+.info-item-label {
+    font-size: 11px;
+    color: #64748b;
+    display: block;
+}
+.info-item-val {
+    font-weight: 600;
+}
+.urun-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.urun-table th {
+    background-color: #1e293b;
+    color: #f8fafc;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 600;
+    font-size: 11.5px;
+}
+.urun-table td {
+    padding: 7px 9px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+.urun-table tr:nth-child(even) td {
+    background-color: rgba(148, 163, 184, 0.06);
+}
+.urun-miktar {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+}
+.badge {
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 11.5px;
+    display: inline-block;
+}
+</style>
 """, unsafe_allow_html=True)
 
 def md_temizle(metin):
@@ -293,14 +293,7 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
-        st.markdown("""
-            <div class="header-banner">
-                <div class="header-info">
-                    <div class="header-title">🏗️ SAYAR YAPI</div>
-                    <div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="header-banner"><div class="header-info"><div class="header-title">🏗️ SAYAR YAPI</div><div class="header-sub">Sipariş Takip ve İzleme Sistemi</div></div></div>', unsafe_allow_html=True)
 
         if url_musteri:
             st.caption(f"Müşteri Girişi: **{url_musteri}**")
@@ -368,7 +361,6 @@ if st.query_params.get("action") == "refresh":
 if "kpi" in st.query_params:
     secilen_kpi = st.query_params.get("kpi", "").upper()
     if secilen_kpi in ("TUMU", "ONAY", "SEVK"):
-        # Aynı karta tekrar tıklanırsa varsayılan SEVK moduna dön
         if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
             st.session_state.kpi_mod = "SEVK"
         else:
@@ -423,18 +415,15 @@ else:
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
-st.markdown(f"""
-    <div class="header-banner">
-        <div class="header-info">
-            <div class="header-title">{baslik_metni}</div>
-            <div class="header-sub">{alt_metin}</div>
-        </div>
-        <div class="header-actions">
-            <a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>
-            <a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f'<div class="header-banner">'
+    f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
+    f'<div class="header-actions">'
+    f'<a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
+    f'<a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
+    f'</div></div>',
+    unsafe_allow_html=True
+)
 
 try:
     df_sip, df_kalem = verileri_getir()
@@ -464,22 +453,17 @@ cls_tumu = "kpi-active" if kpi_mod == "TUMU" else ""
 cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
 cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
 
-st.markdown(f"""
-    <div class="kpi-grid">
-        <a href="?kpi=TUMU{token_param}" target="_self" class="kpi-card kpi-blue {cls_tumu}" title="Tüm siparişleri göster">
-            <div class="kpi-label">Toplam Sipariş</div>
-            <div class="kpi-value">{toplam_siparis}</div>
-        </a>
-        <a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">
-            <div class="kpi-label">Onay Bekleyen</div>
-            <div class="kpi-value">{onay_bekleyen}</div>
-        </a>
-        <a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece sevk bekleyenleri göster">
-            <div class="kpi-label">Sevk Bekleyen</div>
-            <div class="kpi-value">{sevk_bekleyen}</div>
-        </a>
-    </div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f'<div class="kpi-grid">'
+    f'<a href="?kpi=TUMU{token_param}" target="_self" class="kpi-card kpi-blue {cls_tumu}" title="Tüm siparişleri göster">'
+    f'<div class="kpi-label">Toplam Sipariş</div><div class="kpi-value">{toplam_siparis}</div></a>'
+    f'<a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
+    f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
+    f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece sevk bekleyenleri göster">'
+    f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
+    f'</div>',
+    unsafe_allow_html=True
+)
 
 # 4. Hızlı Arama + Tek "Filtrele" Çekmecesi
 arama = st.text_input("", placeholder="🔍 Ara (Sipariş No, Firma, Müşteri, Şantiye)...", label_visibility="collapsed")
@@ -621,14 +605,14 @@ def stepper_html(op_upper):
     c2 = "step-done" if adim >= 2 else ""
     c3 = "step-done" if adim >= 3 else ""
     c4 = "step-done" if adim >= 4 else ""
-    return f"""
-        <div class="stepper">
-            <div class="step-item {c1}">1. Alındı</div>
-            <div class="step-item {c2}">2. Onay</div>
-            <div class="step-item {c3}">3. İşlendi</div>
-            <div class="step-item {c4}">4. Muhasebe</div>
-        </div>
-    """
+    return (
+        f'<div class="stepper">'
+        f'<div class="step-item {c1}">1. Alındı</div>'
+        f'<div class="step-item {c2}">2. Onay</div>'
+        f'<div class="step-item {c3}">3. İşlendi</div>'
+        f'<div class="step-item {c4}">4. Muhasebe</div>'
+        f'</div>'
+    )
 
 # N+1 Optimizasyonu
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
@@ -646,7 +630,6 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
     santiye_str = row.get("santiye") or "-"
     tarih_str = row.get("tarih") or "-"
 
-    # Expander başlığı için Markdown-güvenli metinler
     f_md = md_temizle(firma_str)
     m_md = md_temizle(musteri_str)
     s_md = md_temizle(santiye_str)
@@ -672,23 +655,25 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
         )
         st.markdown(stepper_html(op_upper), unsafe_allow_html=True)
 
-        musteri_blok = "" if yetki_tipi == "MUSTERI" else f"""
-            <div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>
-            <div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get('siparis_veren') or '-'))}</span></div>
-        """
+        # Tek satırlık (girintisiz) HTML ile Markdown kod bloğu çakışmasını önle
+        musteri_blok = "" if yetki_tipi == "MUSTERI" else (
+            f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>'
+            f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get("siparis_veren") or "-"))}</span></div>'
+        )
 
-        st.markdown(f"""
-            <div class="info-grid">
-                <div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>
-                <div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>
-                <div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>
-                <div><span class="info-item-label">Sevk Tarihi</span><span class="info-item-val">{html.escape(str(row.get('sevk_tarihi') or '-'))}</span></div>
-                {musteri_blok}
-                <div><span class="info-item-label">Fabrika / Nakliye</span><span class="info-item-val">{html.escape(str(row.get('fabrika') or '-'))} / {html.escape(str(row.get('nakliye') or '-'))}</span></div>
-                <div><span class="info-item-label">Ted. Sip. No</span><span class="info-item-val">{html.escape(str(row.get('ted_sip_no') or '-'))}</span></div>
-                <div><span class="info-item-label">Yetkili / Tel</span><span class="info-item-val">{html.escape(str(row.get('yetkili') or '-'))} {html.escape(str(row.get('telefon') or ''))}</span></div>
-            </div>
-        """, unsafe_allow_html=True)
+        info_html = (
+            f'<div class="info-grid">'
+            f'<div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>'
+            f'<div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>'
+            f'<div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>'
+            f'<div><span class="info-item-label">Sevk Tarihi</span><span class="info-item-val">{html.escape(str(row.get("sevk_tarihi") or "-"))}</span></div>'
+            f'{musteri_blok}'
+            f'<div><span class="info-item-label">Fabrika / Nakliye</span><span class="info-item-val">{html.escape(str(row.get("fabrika") or "-"))} / {html.escape(str(row.get("nakliye") or "-"))}</span></div>'
+            f'<div><span class="info-item-label">Ted. Sip. No</span><span class="info-item-val">{html.escape(str(row.get("ted_sip_no") or "-"))}</span></div>'
+            f'<div><span class="info-item-label">Yetkili / Tel</span><span class="info-item-val">{html.escape(str(row.get("yetkili") or "-"))} {html.escape(str(row.get("telefon") or ""))}</span></div>'
+            f'</div>'
+        )
+        st.markdown(info_html, unsafe_allow_html=True)
 
         not_metni = row.get("notlar")
         if not_metni:
@@ -696,32 +681,21 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
 
         sip_kalem_df = kalem_gruplari.get(sip_no)
         if sip_kalem_df is not None and not sip_kalem_df.empty:
-            satirlar_html = ""
+            satirlar_list = []
             for _, k_row in sip_kalem_df.iterrows():
                 u_ad = html.escape(str(k_row.get("urun") or "-"))
                 u_birim = html.escape(str(k_row.get("birim") or "-"))
                 u_miktar = html.escape(str(k_row.get("miktar") or "-"))
-                satirlar_html += f"""
-                    <tr>
-                        <td>{u_ad}</td>
-                        <td>{u_birim}</td>
-                        <td class="urun-miktar">{u_miktar}</td>
-                    </tr>
-                """
-            st.markdown(f"""
-                <table class="urun-table">
-                    <thead>
-                        <tr>
-                            <th>Ürün</th>
-                            <th>Birim</th>
-                            <th style="text-align:right;">Miktar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {satirlar_html}
-                    </tbody>
-                </table>
-            """, unsafe_allow_html=True)
+                satirlar_list.append(
+                    f'<tr><td>{u_ad}</td><td>{u_birim}</td><td class="urun-miktar">{u_miktar}</td></tr>'
+                )
+            tablo_html = (
+                f'<table class="urun-table">'
+                f'<thead><tr><th>Ürün</th><th>Birim</th><th style="text-align:right;">Miktar</th></tr></thead>'
+                f'<tbody>{"".join(satirlar_list)}</tbody>'
+                f'</table>'
+            )
+            st.markdown(tablo_html, unsafe_allow_html=True)
         else:
             st.caption("Bu siparişe ait ürün kalemi bulunmuyor.")
 
