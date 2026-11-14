@@ -534,49 +534,6 @@ if arama.strip():
     )
     filtered = filtered[mask]
 
-# 5. Ürün Bazlı Hızlı Özet ve Toplam Miktar Hesabı
-with st.expander("📦 Ürün Bazlı Toplam Özeti", expanded=False):
-    aktif_sip_nolar = filtered["siparis_no"].tolist()
-    ozet_kalemler = df_kalem[df_kalem["siparis_no"].isin(aktif_sip_nolar)].copy()
-
-    if not ozet_kalemler.empty:
-        ozet_kalemler["urun"] = ozet_kalemler["urun"].fillna("-").str.strip()
-        ozet_kalemler["birim"] = ozet_kalemler["birim"].fillna("-").str.strip()
-        ozet_kalemler["miktar_str"] = ozet_kalemler["miktar"].fillna("").astype(str).str.strip()
-
-        temiz_sayi = ozet_kalemler["miktar_str"].str.replace(",", ".", regex=False)
-        ozet_kalemler["miktar_num"] = pd.to_numeric(temiz_sayi, errors="coerce")
-
-        sayisal_df = ozet_kalemler.dropna(subset=["miktar_num"])
-        metin_df = ozet_kalemler[ozet_kalemler["miktar_num"].isna()]
-
-        if not sayisal_df.empty:
-            grup_sayisal = (
-                sayisal_df.groupby(["urun", "birim"], as_index=False)
-                .agg(
-                    Siparis_Sayisi=("siparis_no", "nunique"),
-                    Toplam_Miktar=("miktar_num", "sum")
-                )
-                .sort_values(by=["urun", "birim"])
-            )
-            grup_sayisal["Toplam_Miktar"] = grup_sayisal["Toplam_Miktar"].apply(
-                lambda x: f"{int(x):,}".replace(",", ".") if x == int(x) else f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-            grup_sayisal.columns = ["Ürün", "Birim", "Sipariş", "Toplam Miktar"]
-            st.dataframe(grup_sayisal, use_container_width=True, hide_index=True)
-
-        if not metin_df.empty:
-            st.caption("Metin / Özel Miktarlı Kalemler:")
-            grup_metin = (
-                metin_df.groupby(["urun", "birim", "miktar_str"], as_index=False)
-                .agg(Siparis_Sayisi=("siparis_no", "nunique"))
-                .sort_values(by=["urun"])
-            )
-            grup_metin.columns = ["Ürün", "Birim", "Miktar Notu", "Sipariş"]
-            st.dataframe(grup_metin, use_container_width=True, hide_index=True)
-    else:
-        st.caption("Seçili filtrelere ait ürün kalemi bulunmuyor.")
-
 toplam_filtrelenen = len(filtered)
 gosterilen_limit = st.session_state.sayfa_limiti
 gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
@@ -604,7 +561,7 @@ OP_IKON = {
 # N+1 Optimizasyonu
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-# 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
+# 5. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
 for _, row in filtered.head(gosterilen_limit).iterrows():
     sip_no = row.get("siparis_no", "-")
     op_val = str(row.get("operasyon") or "-")
