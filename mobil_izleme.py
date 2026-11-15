@@ -582,12 +582,12 @@ for _, row in filtered.head(gosterilen_limit).iterrows():
     if yetki_tipi == "MUSTERI":
         baslik = (
             f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-            f"📍 {s_md}  •   {t_md}"
+            f"📍 {s_md}   •    {t_md}"
         )
     else:
         baslik = (
             f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-            f"📍 {s_md}  •   {t_md}"
+            f"📍 {s_md}   •    {t_md}"
         )
 
     with st.expander(baslik):
