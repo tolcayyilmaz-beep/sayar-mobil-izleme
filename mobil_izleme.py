@@ -116,126 +116,6 @@ a[href*="streamlit.io/cloud"] {
 .icon-btn:active {
     background-color: #f97316;
 }
-/* PIN Giriş Ekranı Tasarımı */
-.pin-display-box {
-    background-color: #ffffff;
-    border: 2px solid #cbd5e1;
-    border-radius: 12px;
-    padding: 14px 12px;
-    text-align: center;
-    margin: 8px auto 10px auto;
-    max-width: 340px;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
-}
-.pin-display-label {
-    font-size: 11.5px;
-    color: #64748b;
-    font-weight: 600;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-}
-.pin-dots {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 8px;
-    color: #0f172a;
-    min-height: 36px;
-    line-height: 36px;
-}
-.pin-placeholder {
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    color: #94a3b8;
-}
-/* Tuş Takımı Kolonlarının Mobilde 3'lü Yan Yana Kalması */
-div[data-testid="stHorizontalBlock"].pin-row,
-div[data-testid="stHorizontalBlock"]:has(button[kind="secondary"]) {
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-}
-div[data-testid="stHorizontalBlock"]:has(button[kind="secondary"]) > div {
-    flex: 1 1 33.33% !important;
-    min-width: 0 !important;
-}
-button[kind="secondary"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    color: #0f172a !important;
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    height: 52px !important;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05) !important;
-    transition: all 0.1s ease !important;
-}
-button[kind="secondary"]:hover {
-    border-color: #f97316 !important;
-    background-color: #fff7ed !important;
-}
-button[kind="secondary"]:active {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-    transform: scale(0.97);
-}
-button[kind="primary"] {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
-    border: none !important;
-    border-radius: 10px !important;
-    color: #ffffff !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    height: 48px !important;
-    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.28) !important;
-}
-/* Hoş Geldiniz Ekranı Kartı */
-.welcome-card {
-    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
-    border-top: 5px solid #f97316;
-    border-radius: 16px;
-    padding: 44px 20px;
-    text-align: center;
-    margin: 28px auto;
-    max-width: 420px;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
-    color: #ffffff;
-}
-.welcome-logo {
-    font-size: 42px;
-    margin-bottom: 10px;
-}
-.welcome-brand {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #f97316;
-    margin-bottom: 14px;
-    text-transform: uppercase;
-}
-.welcome-title {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    color: #ffffff;
-    margin-bottom: 10px;
-}
-.welcome-user {
-    font-size: 18px;
-    font-weight: 700;
-    color: #f8fafc;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 10px;
-    padding: 10px 16px;
-    display: inline-block;
-    margin-top: 6px;
-    margin-bottom: 18px;
-}
-.welcome-sub {
-    font-size: 12.5px;
-    color: #94a3b8;
-}
 /* Tıklanabilir Beyaz KPI Kartları */
 .kpi-grid {
     display: grid;
@@ -490,45 +370,24 @@ def token_dogrula(token_str):
         pass
     return None, None
 
-def pin_rakam_ekle(rakam):
-    if len(st.session_state.pin_buffer) < 12:
-        st.session_state.pin_buffer += str(rakam)
-        st.session_state.pin_hata = False
-
-def pin_sil():
-    st.session_state.pin_buffer = st.session_state.pin_buffer[:-1]
-    st.session_state.pin_hata = False
-
-def pin_temizle():
-    st.session_state.pin_buffer = ""
-    st.session_state.pin_hata = False
-
-# 1. Tuş Takımlı PIN Girişi + Hoş Geldiniz Ekranı + Beni Hatırla Kontrolü
+# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Beni Hatırla Kontrolü
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
-    if "pin_buffer" not in st.session_state:
-        st.session_state.pin_buffer = ""
-    if "pin_hata" not in st.session_state:
-        st.session_state.pin_hata = False
-    if "show_welcome" not in st.session_state:
-        st.session_state.show_welcome = False
 
     if st.query_params.get("action") == "logout":
         st.session_state.authenticated = False
         st.session_state.yetki_tipi = None
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
-        st.session_state.pin_buffer = ""
-        st.session_state.show_welcome = False
         st.query_params.clear()
         st.rerun()
 
     url_token = st.query_params.get("token", "")
-    if url_token and not st.session_state.authenticated:
+    if url_token:
         t_tip, t_deger = token_dogrula(url_token)
         if t_tip:
             st.session_state.authenticated = True
@@ -542,136 +401,56 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
-        st.markdown(
-            '<div class="header-banner">'
-            '<div class="header-info">'
-            '<div class="header-title">🏗️ SAYAR YAPI</div>'
-            '<div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>'
-            '</div></div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="header-banner"><div class="header-info"><div class="header-title">🏗️ SAYAR YAPI</div><div class="header-sub">Sipariş Takip ve İzleme Sistemi</div></div></div>', unsafe_allow_html=True)
 
         if url_musteri:
             st.caption(f"Müşteri Girişi: **{url_musteri}**")
         elif url_veren:
             st.caption(f"Personel Girişi: **{url_veren}**")
 
-        # Şifre Gösterge Kutusu
-        girilen_uzunluk = len(st.session_state.pin_buffer)
-        if girilen_uzunluk > 0:
-            noktalar = "●" * girilen_uzunluk
-            gosterge_html = f'<div class="pin-dots">{noktalar}</div>'
-        else:
-            gosterge_html = '<div class="pin-dots pin-placeholder">Şifrenizi Tuşlayın</div>'
+        pin = st.text_input("Erişim Şifresi:", type="password")
+        beni_hatirla = st.checkbox("Beni Hatırla", value=True)
 
-        st.markdown(
-            f'<div class="pin-display-box">'
-            f'<div class="pin-display-label">Erişim Şifresi</div>'
-            f'{gosterge_html}'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        if st.button("Giriş Yap", use_container_width=True, type="primary"):
+            basarili_tip = None
+            basarili_deger = None
 
-        # Tuş Takımı (3x4 Izgara)
-        _, tus_alan, _ = st.columns([1, 6, 1])
-        with tus_alan:
-            tus_satirlari = [
-                ["1", "2", "3"],
-                ["4", "5", "6"],
-                ["7", "8", "9"]
-            ]
-            for satir in tus_satirlari:
-                c1, c2, c3 = st.columns(3)
-                c1.button(satir[0], key=f"btn_{satir[0]}", on_click=pin_rakam_ekle, args=(satir[0],), use_container_width=True)
-                c2.button(satir[1], key=f"btn_{satir[1]}", on_click=pin_rakam_ekle, args=(satir[1],), use_container_width=True)
-                c3.button(satir[2], key=f"btn_{satir[2]}", on_click=pin_rakam_ekle, args=(satir[2],), use_container_width=True)
-
-            b1, b2, b3 = st.columns(3)
-            b1.button("C", key="btn_clear", on_click=pin_temizle, use_container_width=True, help="Temizle")
-            b2.button("0", key="btn_0", on_click=pin_rakam_ekle, args=("0",), use_container_width=True)
-            b3.button("⌫", key="btn_back", on_click=pin_sil, use_container_width=True, help="Sil")
-
-            beni_hatirla = st.checkbox("Beni Hatırla (90 Gün)", value=True)
-
-            if st.button("Giriş Yap", use_container_width=True, type="primary"):
-                pin = st.session_state.pin_buffer
-                basarili_tip = None
+            if pin == st.secrets["APP_PASSWORD"]:
+                basarili_tip = "YONETICI"
                 basarili_deger = None
 
-                if pin == str(st.secrets["APP_PASSWORD"]):
-                    basarili_tip = "YONETICI"
-                    basarili_deger = None
+            if not basarili_tip and not url_veren:
+                musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
+                for m_adi, m_sifre in musteri_map.items():
+                    if pin == str(m_sifre):
+                        if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
+                            basarili_tip = "MUSTERI"
+                            basarili_deger = m_adi
+                            break
 
-                if not basarili_tip and not url_veren:
-                    musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
-                    for m_adi, m_sifre in musteri_map.items():
-                        if pin == str(m_sifre):
-                            if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
-                                basarili_tip = "MUSTERI"
-                                basarili_deger = m_adi
-                                break
+            if not basarili_tip and not url_musteri:
+                veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
+                for v_adi, v_sifre in veren_map.items():
+                    if pin == str(v_sifre):
+                        if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
+                            basarili_tip = "SIPARIS_VEREN"
+                            basarili_deger = v_adi
+                            break
 
-                if not basarili_tip and not url_musteri:
-                    veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
-                    for v_adi, v_sifre in veren_map.items():
-                        if pin == str(v_sifre):
-                            if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
-                                basarili_tip = "SIPARIS_VEREN"
-                                basarili_deger = v_adi
-                                break
-
-                if basarili_tip:
-                    st.session_state.authenticated = True
-                    st.session_state.yetki_tipi = basarili_tip
-                    st.session_state.yetki_deger = basarili_deger
-                    st.session_state.pin_buffer = ""
-                    st.session_state.pin_hata = False
-                    st.session_state.show_welcome = True
-                    if beni_hatirla:
-                        yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
-                        st.session_state.active_token = yeni_token
-                        st.query_params["token"] = yeni_token
-                    else:
-                        st.session_state.active_token = ""
-                    st.rerun()
+            if basarili_tip:
+                st.session_state.authenticated = True
+                st.session_state.yetki_tipi = basarili_tip
+                st.session_state.yetki_deger = basarili_deger
+                if beni_hatirla:
+                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
+                    st.session_state.active_token = yeni_token
+                    st.query_params["token"] = yeni_token
                 else:
-                    st.session_state.pin_buffer = ""
-                    st.session_state.pin_hata = True
-                    st.rerun()
-
-            if st.session_state.pin_hata:
-                st.error("Hatalı erişim şifresi! Lütfen tekrar tuşlayın.")
-
+                    st.session_state.active_token = ""
+                st.rerun()
+            else:
+                st.error("Hatalı erişim şifresi!")
         st.stop()
-
-    # Giriş Başarılıysa 2 Saniyelik Hoş Geldiniz Ekranı Göster
-    if st.session_state.get("show_welcome"):
-        y_tip = st.session_state.yetki_tipi
-        y_deg = st.session_state.yetki_deger
-
-        if y_tip == "MUSTERI":
-            karsilama_isim = html.escape(str(y_deg).upper())
-            karsilama_alt = "Müşteri siparişleriniz yükleniyor..."
-        elif y_tip == "SIPARIS_VEREN":
-            karsilama_isim = html.escape(str(y_deg).upper())
-            karsilama_alt = "Personel sipariş listeniz hazırlanıyor..."
-        else:
-            karsilama_isim = "YÖNETİCİ PANELİ"
-            karsilama_alt = "Canlı sipariş takip sistemi yükleniyor..."
-
-        st.markdown(
-            f'<div class="welcome-card">'
-            f'<div class="welcome-logo">🏗️</div>'
-            f'<div class="welcome-brand">SAYAR YAPI</div>'
-            f'<div class="welcome-title">HOŞ GELDİNİZ</div>'
-            f'<div class="welcome-user">{karsilama_isim}</div>'
-            f'<div class="welcome-sub">{karsilama_alt}</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        time.sleep(2)
-        st.session_state.show_welcome = False
-        st.rerun()
 
 check_password()
 
