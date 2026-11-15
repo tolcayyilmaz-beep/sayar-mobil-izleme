@@ -741,7 +741,7 @@ else:
                 unsafe_allow_html=True
             )
 
-            # Sipariş Kalemleri Tablosu (3 Sütunlu ve Otomatik Sütun Algılamalı)
+            # Sipariş Kalemleri Tablosu (Malzeme / Ürün | Birim | Miktar)
             kalemler = kalem_gruplari.get(sip_no)
             if kalemler is not None and not kalemler.empty:
                 olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
@@ -773,8 +773,8 @@ else:
                     satirlar_html += (
                         f"<tr>"
                         f"<td>{urun_adi}</td>"
+                        f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
                         f"<td class='urun-miktar'>{miktar_str}</td>"
-                        f"<td style='text-align:right; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
                         f"</tr>"
                     )
 
@@ -782,8 +782,8 @@ else:
                     f"<table class='urun-table'>"
                     f"<thead><tr>"
                     f"<th>Malzeme / Ürün</th>"
+                    f"<th style='text-align:left;'>Birim</th>"
                     f"<th style='text-align:right;'>Miktar</th>"
-                    f"<th style='text-align:right;'>Birim</th>"
                     f"</tr></thead>"
                     f"<tbody>{satirlar_html}</tbody>"
                     f"</table>",
