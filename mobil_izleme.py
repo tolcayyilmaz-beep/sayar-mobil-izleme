@@ -106,8 +106,8 @@ div[class^="viewerBadge_"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-top: 14px;
-    margin-bottom: 16px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 a.kpi-card {
     display: block;
@@ -148,14 +148,45 @@ a.kpi-card:active {
     color: #0f172a;
     line-height: 1.2;
 }
+/* Arama + Popover Satırının Mobilde Yan Yana Kalması */
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 54px !important;
+}
 /* Arama Kutusu Beyaz Zemin */
 div[data-testid="stTextInput"] input {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 9px !important;
     color: #0f172a !important;
-    padding-top: 7px !important;
-    padding-bottom: 7px !important;
+    height: 38px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+/* Popover Buton Tasarımı */
+div[data-testid="stPopover"] > button {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 9px !important;
+    color: #0f172a !important;
+    height: 38px !important;
+    padding: 0 10px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #f97316 !important;
+    background-color: #fff7ed !important;
 }
 /* Sipariş Kartları ve Çekmeceler: Kompakt Beyaz Zemin + Çelik Çerçeve */
 div[data-testid="stExpander"] {
@@ -243,6 +274,56 @@ div[data-testid="stExpander"] summary p {
     font-weight: bold;
     font-size: 11.5px;
     display: inline-block;
+}
+/* Empty State & Sayfalama Stilleri */
+.empty-state-box {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 28px 16px;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+.empty-state-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+.empty-state-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.empty-state-desc {
+    font-size: 12.5px;
+    color: #64748b;
+}
+.pagination-box {
+    margin-top: 12px;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.pagination-text {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.progress-track {
+    width: 100%;
+    max-width: 240px;
+    height: 5px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    margin: 0 auto 8px auto;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
+    border-radius: 999px;
+    transition: width 0.25s ease;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -362,6 +443,18 @@ if "kpi_mod" not in st.session_state:
     st.session_state.kpi_mod = "SEVK"
 if "sayfa_limiti" not in st.session_state:
     st.session_state.sayfa_limiti = 50
+if "arama_metni" not in st.session_state:
+    st.session_state.arama_metni = ""
+
+def filtreleri_sifirla():
+    st.session_state.kpi_mod = "TUMU"
+    st.session_state.arama_metni = ""
+    st.session_state.f_op = "[TÜMÜ]"
+    st.session_state.f_firma = "[TÜMÜ]"
+    st.session_state.f_musteri = "[TÜMÜ]"
+    st.session_state.f_gizle_muh = False
+    st.session_state.f_gizle_ipt = False
+    st.session_state.sayfa_limiti = 50
 
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
@@ -376,6 +469,10 @@ if "kpi" in st.query_params:
             st.session_state.kpi_mod = "SEVK"
         else:
             st.session_state.kpi_mod = secilen_kpi
+        # KPI değiştiğinde ilgili widget state'lerini de senkronize et
+        st.session_state.f_op = "ONAY BEKLİYOR" if st.session_state.kpi_mod == "ONAY" else "[TÜMÜ]"
+        st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
+        st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
         st.session_state.sayfa_limiti = 50
     st.query_params.pop("kpi", None)
     st.rerun()
@@ -476,40 +573,60 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 4. Hızlı Arama + Tek "Filtrele" Çekmecesi
-arama = st.text_input("", placeholder="🔍 Ara (Sipariş No, Firma, Müşteri, Şantiye)...", label_visibility="collapsed")
+# 4. Hızlı Arama + Yüzen Popover Filtre Menüsü (Madde 3)
+op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
+firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
+musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
 
-varsayilan_op = "ONAY BEKLİYOR" if kpi_mod == "ONAY" else "[TÜMÜ]"
-varsayilan_gizle = (kpi_mod == "SEVK")
+# Varsayılan state değerlerini ilk açılışta ata
+if "f_op" not in st.session_state:
+    st.session_state.f_op = "ONAY BEKLİYOR" if kpi_mod == "ONAY" else "[TÜMÜ]"
+if st.session_state.f_op not in op_listesi:
+    st.session_state.f_op = "[TÜMÜ]"
+if "f_firma" not in st.session_state or st.session_state.f_firma not in firma_listesi:
+    st.session_state.f_firma = "[TÜMÜ]"
+if "f_musteri" not in st.session_state or st.session_state.f_musteri not in musteri_listesi:
+    st.session_state.f_musteri = "[TÜMÜ]"
+if "f_gizle_muh" not in st.session_state:
+    st.session_state.f_gizle_muh = (kpi_mod == "SEVK")
+if "f_gizle_ipt" not in st.session_state:
+    st.session_state.f_gizle_ipt = (kpi_mod == "SEVK")
 
-with st.expander("⚙️ Filtrele", expanded=False):
-    op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-    op_index = op_listesi.index(varsayilan_op) if varsayilan_op in op_listesi else 0
+# Aktif ek filtre var mı kontrolü (Butonda turuncu nokta göstermek için)
+ek_filtre_aktif = (
+    st.session_state.f_op != "[TÜMÜ]" or
+    st.session_state.f_firma != "[TÜMÜ]" or
+    st.session_state.f_musteri != "[TÜMÜ]" or
+    st.session_state.f_gizle_muh or
+    st.session_state.f_gizle_ipt
+)
+popover_etiket = "⚙️ •" if ek_filtre_aktif else "⚙️"
 
-    if yetki_tipi == "MUSTERI":
-        f_col1, f_col2 = st.columns(2)
-        with f_col1:
-            secili_op = st.selectbox("Operasyon", op_listesi, index=op_index)
-        with f_col2:
-            firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-            secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
-        secili_musteri = "[TÜMÜ]"
-    else:
-        f_col1, f_col2, f_col3 = st.columns(3)
-        with f_col1:
-            secili_op = st.selectbox("Operasyon", op_listesi, index=op_index)
-        with f_col2:
-            firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-            secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi)
-        with f_col3:
-            musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
-            secili_musteri = st.selectbox("Müşteri", musteri_listesi)
+col_arama, col_filtre = st.columns([5, 1])
+with col_arama:
+    arama = st.text_input(
+        "Arama",
+        key="arama_metni",
+        placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
+        label_visibility="collapsed"
+    )
 
-    c_chk1, c_chk2 = st.columns(2)
-    with c_chk1:
-        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", value=varsayilan_gizle)
-    with c_chk2:
-        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", value=varsayilan_gizle)
+with col_filtre:
+    with st.popover(popover_etiket, use_container_width=True):
+        st.markdown("**Detaylı Filtreleme**")
+        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
+        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
+
+        if yetki_tipi != "MUSTERI":
+            secili_musteri = st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
+        else:
+            secili_musteri = "[TÜMÜ]"
+
+        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", key="f_gizle_muh")
+        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
+
+        if ek_filtre_aktif or arama.strip():
+            st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
 # Filtreleme Uygulama
 filtered = df_sip.copy()
@@ -538,111 +655,125 @@ toplam_filtrelenen = len(filtered)
 gosterilen_limit = st.session_state.sayfa_limiti
 gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
-st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
+# 5. Boş Durum (Empty State) Kontrolü (Madde 6)
+if toplam_filtrelenen == 0:
+    st.markdown(
+        '<div class="empty-state-box">'
+        '<div class="empty-state-icon">🔍</div>'
+        '<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
+        '<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
+    with col_e2:
+        st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
+else:
+    st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-OP_RENK = {
-    "İŞLENDİ": "#0284c7",
-    "ONAY BEKLİYOR": "#f97316",
-    "ONAYLANDI": "#16a34a",
-    "MUHASEBEYE İLETİLDİ": "#475569",
-    "İPTAL EDİLDİ": "#dc2626",
-    "KISMİ EVRAK": "#7c3aed"
-}
+    OP_RENK = {
+        "İŞLENDİ": "#0284c7",
+        "ONAY BEKLİYOR": "#f97316",
+        "ONAYLANDI": "#16a34a",
+        "MUHASEBEYE İLETİLDİ": "#475569",
+        "İPTAL EDİLDİ": "#dc2626",
+        "KISMİ EVRAK": "#7c3aed"
+    }
 
-OP_IKON = {
-    "İŞLENDİ": "🔵",
-    "ONAY BEKLİYOR": "🟠",
-    "ONAYLANDI": "🟢",
-    "MUHASEBEYE İLETİLDİ": "✔️",
-    "İPTAL EDİLDİ": "🔴",
-    "KISMİ EVRAK": "🟣"
-}
+    OP_IKON = {
+        "İŞLENDİ": "🔵",
+        "ONAY BEKLİYOR": "🟠",
+        "ONAYLANDI": "🟢",
+        "MUHASEBEYE İLETİLDİ": "✔️",
+        "İPTAL EDİLDİ": "🔴",
+        "KISMİ EVRAK": "🟣"
+    }
 
-# N+1 Optimizasyonu
-kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
+    # N+1 Optimizasyonu
+    kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-# 5. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
-for _, row in filtered.head(gosterilen_limit).iterrows():
-    sip_no = row.get("siparis_no", "-")
-    op_val = str(row.get("operasyon") or "-")
-    op_upper = op_val.upper()
-    renk = OP_RENK.get(op_upper, "#475569")
-    durum_ikon = OP_IKON.get(op_upper, "⚪")
+    # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
+    for _, row in filtered.head(gosterilen_limit).iterrows():
+        sip_no = row.get("siparis_no", "-")
+        op_val = str(row.get("operasyon") or "-")
+        op_upper = op_val.upper()
+        renk = OP_RENK.get(op_upper, "#475569")
+        durum_ikon = OP_IKON.get(op_upper, "⚪")
 
-    firma_str = row.get("firma") or "-"
-    musteri_str = row.get("musteri") or "-"
-    santiye_str = row.get("santiye") or "-"
-    tarih_str = row.get("tarih") or "-"
+        firma_str = row.get("firma") or "-"
+        musteri_str = row.get("musteri") or "-"
+        santiye_str = row.get("santiye") or "-"
+        tarih_str = row.get("tarih") or "-"
 
-    f_md = md_temizle(firma_str)
-    m_md = md_temizle(musteri_str)
-    s_md = md_temizle(santiye_str)
-    t_md = md_temizle(tarih_str)
+        f_md = md_temizle(firma_str)
+        m_md = md_temizle(musteri_str)
+        s_md = md_temizle(santiye_str)
+        t_md = md_temizle(tarih_str)
 
-    if yetki_tipi == "MUSTERI":
-        baslik = (
-            f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-            f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-        )
-    else:
-        baslik = (
-            f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-            f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-        )
-
-    with st.expander(baslik):
-        st.markdown(
-            f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-            f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
-            unsafe_allow_html=True
-        )
-
-        musteri_blok = "" if yetki_tipi == "MUSTERI" else (
-            f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>'
-            f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get("siparis_veren") or "-"))}</span></div>'
-        )
-
-        info_html = (
-            f'<div class="info-grid">'
-            f'<div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>'
-            f'<div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>'
-            f'<div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>'
-            f'<div><span class="info-item-label">Sevk Tarihi</span><span class="info-item-val">{html.escape(str(row.get("sevk_tarihi") or "-"))}</span></div>'
-            f'{musteri_blok}'
-            f'<div><span class="info-item-label">Fabrika / Nakliye</span><span class="info-item-val">{html.escape(str(row.get("fabrika") or "-"))} / {html.escape(str(row.get("nakliye") or "-"))}</span></div>'
-            f'<div><span class="info-item-label">Ted. Sip. No</span><span class="info-item-val">{html.escape(str(row.get("ted_sip_no") or "-"))}</span></div>'
-            f'<div><span class="info-item-label">Yetkili / Tel</span><span class="info-item-val">{html.escape(str(row.get("yetkili") or "-"))} {html.escape(str(row.get("telefon") or ""))}</span></div>'
-            f'</div>'
-        )
-        st.markdown(info_html, unsafe_allow_html=True)
-
-        not_metni = row.get("notlar")
-        if not_metni:
-            st.info(f"📝 **Not:** {not_metni}")
-
-        sip_kalem_df = kalem_gruplari.get(sip_no)
-        if sip_kalem_df is not None and not sip_kalem_df.empty:
-            satirlar_list = []
-            for _, k_row in sip_kalem_df.iterrows():
-                u_ad = html.escape(str(k_row.get("urun") or "-"))
-                u_birim = html.escape(str(k_row.get("birim") or "-"))
-                u_miktar = html.escape(str(k_row.get("miktar") or "-"))
-                satirlar_list.append(
-                    f'<tr><td>{u_ad}</td><td>{u_birim}</td><td class="urun-miktar">{u_miktar}</td></tr>'
-                )
-            tablo_html = (
-                f'<table class="urun-table">'
-                f'<thead><tr><th>Ürün</th><th>Birim</th><th style="text-align:right;">Miktar</th></tr></thead>'
-                f'<tbody>{"".join(satirlar_list)}</tbody>'
-                f'</table>'
+        if yetki_tipi == "MUSTERI":
+            baslik = (
+                f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
+                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
             )
-            st.markdown(tablo_html, unsafe_allow_html=True)
         else:
-            st.caption("Bu siparişe ait ürün kalemi bulunmuyor.")
+            baslik = (
+                f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
+                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
+            )
 
-# Sayfalama: Daha Fazla Göster Butonu
-if toplam_filtrelenen > gosterilen_limit:
-    kalan = toplam_filtrelenen - gosterilen_limit
-    if st.button(f"⬇️ Daha Fazla Göster ({kalan} kayıt daha var)", use_container_width=True):
-        st.session_state.sayfa_limiti += 50
-        st.rerun()
+        with st.expander(baslik):
+            st.markdown(
+                f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
+                f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
+                unsafe_allow_html=True
+            )
+
+            musteri_blok = "" if yetki_tipi == "MUSTERI" else (
+                f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>'
+            )
+
+            st.markdown(
+                f'<div class="info-grid">'
+                f'<div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>'
+                f'{musteri_blok}'
+                f'<div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>'
+                f'<div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>'
+                f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get("siparis_veren") or "-"))}</span></div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+            # Sipariş Kalemleri Tablosu
+            kalemler = kalem_gruplari.get(sip_no)
+            if kalemler is not None and not kalemler.empty:
+                satirlar_html = ""
+                for _, k_row in kalemler.iterrows():
+                    urun_adi = html.escape(str(k_row.get("urun_adi") or k_row.get("malzeme") or "-"))
+                    miktar = html.escape(str(k_row.get("miktar") or "-"))
+                    birim = html.escape(str(k_row.get("birim") or ""))
+                    satirlar_html += f"<tr><td>{urun_adi}</td><td class='urun-miktar'>{miktar} {birim}</td></tr>"
+
+                st.markdown(
+                    f"<table class='urun-table'>"
+                    f"<thead><tr><th>Malzeme / Ürün</th><th style='text-align:right;'>Miktar</th></tr></thead>"
+                    f"<tbody>{satirlar_html}</tbody>"
+                    f"</table>",
+                    unsafe_allow_html=True
+                )
+
+    # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama (Madde 6)
+    yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
+    st.markdown(
+        f'<div class="pagination-box">'
+        f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi gösteriliyor</div>'
+        f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    if gosterilen_adet < toplam_filtrelenen:
+        kalan = toplam_filtrelenen - gosterilen_adet
+        eklenecek = min(50, kalan)
+        if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
+            st.session_state.sayfa_limiti += 50
+            st.rerun()
