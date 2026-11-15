@@ -23,13 +23,21 @@ st.markdown("""
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
-footer,
 [data-testid="stStatusWidget"],
+[data-testid="manage-app-button"],
+footer,
+.stAppDeployButton,
 .viewerBadge_container__r5tak,
 .viewerBadge_link__qRIco,
-div[class^="viewerBadge_"] {
+div[class*="viewerBadge"],
+div[class*="StatusWidget"],
+div[class*="profileContainer"],
+div[class*="profilePreview"],
+a[href*="streamlit.io/cloud"] {
     display: none !important;
     visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 /* Sayfa Zemini: Taş Grisi */
 .stApp, [data-testid="stAppViewContainer"] {
