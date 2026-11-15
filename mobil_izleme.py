@@ -553,7 +553,7 @@ OP_IKON = {
     "İŞLENDİ": "🔵",
     "ONAY BEKLİYOR": "🟠",
     "ONAYLANDI": "🟢",
-    "MUHASEBEYE İLETİLDİ": "✅",
+    "MUHASEBEYE İLETİLDİ": ​"✔️",
     "İPTAL EDİLDİ": "🔴",
     "KISMİ EVRAK": "🟣"
 }
