@@ -1,4 +1,11 @@
 import os
+
+# Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
+if os.environ.get("STREAMLIT_SECRETS"):
+    os.makedirs(".streamlit", exist_ok=True)
+    with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
+        f.write(os.environ["STREAMLIT_SECRETS"])
+
 import json
 import time
 import html
