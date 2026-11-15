@@ -705,6 +705,41 @@ else:
     # N+1 Optimizasyonu
     kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
+    # Kart içinde zaten üstte veya rozette gösterilen sistem sütunları
+    haric_sutunlar = {
+        "id", "siparis_no", "operasyon", "durum",
+        "musteri" if yetki_tipi == "MUSTERI" else ""
+    }
+
+    ETIKET_MAP = {
+        "firma": "Tedarikçi Firma",
+        "musteri": "Müşteri",
+        "santiye": "Şantiye",
+        "tarih": "Sipariş Tarihi",
+        "siparis_tarihi": "Sipariş Tarihi",
+        "siparis_veren": "Sipariş Veren",
+        "plaka": "Araç Plakası",
+        "arac_plaka": "Araç Plakası",
+        "sofor": "Şoför",
+        "telefon": "Telefon",
+        "teslim_tarihi": "Teslim Tarihi",
+        "sevk_tarihi": "Sevk Tarihi",
+        "onay_tarihi": "Onay Tarihi",
+        "onaylayan": "Onaylayan",
+        "irsaliye_no": "İrsaliye No",
+        "fatura_no": "Fatura No",
+        "odeme_sekli": "Ödeme Şekli",
+        "nakliye": "Nakliye",
+        "aciklama": "Açıklama / Not",
+        "notlar": "Not"
+    }
+
+    oncelik = [
+        "firma", "musteri", "santiye", "tarih", "siparis_tarihi",
+        "siparis_veren", "teslim_tarihi", "sevk_tarihi", "plaka",
+        "sofor", "irsaliye_no", "aciklama", "notlar"
+    ]
+
     # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
@@ -741,20 +776,29 @@ else:
                 unsafe_allow_html=True
             )
 
-            musteri_blok = "" if yetki_tipi == "MUSTERI" else (
-                f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(str(musteri_str))}</span></div>'
-            )
+            # Siparişler tablosundaki tüm dolu sütunları dinamik olarak göster
+            sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
+            grid_items_html = ""
+            for col_name in sirali_sutunlar:
+                if col_name.lower() in haric_sutunlar:
+                    continue
+                val = row.get(col_name)
+                if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
+                    continue
 
-            st.markdown(
-                f'<div class="info-grid">'
-                f'<div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(str(firma_str))}</span></div>'
-                f'{musteri_blok}'
-                f'<div><span class="info-item-label">Şantiye</span><span class="info-item-val">{html.escape(str(santiye_str))}</span></div>'
-                f'<div><span class="info-item-label">Sipariş Tarihi</span><span class="info-item-val">{html.escape(str(tarih_str))}</span></div>'
-                f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(str(row.get("siparis_veren") or "-"))}</span></div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
+                etiket = ETIKET_MAP.get(col_name.lower(), col_name.replace("_", " ").title())
+                deger_str = html.escape(str(val).strip())
+
+                span_style = ' style="grid-column: span 2;"' if col_name.lower() in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
+                grid_items_html += (
+                    f'<div{span_style}>'
+                    f'<span class="info-item-label">{html.escape(etiket)}</span>'
+                    f'<span class="info-item-val">{deger_str}</span>'
+                    f'</div>'
+                )
+
+            if grid_items_html:
+                st.markdown(f'<div class="info-grid">{grid_items_html}</div>', unsafe_allow_html=True)
 
             # Sipariş Kalemleri Tablosu (Malzeme / Ürün | Birim | Miktar)
             kalemler = kalem_gruplari.get(sip_no)
