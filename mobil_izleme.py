@@ -153,6 +153,7 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
+    margin-top: 12px !important; /*
 }
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
