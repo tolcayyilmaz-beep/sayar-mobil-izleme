@@ -148,11 +148,12 @@ a.kpi-card:active {
     color: #0f172a;
     line-height: 1.2;
 }
-/* Arama + Popover Satırının Mobilde Yan Yana Kalması */
+/* Arama + Popover Satırının Mobilde Yan Yana Kalması ve Üst Boşluk */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
+    margin-top: 12px !important;
 }
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
@@ -469,7 +470,6 @@ if "kpi" in st.query_params:
             st.session_state.kpi_mod = "SEVK"
         else:
             st.session_state.kpi_mod = secilen_kpi
-        # KPI değiştiğinde ilgili widget state'lerini de senkronize et
         st.session_state.f_op = "ONAY BEKLİYOR" if st.session_state.kpi_mod == "ONAY" else "[TÜMÜ]"
         st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
@@ -573,12 +573,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 4. Hızlı Arama + Yüzen Popover Filtre Menüsü (Madde 3)
+# 4. Hızlı Arama + Yüzen Popover Filtre Menüsü
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
 musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
 
-# Varsayılan state değerlerini ilk açılışta ata
 if "f_op" not in st.session_state:
     st.session_state.f_op = "ONAY BEKLİYOR" if kpi_mod == "ONAY" else "[TÜMÜ]"
 if st.session_state.f_op not in op_listesi:
@@ -592,7 +591,6 @@ if "f_gizle_muh" not in st.session_state:
 if "f_gizle_ipt" not in st.session_state:
     st.session_state.f_gizle_ipt = (kpi_mod == "SEVK")
 
-# Aktif ek filtre var mı kontrolü (Butonda turuncu nokta göstermek için)
 ek_filtre_aktif = (
     st.session_state.f_op != "[TÜMÜ]" or
     st.session_state.f_firma != "[TÜMÜ]" or
@@ -655,7 +653,7 @@ toplam_filtrelenen = len(filtered)
 gosterilen_limit = st.session_state.sayfa_limiti
 gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
-# 5. Boş Durum (Empty State) Kontrolü (Madde 6)
+# 5. Boş Durum (Empty State) Kontrolü
 if toplam_filtrelenen == 0:
     st.markdown(
         '<div class="empty-state-box">'
@@ -743,12 +741,20 @@ else:
                 unsafe_allow_html=True
             )
 
-            # Sipariş Kalemleri Tablosu
+            # Sipariş Kalemleri Tablosu (Otomatik Sütun Algılama)
             kalemler = kalem_gruplari.get(sip_no)
             if kalemler is not None and not kalemler.empty:
+                olasi_ad_sutunlari = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
+                ad_sutunu = next((c for c in olasi_ad_sutunlari if c in kalemler.columns), None)
+
+                if ad_sutunu is None:
+                    haric = {"id", "siparis_no", "miktar", "birim", "adet", "fiyat", "tutar"}
+                    kalan_sutunlar = [c for c in kalemler.columns if c.lower() not in haric]
+                    ad_sutunu = kalan_sutunlar[0] if kalan_sutunlar else kalemler.columns[0]
+
                 satirlar_html = ""
                 for _, k_row in kalemler.iterrows():
-                    urun_adi = html.escape(str(k_row.get("urun_adi") or k_row.get("malzeme") or "-"))
+                    urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-"))
                     miktar = html.escape(str(k_row.get("miktar") or "-"))
                     birim = html.escape(str(k_row.get("birim") or ""))
                     satirlar_html += f"<tr><td>{urun_adi}</td><td class='urun-miktar'>{miktar} {birim}</td></tr>"
@@ -761,7 +767,7 @@ else:
                     unsafe_allow_html=True
                 )
 
-    # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama (Madde 6)
+    # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
         f'<div class="pagination-box">'
