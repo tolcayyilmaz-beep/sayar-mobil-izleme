@@ -741,27 +741,50 @@ else:
                 unsafe_allow_html=True
             )
 
-            # Sipariş Kalemleri Tablosu (Otomatik Sütun Algılama)
+            # Sipariş Kalemleri Tablosu (3 Sütunlu ve Otomatik Sütun Algılamalı)
             kalemler = kalem_gruplari.get(sip_no)
             if kalemler is not None and not kalemler.empty:
-                olasi_ad_sutunlari = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-                ad_sutunu = next((c for c in olasi_ad_sutunlari if c in kalemler.columns), None)
+                olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
+                ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
 
-                if ad_sutunu is None:
-                    haric = {"id", "siparis_no", "miktar", "birim", "adet", "fiyat", "tutar"}
-                    kalan_sutunlar = [c for c in kalemler.columns if c.lower() not in haric]
-                    ad_sutunu = kalan_sutunlar[0] if kalan_sutunlar else kalemler.columns[0]
+                olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
+                miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
+
+                olasi_birim = ["birim", "birimi", "olcu_birimi"]
+                birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
+
+                haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
+                kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
+
+                if ad_sutunu is None and kalan_sutunlar:
+                    ad_sutunu = kalan_sutunlar.pop(0)
+                if miktar_sutunu is None and kalan_sutunlar:
+                    miktar_sutunu = kalan_sutunlar.pop(0)
 
                 satirlar_html = ""
                 for _, k_row in kalemler.iterrows():
-                    urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-"))
-                    miktar = html.escape(str(k_row.get("miktar") or "-"))
-                    birim = html.escape(str(k_row.get("birim") or ""))
-                    satirlar_html += f"<tr><td>{urun_adi}</td><td class='urun-miktar'>{miktar} {birim}</td></tr>"
+                    urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
+                    miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
+                    if isinstance(miktar_val, float) and miktar_val.is_integer():
+                        miktar_val = int(miktar_val)
+                    miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
+                    birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
+
+                    satirlar_html += (
+                        f"<tr>"
+                        f"<td>{urun_adi}</td>"
+                        f"<td class='urun-miktar'>{miktar_str}</td>"
+                        f"<td style='text-align:right; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
+                        f"</tr>"
+                    )
 
                 st.markdown(
                     f"<table class='urun-table'>"
-                    f"<thead><tr><th>Malzeme / Ürün</th><th style='text-align:right;'>Miktar</th></tr></thead>"
+                    f"<thead><tr>"
+                    f"<th>Malzeme / Ürün</th>"
+                    f"<th style='text-align:right;'>Miktar</th>"
+                    f"<th style='text-align:right;'>Birim</th>"
+                    f"</tr></thead>"
                     f"<tbody>{satirlar_html}</tbody>"
                     f"</table>",
                     unsafe_allow_html=True
