@@ -6,11 +6,13 @@ if os.environ.get("STREAMLIT_SECRETS"):
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
+import re
 import json
 import time
 import html
 import sqlite3
 import tempfile
+import datetime
 import requests
 import pandas as pd
 import streamlit as st
@@ -24,7 +26,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
+# Özel CSS: Kurumsal Çelik & Beton + Modern Mobil Kart Tasarımı
 st.markdown("""
 <style>
 header[data-testid="stHeader"],
@@ -59,9 +61,9 @@ a[href*="streamlit.io/cloud"] {
 }
 /* Streamlit blokları arasındaki genel dikey boşluğu daralt */
 [data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
+    gap: 0.42rem !important;
 }
-/* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
+/* Kurumsal Başlık Şeridi */
 .header-banner {
     display: flex;
     justify-content: space-between;
@@ -121,8 +123,8 @@ a[href*="streamlit.io/cloud"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 6px;
 }
 a.kpi-card {
     display: block;
@@ -163,12 +165,12 @@ a.kpi-card:active {
     color: #0f172a;
     line-height: 1.2;
 }
-/* Arama + Popover Satırının Mobilde Yan Yana Kalması ve Üst Boşluk */
+/* Arama + Popover Satırının Mobilde Yan Yana Kalması */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
-    margin-top: 12px !important;
+    margin-top: 6px !important;
 }
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
@@ -212,24 +214,117 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Sipariş Kartları ve Çekmeceler: Kompakt Beyaz Zemin + Çelik Çerçeve */
+
+/* 4. ÖZELLİK: Yatay Kaydırılabilir Hızlı Durum Çipleri */
+.chip-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 4px 1px 6px 1px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.chip-bar::-webkit-scrollbar {
+    display: none;
+}
+a.chip-item {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #ffffff;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+a.chip-item:hover {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+}
+a.chip-item.chip-active {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.18);
+}
+.chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* 3. ÖZELLİK: Tarih Bazlı Akıllı Grup Başlığı */
+.date-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    padding: 0 2px;
+}
+.date-group-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: #475569;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.date-group-line {
+    flex: 1;
+    height: 1px;
+    background-color: #cbd5e1;
+}
+
+/* 1. ÖZELLİK: Sol Kenar Durum Çizgili Özel Mobil Kartlar */
 div[data-testid="stExpander"] {
     background-color: #ffffff !important;
     border-radius: 9px !important;
     border: 1px solid #cbd5e1 !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    border-left: 5px solid #64748b !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
     margin-bottom: 3px !important;
     overflow: hidden;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
+/* Duruma göre otomatik sol şerit rengi */
+div[data-testid="stExpander"]:has(.op-marker-onay-bekliyor) {
+    border-left-color: #f97316 !important;
+}
+div[data-testid="stExpander"]:has(.op-marker-onaylandi) {
+    border-left-color: #16a34a !important;
+}
+div[data-testid="stExpander"]:has(.op-marker-islendi) {
+    border-left-color: #0284c7 !important;
+}
+div[data-testid="stExpander"]:has(.op-marker-muhasebe) {
+    border-left-color: #475569 !important;
+}
+div[data-testid="stExpander"]:has(.op-marker-iptal) {
+    border-left-color: #dc2626 !important;
+}
+div[data-testid="stExpander"]:has(.op-marker-kismi) {
+    border-left-color: #7c3aed !important;
+}
+
 div[data-testid="stExpander"] summary {
     display: flex !important;
     align-items: center !important;
     background-color: #ffffff !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
     padding-left: 10px !important;
     padding-right: 10px !important;
-    line-height: 1.3 !important;
+    line-height: 1.32 !important;
 }
 div[data-testid="stExpander"] summary:hover {
     background-color: #f8fafc !important;
@@ -238,7 +333,7 @@ div[data-testid="stExpander"] summary p {
     font-size: 13px !important;
     color: #0f172a !important;
     margin: 0 !important;
-    line-height: 1.32 !important;
+    line-height: 1.35 !important;
 }
 .info-grid {
     display: grid;
@@ -292,12 +387,13 @@ div[data-testid="stExpander"] summary p {
     white-space: nowrap;
 }
 .badge {
-    padding: 3px 8px;
-    border-radius: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
     color: white;
-    font-weight: bold;
-    font-size: 11.5px;
+    font-weight: 700;
+    font-size: 11px;
     display: inline-block;
+    letter-spacing: 0.2px;
 }
 /* Empty State & Sayfalama Stilleri */
 .empty-state-box {
@@ -355,6 +451,37 @@ div[data-testid="stExpander"] summary p {
 def md_temizle(metin):
     """Expander başlığında Markdown karakterlerinin biçim bozmasını önler."""
     return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
+
+def tarih_grubu_bul(tarih_degeri, bugun):
+    """Tarih metnini ayrıştırıp Bugün / Dün / Bu Hafta / Daha Önce grubuna ayırır."""
+    if pd.isna(tarih_degeri) or not str(tarih_degeri).strip():
+        return "TARİHSİZ"
+    s = str(tarih_degeri).strip()
+    dt = None
+    m_tr = re.search(r"(\d{1,2})[./-](\d{1,2})[./-](\d{4})", s)
+    m_iso = re.search(r"(\d{4})[./-](\d{1,2})[./-](\d{1,2})", s)
+    try:
+        if m_tr:
+            dt = datetime.date(int(m_tr.group(3)), int(m_tr.group(2)), int(m_tr.group(1)))
+        elif m_iso:
+            dt = datetime.date(int(m_iso.group(1)), int(m_iso.group(2)), int(m_iso.group(3)))
+    except ValueError:
+        dt = None
+
+    if dt is None:
+        return "DİĞER SİPARİŞLER"
+
+    fark = (bugun - dt).days
+    if fark == 0:
+        return "BUGÜN"
+    elif fark == 1:
+        return "DÜN"
+    elif 2 <= fark <= 7:
+        return "BU HAFTA"
+    elif fark < 0:
+        return "İLERİ TARİHLİ"
+    else:
+        return "DAHA ÖNCE"
 
 # Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
@@ -500,6 +627,35 @@ if "kpi" in st.query_params:
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
         st.session_state.sayfa_limiti = 50
     st.query_params.pop("kpi", None)
+    st.rerun()
+
+# Hızlı Durum Çipi Tıklama Kontrolü
+if "chip" in st.query_params:
+    secilen_chip = st.query_params.get("chip", "").upper()
+    chip_eslesme = {
+        "TUMU": "[TÜMÜ]",
+        "ONAY_BEKLIYOR": "ONAY BEKLİYOR",
+        "ONAYLANDI": "ONAYLANDI",
+        "ISLENDI": "İŞLENDİ",
+        "KISMI_EVRAK": "KISMİ EVRAK",
+        "MUHASEBE": "MUHASEBEYE İLETİLDİ",
+        "IPTAL": "İPTAL EDİLDİ"
+    }
+    if secilen_chip in chip_eslesme:
+        hedef_op = chip_eslesme[secilen_chip]
+        st.session_state.f_op = hedef_op
+        if hedef_op == "MUHASEBEYE İLETİLDİ":
+            st.session_state.f_gizle_muh = False
+            st.session_state.kpi_mod = "TUMU"
+        elif hedef_op == "İPTAL EDİLDİ":
+            st.session_state.f_gizle_ipt = False
+            st.session_state.kpi_mod = "TUMU"
+        elif hedef_op == "ONAY BEKLİYOR":
+            st.session_state.kpi_mod = "ONAY"
+        elif hedef_op == "[TÜMÜ]":
+            st.session_state.kpi_mod = "SEVK" if (st.session_state.get("f_gizle_muh") and st.session_state.get("f_gizle_ipt")) else "TUMU"
+        st.session_state.sayfa_limiti = 50
+    st.query_params.pop("chip", None)
     st.rerun()
 
 yetki_tipi = st.session_state.yetki_tipi
@@ -651,6 +807,25 @@ with col_filtre:
         if ek_filtre_aktif or arama.strip():
             st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
+# Yatay Kaydırılabilir Hızlı Durum Çipleri
+chip_tanimlari = [
+    ("TUMU", "[TÜMÜ]", "Tümü", "#64748b"),
+    ("ONAY_BEKLIYOR", "ONAY BEKLİYOR", "Onay Bekleyen", "#f97316"),
+    ("ONAYLANDI", "ONAYLANDI", "Onaylanan", "#16a34a"),
+    ("ISLENDI", "İŞLENDİ", "İşlenen", "#0284c7"),
+    ("KISMI_EVRAK", "KISMİ EVRAK", "Kısmi Evrak", "#7c3aed"),
+]
+chips_html = '<div class="chip-bar">'
+for c_kod, c_op_val, c_etiket, c_renk in chip_tanimlari:
+    aktif_mi = "chip-active" if secili_op == c_op_val else ""
+    chips_html += (
+        f'<a href="?chip={c_kod}{token_param}" target="_self" class="chip-item {aktif_mi}">'
+        f'<span class="chip-dot" style="background-color:{c_renk};"></span>{c_etiket}'
+        f'</a>'
+    )
+chips_html += '</div>'
+st.markdown(chips_html, unsafe_allow_html=True)
+
 # Filtreleme Uygulama
 filtered = df_sip.copy()
 
@@ -703,13 +878,13 @@ else:
         "KISMİ EVRAK": "#7c3aed"
     }
 
-    OP_IKON = {
-        "İŞLENDİ": "🔵",
-        "ONAY BEKLİYOR": "🟠",
-        "ONAYLANDI": "🟢",
-        "MUHASEBEYE İLETİLDİ": "✔️",
-        "İPTAL EDİLDİ": "🔴",
-        "KISMİ EVRAK": "🟣"
+    OP_MARKER_CLS = {
+        "İŞLENDİ": "op-marker-islendi",
+        "ONAY BEKLİYOR": "op-marker-onay-bekliyor",
+        "ONAYLANDI": "op-marker-onaylandi",
+        "MUHASEBEYE İLETİLDİ": "op-marker-muhasebe",
+        "İPTAL EDİLDİ": "op-marker-iptal",
+        "KISMİ EVRAK": "op-marker-kismi"
     }
 
     # N+1 Optimizasyonu
@@ -750,18 +925,34 @@ else:
         "sofor", "irsaliye_no", "aciklama", "notlar"
     ]
 
-    # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
+    bugun_tarih = datetime.date.today()
+    son_tarih_grubu = None
+
+    # 6. Tarih Gruplamalı ve Sol Durum Çizgili Mobil Sipariş Kartları
     for _, row in filtered.head(gosterilen_limit).iterrows():
+        tarih_ham = row.get("tarih") if pd.notna(row.get("tarih")) else row.get("siparis_tarihi")
+        aktif_grup = tarih_grubu_bul(tarih_ham, bugun_tarih)
+
+        if aktif_grup != son_tarih_grubu:
+            son_tarih_grubu = aktif_grup
+            st.markdown(
+                f'<div class="date-group-header">'
+                f'<span class="date-group-label">{aktif_grup}</span>'
+                f'<div class="date-group-line"></div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
         renk = OP_RENK.get(op_upper, "#475569")
-        durum_ikon = OP_IKON.get(op_upper, "⚪")
+        marker_cls = OP_MARKER_CLS.get(op_upper, "op-marker-muhasebe")
 
         firma_str = row.get("firma") or "-"
         musteri_str = row.get("musteri") or "-"
         santiye_str = row.get("santiye") or "-"
-        tarih_str = row.get("tarih") or "-"
+        tarih_str = tarih_ham or "-"
 
         f_md = md_temizle(firma_str)
         m_md = md_temizle(musteri_str)
@@ -770,17 +961,18 @@ else:
 
         if yetki_tipi == "MUSTERI":
             baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
+                f"**#{sip_no} | {f_md}**  \n"
+                f"📍 {s_md} \u00A0 • \u00A0 {t_md}"
             )
         else:
             baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
+                f"**#{sip_no} | {f_md} ➔ {m_md}**  \n"
+                f"📍 {s_md} \u00A0 • \u00A0 {t_md}"
             )
 
         with st.expander(baslik):
             st.markdown(
+                f"<span class='{marker_cls}' style='display:none;'></span>"
                 f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
                 f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
                 unsafe_allow_html=True
