@@ -299,6 +299,11 @@ div[data-testid="stExpander"] summary p {
     font-size: 11.5px;
     display: inline-block;
 }
+.durum-plain {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 12px;
+}
 /* Empty State & Sayfalama Stilleri */
 .empty-state-box {
     background-color: #ffffff;
@@ -355,6 +360,17 @@ div[data-testid="stExpander"] summary p {
 def md_temizle(metin):
     """Expander başlığında Markdown karakterlerinin biçim bozmasını önler."""
     return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
+
+def durum_metni_formatla(durum_val):
+    """Sipariş durumu içindeki 'Sevk Edildi' ve 'İptal' yazılarını büyük harfe çevirir."""
+    metin = str(durum_val or "-").strip()
+    if not metin or metin == "-":
+        return "-"
+    # Türkçe karakter duyarlı büyük harf kontrolü
+    tr_upper = metin.replace("i", "İ").replace("ı", "I").upper()
+    if tr_upper in ("SEVK EDİLDİ", "İPTAL", "İPTAL EDİLDİ"):
+        return tr_upper
+    return metin
 
 # Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
@@ -512,7 +528,7 @@ def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
 
-    download_url = f"[https://drive.google.com/uc?export=download&confirm=t&id=](https://drive.google.com/uc?export=download&confirm=t&id=){file_id}"
+    download_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
     response = requests.get(download_url, timeout=15)
     response.raise_for_status()
 
@@ -576,7 +592,7 @@ onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
     df_sip[
         (~df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ", "İPTAL EDİLDİ"])) &
-        (df_sip["durum"].fillna("").str.upper() != "İPTAL")
+        (df_sip["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
     ]
 )
 
@@ -656,7 +672,10 @@ filtered = df_sip.copy()
 if gizle_tamamlanan:
     filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
 if gizle_iptal:
-    filtered = filtered[(filtered["operasyon"] != "İPTAL EDİLDİ") & (filtered["durum"].fillna("").str.upper() != "İPTAL")]
+    filtered = filtered[
+        (filtered["operasyon"] != "İPTAL EDİLDİ") &
+        (filtered["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
+    ]
 if secili_op != "[TÜMÜ]":
     filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
@@ -780,10 +799,12 @@ else:
                 f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
             )
 
+        durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
+
         with st.expander(baslik):
             st.markdown(
                 f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-                f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
+                f"<span class='durum-plain'>Durum: {durum_gosterim}</span>",
                 unsafe_allow_html=True
             )
 
