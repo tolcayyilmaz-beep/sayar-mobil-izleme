@@ -14,6 +14,7 @@ import tempfile
 import requests
 import pandas as pd
 import streamlit as st
+from datetime import datetime, timezone, timedelta
 from cryptography.fernet import Fernet
 
 # Sayfa ve Mobil Görünüm Ayarları
@@ -92,7 +93,38 @@ a[href*="streamlit.io/cloud"] {
 .header-sub {
     font-size: 11px;
     color: #cbd5e1;
-    margin-top: 1px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+/* Canlılık İndikatörü ve Zaman Damgası (Öneri 5) */
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+.live-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 .header-actions {
     display: flex;
@@ -121,8 +153,8 @@ a[href*="streamlit.io/cloud"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 a.kpi-card {
     display: block;
@@ -163,12 +195,12 @@ a.kpi-card:active {
     color: #0f172a;
     line-height: 1.2;
 }
-/* Arama + Popover Satırının Mobilde Yan Yana Kalması ve Üst Boşluk */
+/* Arama + Popover Satırının Mobilde Yan Yana Kalması */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
-    margin-top: 12px !important;
+    margin-top: 8px !important;
 }
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
@@ -204,14 +236,65 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Sipariş Kartları ve Çekmeceler: Kompakt Beyaz Zemin + Çelik Çerçeve */
+/* Aktif Filtre Etiketleri / Chips (Öneri 3) */
+.chip-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    align-items: center;
+}
+a.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #e2e8f0;
+    color: #1e293b !important;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+a.filter-chip:hover {
+    background-color: #fed7aa;
+    border-color: #f97316;
+    color: #9a3412 !important;
+}
+a.filter-chip-clear {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c !important;
+}
+a.filter-chip-clear:hover {
+    background-color: #fecaca;
+}
+/* Sipariş Kartları ve Sol Kenar Durum Şeridi (Öneri 2) */
 div[data-testid="stExpander"] {
     background-color: #ffffff !important;
     border-radius: 9px !important;
     border: 1px solid #cbd5e1 !important;
+    border-left: 4px solid #0284c7 !important;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
     margin-bottom: 3px !important;
     overflow: hidden;
+}
+/* Expander içindeki metin/ikon rengine göre sol kenar şeridini otomatik renklendir */
+div[data-testid="stExpander"]:has(summary p:contains("🟠")),
+div[data-testid="stExpander"]:has(.status-flag-orange) {
+    border-left: 4px solid #f97316 !important;
+}
+div[data-testid="stExpander"]:has(.status-flag-green) {
+    border-left: 4px solid #16a34a !important;
+}
+div[data-testid="stExpander"]:has(.status-flag-red) {
+    border-left: 4px solid #ef4444 !important;
+}
+div[data-testid="stExpander"]:has(.status-flag-blue) {
+    border-left: 4px solid #0284c7 !important;
 }
 div[data-testid="stExpander"] summary {
     display: flex !important;
@@ -472,6 +555,33 @@ def filtreleri_sifirla():
     st.session_state.f_gizle_ipt = False
     st.session_state.sayfa_limiti = 50
 
+# URL Üzerinden Tekil Filtre Kaldırma (Öneri 3 - Chip Kapatma)
+if "drop_filter" in st.query_params:
+    df_hedef = st.query_params.get("drop_filter", "")
+    if df_hedef == "op":
+        st.session_state.f_op = "[TÜMÜ]"
+        if st.session_state.kpi_mod == "ONAY":
+            st.session_state.kpi_mod = "TUMU"
+    elif df_hedef == "firma":
+        st.session_state.f_firma = "[TÜMÜ]"
+    elif df_hedef == "musteri":
+        st.session_state.f_musteri = "[TÜMÜ]"
+    elif df_hedef == "gizle_muh":
+        st.session_state.f_gizle_muh = False
+        if st.session_state.kpi_mod == "SEVK":
+            st.session_state.kpi_mod = "TUMU"
+    elif df_hedef == "gizle_ipt":
+        st.session_state.f_gizle_ipt = False
+        if st.session_state.kpi_mod == "SEVK":
+            st.session_state.kpi_mod = "TUMU"
+    elif df_hedef == "arama":
+        st.session_state.arama_metni = ""
+    elif df_hedef == "all":
+        filtreleri_sifirla()
+    st.session_state.sayfa_limiti = 50
+    st.query_params.pop("drop_filter", None)
+    st.rerun()
+
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
     st.session_state.sayfa_limiti = 50
@@ -495,6 +605,7 @@ if "kpi" in st.query_params:
 yetki_tipi = st.session_state.yetki_tipi
 yetki_deger = st.session_state.yetki_deger
 aktif_token = st.session_state.get("active_token") or st.query_params.get("token", "")
+token_param = f"&token={aktif_token}" if aktif_token else ""
 
 # 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
 @st.cache_data(ttl=30)
@@ -519,12 +630,21 @@ def verileri_getir():
         df_siparisler = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC", conn)
         df_kalemler = pd.read_sql_query("SELECT * FROM siparis_kalemleri", conn)
         conn.close()
-        return df_siparisler, df_kalemler
+
+        # Türkiye saati (UTC+3) ile verinin çekildiği anı damgala
+        tr_saati = datetime.now(timezone(timedelta(hours=3))).strftime("%H:%M")
+        return df_siparisler, df_kalemler, tr_saati
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
 
-# Renk Kodlu Üst Başlık Şeridi
+try:
+    df_sip, df_kalem, son_guncelleme = verileri_getir()
+except Exception as e:
+    st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
+    st.stop()
+
+# Renk Kodlu Üst Başlık Şeridi + Canlılık İndikatörü (Öneri 5)
 if yetki_tipi == "MUSTERI":
     baslik_metni = f"🏗️ SAYAR YAPI | {html.escape(str(yetki_deger))}"
     alt_metin = "Müşteri Sipariş İzleme Paneli"
@@ -535,24 +655,23 @@ else:
     baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
     alt_metin = "Yönetici Canlı Takip Paneli"
 
-token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
 st.markdown(
     f'<div class="header-banner">'
-    f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
+    f'<div class="header-info">'
+    f'<div class="header-title">{baslik_metni}</div>'
+    f'<div class="header-sub">'
+    f'<span>{alt_metin}</span>'
+    f'<span class="live-badge" title="Veriler her 30 saniyede bir güncellenir"><span class="live-dot"></span>Güncel • {son_guncelleme}</span>'
+    f'</div>'
+    f'</div>'
     f'<div class="header-actions">'
     f'<a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
     f'<a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
     f'</div></div>',
     unsafe_allow_html=True
 )
-
-try:
-    df_sip, df_kalem = verileri_getir()
-except Exception as e:
-    st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
-    st.stop()
 
 # Yetki Tipine Göre Veriyi Kısıtlama
 if yetki_tipi == "MUSTERI":
@@ -620,248 +739,173 @@ with col_arama:
     arama = st.text_input(
         "Arama",
         key="arama_metni",
-        placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
+        placeholder="🔍 Sipariş no, müşteri, firma, ürün ara...",
         label_visibility="collapsed"
     )
 
 with col_filtre:
     with st.popover(popover_etiket, use_container_width=True):
-        st.markdown("**Detaylı Filtreleme**")
-        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
-        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
-
+        st.selectbox("Operasyon Durumu", op_listesi, key="f_op")
+        st.selectbox("Tedarikçi / Firma", firma_listesi, key="f_firma")
         if yetki_tipi != "MUSTERI":
-            secili_musteri = st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
-        else:
-            secili_musteri = "[TÜMÜ]"
+            st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
+        st.checkbox("Muhasebeye İletilenleri Gizle", key="f_gizle_muh")
+        st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
+        st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
-        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", key="f_gizle_muh")
-        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
+# 4.1. Aktif Filtre Etiketleri / Chips (Öneri 3)
+aktif_chipler = []
+if st.session_state.f_op != "[TÜMÜ]":
+    aktif_chipler.append(("op", f"Durum: {st.session_state.f_op}"))
+if st.session_state.f_firma != "[TÜMÜ]":
+    aktif_chipler.append(("firma", f"Firma: {st.session_state.f_firma}"))
+if yetki_tipi != "MUSTERI" and st.session_state.f_musteri != "[TÜMÜ]":
+    aktif_chipler.append(("musteri", f"Müşteri: {st.session_state.f_musteri}"))
+if st.session_state.f_gizle_muh:
+    aktif_chipler.append(("gizle_muh", "Muhasebe Gizli"))
+if st.session_state.f_gizle_ipt:
+    aktif_chipler.append(("gizle_ipt", "İptaller Gizli"))
+if arama and arama.strip():
+    aktif_chipler.append(("arama", f'Arama: "{arama.strip()}"'))
 
-        if ek_filtre_aktif or arama.strip():
-            st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
+if aktif_chipler:
+    chip_html_parcalari = ['<div class="chip-bar">']
+    for c_key, c_label in aktif_chipler:
+        chip_html_parcalari.append(
+            f'<a href="?drop_filter={c_key}{token_param}" target="_self" class="filter-chip" title="Bu filtreyi kaldır">'
+            f'{html.escape(c_label)} ✕</a>'
+        )
+    if len(aktif_chipler) > 1:
+        chip_html_parcalari.append(
+            f'<a href="?drop_filter=all{token_param}" target="_self" class="filter-chip filter-chip-clear" title="Tüm filtreleri temizle">'
+            f'Tümünü Temizle</a>'
+        )
+    chip_html_parcalari.append('</div>')
+    st.markdown("".join(chip_html_parcalari), unsafe_allow_html=True)
 
-# Filtreleme Uygulama
-filtered = df_sip.copy()
+# 5. Verileri Filtreleme
+df_filtre = df_sip.copy()
 
-if gizle_muhasebe:
-    filtered = filtered[filtered["operasyon"] != "MUHASEBEYE İLETİLDİ"]
-if gizle_iptal:
-    filtered = filtered[(filtered["operasyon"] != "İPTAL EDİLDİ") & (filtered["durum"] != "İptal")]
-if secili_op != "[TÜMÜ]":
-    filtered = filtered[filtered["operasyon"] == secili_op]
-if secili_firma != "[TÜMÜ]":
-    filtered = filtered[filtered["firma"] == secili_firma]
-if secili_musteri != "[TÜMÜ]":
-    filtered = filtered[filtered["musteri"] == secili_musteri]
-if arama.strip():
+if st.session_state.f_op != "[TÜMÜ]":
+    df_filtre = df_filtre[df_filtre["operasyon"] == st.session_state.f_op]
+
+if st.session_state.f_firma != "[TÜMÜ]":
+    df_filtre = df_filtre[df_filtre["firma"] == st.session_state.f_firma]
+
+if yetki_tipi != "MUSTERI" and st.session_state.f_musteri != "[TÜMÜ]":
+    df_filtre = df_filtre[df_filtre["musteri"] == st.session_state.f_musteri]
+
+if st.session_state.f_gizle_muh:
+    df_filtre = df_filtre[df_filtre["operasyon"] != "MUHASEBEYE İLETİLDİ"]
+
+if st.session_state.f_gizle_ipt:
+    df_filtre = df_filtre[
+        (df_filtre["operasyon"] != "İPTAL EDİLDİ") &
+        (df_filtre["durum"] != "İptal")
+    ]
+
+if arama and arama.strip():
     q = arama.strip().lower()
-    mask = (
-        filtered["siparis_no"].astype(str).str.contains(q, na=False) |
-        filtered["firma"].fillna("").str.lower().str.contains(q) |
-        filtered["musteri"].fillna("").str.lower().str.contains(q) |
-        filtered["santiye"].fillna("").str.lower().str.contains(q)
+    urun_eslesen_nolar = set(
+        df_kalem[
+            df_kalem["urun_adi"].fillna("").str.lower().str.contains(q, regex=False)
+        ]["siparis_no"].tolist()
     )
-    filtered = filtered[mask]
+    maske = (
+        df_filtre["siparis_no"].astype(str).str.lower().str.contains(q, regex=False) |
+        df_filtre["musteri"].fillna("").str.lower().str.contains(q, regex=False) |
+        df_filtre["firma"].fillna("").str.lower().str.contains(q, regex=False) |
+        df_filtre["siparis_veren"].fillna("").str.lower().str.contains(q, regex=False) |
+        df_filtre["aciklama"].fillna("").str.lower().str.contains(q, regex=False) |
+        df_filtre["siparis_no"].isin(urun_eslesen_nolar)
+    )
+    df_filtre = df_filtre[maske]
 
-toplam_filtrelenen = len(filtered)
-gosterilen_limit = st.session_state.sayfa_limiti
-gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
+# 6. Sipariş Kartlarını Listeleme ve Empty State
+toplam_bulunan = len(df_filtre)
 
-# 5. Boş Durum (Empty State) Kontrolü
-if toplam_filtrelenen == 0:
+if toplam_bulunan == 0:
     st.markdown(
         '<div class="empty-state-box">'
-        '<div class="empty-state-icon">🔍</div>'
-        '<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
-        '<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
+        '<div class="empty-state-icon">📭</div>'
+        '<div class="empty-state-title">Kayıt Bulunamadı</div>'
+        '<div class="empty-state-desc">Seçili filtrelere veya arama kriterine uygun sipariş yok.</div>'
         '</div>',
         unsafe_allow_html=True
     )
-    col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
-    with col_e2:
-        st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
-    st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
+    gosterilecek_df = df_filtre.head(st.session_state.sayfa_limiti)
 
-    OP_RENK = {
-        "İŞLENDİ": "#0284c7",
-        "ONAY BEKLİYOR": "#f97316",
-        "ONAYLANDI": "#16a34a",
-        "MUHASEBEYE İLETİLDİ": "#475569",
-        "İPTAL EDİLDİ": "#dc2626",
-        "KISMİ EVRAK": "#7c3aed"
-    }
+    def durum_bilgisi(op_metni, durum_metni):
+        op = str(op_metni or "").upper()
+        drm = str(durum_metni or "").upper()
+        if "İPTAL" in op or "İPTAL" in drm:
+            return "#ef4444", "🔴", "status-flag-red"
+        if "ONAY BEKLİYOR" in op:
+            return "#f97316", "🟠", "status-flag-orange"
+        if "MUHASEBE" in op or "TESLİM" in op:
+            return "#16a34a", "🟢", "status-flag-green"
+        return "#0284c7", "🔵", "status-flag-blue"
 
-    OP_IKON = {
-        "İŞLENDİ": "🔵",
-        "ONAY BEKLİYOR": "🟠",
-        "ONAYLANDI": "🟢",
-        "MUHASEBEYE İLETİLDİ": "✔️",
-        "İPTAL EDİLDİ": "🔴",
-        "KISMİ EVRAK": "🟣"
-    }
-
-    # N+1 Optimizasyonu
-    kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
-
-    # Kart içinde zaten üstte veya rozette gösterilen sistem sütunları
-    haric_sutunlar = {
-        "id", "siparis_no", "operasyon", "durum",
-        "musteri" if yetki_tipi == "MUSTERI" else ""
-    }
-
-    ETIKET_MAP = {
-        "firma": "Tedarikçi Firma",
-        "musteri": "Müşteri",
-        "santiye": "Şantiye",
-        "tarih": "Sipariş Tarihi",
-        "siparis_tarihi": "Sipariş Tarihi",
-        "siparis_veren": "Sipariş Veren",
-        "plaka": "Araç Plakası",
-        "arac_plaka": "Araç Plakası",
-        "sofor": "Şoför",
-        "telefon": "Telefon",
-        "teslim_tarihi": "Teslim Tarihi",
-        "sevk_tarihi": "Sevk Tarihi",
-        "onay_tarihi": "Onay Tarihi",
-        "onaylayan": "Onaylayan",
-        "irsaliye_no": "İrsaliye No",
-        "fatura_no": "Fatura No",
-        "odeme_sekli": "Ödeme Şekli",
-        "nakliye": "Nakliye",
-        "aciklama": "Açıklama / Not",
-        "notlar": "Not"
-    }
-
-    oncelik = [
-        "firma", "musteri", "santiye", "tarih", "siparis_tarihi",
-        "siparis_veren", "teslim_tarihi", "sevk_tarihi", "plaka",
-        "sofor", "irsaliye_no", "aciklama", "notlar"
-    ]
-
-    # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
-    for _, row in filtered.head(gosterilen_limit).iterrows():
+    for _, row in gosterilecek_df.iterrows():
         sip_no = row.get("siparis_no", "-")
-        op_val = str(row.get("operasyon") or "-")
-        op_upper = op_val.upper()
-        renk = OP_RENK.get(op_upper, "#475569")
-        durum_ikon = OP_IKON.get(op_upper, "⚪")
+        musteri = md_temizle(row.get("musteri"))
+        firma = md_temizle(row.get("firma"))
+        operasyon = md_temizle(row.get("operasyon"))
+        tarih = md_temizle(row.get("tarih"))
+        veren = md_temizle(row.get("siparis_veren"))
+        durum = md_temizle(row.get("durum"))
+        aciklama = html.escape(str(row.get("aciklama") or "-"))
 
-        firma_str = row.get("firma") or "-"
-        musteri_str = row.get("musteri") or "-"
-        santiye_str = row.get("santiye") or "-"
-        tarih_str = row.get("tarih") or "-"
+        renk, ikon, flag_cls = durum_bilgisi(operasyon, durum)
+        baslik = f"{ikon} #{sip_no} | {musteri} — {firma} ({operasyon})"
 
-        f_md = md_temizle(firma_str)
-        m_md = md_temizle(musteri_str)
-        s_md = md_temizle(santiye_str)
-        t_md = md_temizle(tarih_str)
-
-        if yetki_tipi == "MUSTERI":
-            baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-            )
-        else:
-            baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-            )
-
-        with st.expander(baslik):
+        with st.expander(baslik, expanded=False):
+            # Gizli flag span'i (CSS :has() ile expander sol kenar rengini boyar - Öneri 2)
             st.markdown(
-                f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-                f"**Durum:** {html.escape(str(row.get('durum') or '-'))}",
+                f'<span class="{flag_cls}" style="display:none;"></span>'
+                f'<div class="info-grid">'
+                f'<div><span class="info-item-label">Operasyon</span><span class="badge" style="background-color:{renk};">{html.escape(operasyon)}</span></div>'
+                f'<div><span class="info-item-label">Tarih</span><span class="info-item-val">{html.escape(tarih)}</span></div>'
+                f'<div><span class="info-item-label">Müşteri</span><span class="info-item-val">{html.escape(musteri)}</span></div>'
+                f'<div><span class="info-item-label">Tedarikçi Firma</span><span class="info-item-val">{html.escape(firma)}</span></div>'
+                f'<div><span class="info-item-label">Sipariş Veren</span><span class="info-item-val">{html.escape(veren)}</span></div>'
+                f'<div><span class="info-item-label">Genel Durum</span><span class="info-item-val">{html.escape(durum)}</span></div>'
+                f'<div style="grid-column: span 2;"><span class="info-item-label">Açıklama / Not</span><span class="info-item-val">{aciklama}</span></div>'
+                f'</div>',
                 unsafe_allow_html=True
             )
 
-            # Siparişler tablosundaki tüm dolu sütunları dinamik olarak göster
-            sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
-            grid_items_html = ""
-            for col_name in sirali_sutunlar:
-                if col_name.lower() in haric_sutunlar:
-                    continue
-                val = row.get(col_name)
-                if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
-                    continue
-
-                etiket = ETIKET_MAP.get(col_name.lower(), col_name.replace("_", " ").title())
-                deger_str = html.escape(str(val).strip())
-
-                span_style = ' style="grid-column: span 2;"' if col_name.lower() in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
-                grid_items_html += (
-                    f'<div{span_style}>'
-                    f'<span class="info-item-label">{html.escape(etiket)}</span>'
-                    f'<span class="info-item-val">{deger_str}</span>'
-                    f'</div>'
-                )
-
-            if grid_items_html:
-                st.markdown(f'<div class="info-grid">{grid_items_html}</div>', unsafe_allow_html=True)
-
-            # Sipariş Kalemleri Tablosu (Malzeme / Ürün | Birim | Miktar)
-            kalemler = kalem_gruplari.get(sip_no)
-            if kalemler is not None and not kalemler.empty:
-                olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-                ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
-
-                olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
-                miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
-
-                olasi_birim = ["birim", "birimi", "olcu_birimi"]
-                birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
-
-                haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
-                kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
-
-                if ad_sutunu is None and kalan_sutunlar:
-                    ad_sutunu = kalan_sutunlar.pop(0)
-                if miktar_sutunu is None and kalan_sutunlar:
-                    miktar_sutunu = kalan_sutunlar.pop(0)
-
+            kalemler = df_kalem[df_kalem["siparis_no"] == sip_no]
+            if not kalemler.empty:
                 satirlar_html = ""
-                for _, k_row in kalemler.iterrows():
-                    urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
-                    miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
-                    if isinstance(miktar_val, float) and miktar_val.is_integer():
-                        miktar_val = int(miktar_val)
-                    miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
-                    birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
-
-                    satirlar_html += (
-                        f"<tr>"
-                        f"<td>{urun_adi}</td>"
-                        f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
-                        f"<td class='urun-miktar'>{miktar_str}</td>"
-                        f"</tr>"
-                    )
+                for _, k in kalemler.iterrows():
+                    u_adi = html.escape(str(k.get("urun_adi") or "-"))
+                    miktar = html.escape(str(k.get("miktar") or ""))
+                    birim = html.escape(str(k.get("birim") or ""))
+                    satirlar_html += f"<tr><td>{u_adi}</td><td class='urun-miktar'>{miktar} {birim}</td></tr>"
 
                 st.markdown(
-                    f"<table class='urun-table'>"
-                    f"<thead><tr>"
-                    f"<th>Malzeme / Ürün</th>"
-                    f"<th style='text-align:left;'>Birim</th>"
-                    f"<th style='text-align:right;'>Miktar</th>"
-                    f"</tr></thead>"
-                    f"<tbody>{satirlar_html}</tbody>"
-                    f"</table>",
+                    f'<table class="urun-table">'
+                    f'<thead><tr><th>Ürün / Malzeme</th><th style="text-align:right;">Miktar</th></tr></thead>'
+                    f'<tbody>{satirlar_html}</tbody>'
+                    f'</table>',
                     unsafe_allow_html=True
                 )
 
-    # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
-    yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
+    # 7. Sayfalama ve İlerleme Çubuğu
+    gosterilen_sayi = len(gosterilecek_df)
+    yuzde = min(100, int((gosterilen_sayi / toplam_bulunan) * 100))
+
     st.markdown(
         f'<div class="pagination-box">'
-        f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi gösteriliyor</div>'
-        f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
+        f'<div class="pagination-text">{toplam_bulunan} siparişten {gosterilen_sayi} tanesi gösteriliyor</div>'
+        f'<div class="progress-track"><div class="progress-fill" style="width: {yuzde}%;"></div></div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    if gosterilen_adet < toplam_filtrelenen:
-        kalan = toplam_filtrelenen - gosterilen_adet
-        eklenecek = min(50, kalan)
-        if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
+    if gosterilen_sayi < toplam_bulunan:
+        if st.button("Daha Fazla Göster (+50)", use_container_width=True):
             st.session_state.sayfa_limiti += 50
             st.rerun()
