@@ -179,7 +179,7 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:las
     width: auto !important;
     min-width: 54px !important;
 }
-/* Arama Kutusu Beyaz Zemin */
+/* Arama Kutusu ve Şifre Alanı Beyaz Zemin */
 div[data-testid="stTextInput"] input {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -188,6 +188,14 @@ div[data-testid="stTextInput"] input {
     height: 38px !important;
     padding-top: 6px !important;
     padding-bottom: 6px !important;
+}
+/* Giriş Formu Kart Görünümü */
+div[data-testid="stForm"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 14px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
 /* Popover Buton Tasarımı */
 div[data-testid="stPopover"] > button {
@@ -408,10 +416,12 @@ def check_password():
         elif url_veren:
             st.caption(f"Personel Girişi: **{url_veren}**")
 
-        pin = st.text_input("Erişim Şifresi:", type="password")
-        beni_hatirla = st.checkbox("Beni Hatırla", value=True)
+        with st.form("login_form", clear_on_submit=False):
+            pin = st.text_input("Erişim Şifresi:", type="password")
+            beni_hatirla = st.checkbox("Beni Hatırla", value=True)
+            giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
 
-        if st.button("Giriş Yap", use_container_width=True, type="primary"):
+        if giris_yapildi:
             basarili_tip = None
             basarili_deger = None
 
