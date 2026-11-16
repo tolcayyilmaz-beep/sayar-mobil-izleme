@@ -512,7 +512,7 @@ def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
 
-    download_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
+    download_url = f"[https://drive.google.com/uc?export=download&confirm=t&id=](https://drive.google.com/uc?export=download&confirm=t&id=){file_id}"
     response = requests.get(download_url, timeout=15)
     response.raise_for_status()
 
@@ -576,7 +576,7 @@ onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
     df_sip[
         (~df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ", "İPTAL EDİLDİ"])) &
-        (df_sip["durum"] != "İptal")
+        (df_sip["durum"].fillna("").str.upper() != "İPTAL")
     ]
 )
 
@@ -656,7 +656,7 @@ filtered = df_sip.copy()
 if gizle_tamamlanan:
     filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
 if gizle_iptal:
-    filtered = filtered[(filtered["operasyon"] != "İPTAL EDİLDİ") & (filtered["durum"] != "İptal")]
+    filtered = filtered[(filtered["operasyon"] != "İPTAL EDİLDİ") & (filtered["durum"].fillna("").str.upper() != "İPTAL")]
 if secili_op != "[TÜMÜ]":
     filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
