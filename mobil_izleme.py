@@ -575,8 +575,7 @@ toplam_siparis = len(df_sip)
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
     df_sip[
-        (df_sip["operasyon"] != "MUHASEBEYE İLETİLDİ") &
-        (df_sip["operasyon"] != "İPTAL EDİLDİ") &
+        (~df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ", "İPTAL EDİLDİ"])) &
         (df_sip["durum"] != "İptal")
     ]
 )
@@ -592,7 +591,7 @@ st.markdown(
     f'<div class="kpi-label">Toplam Sipariş</div><div class="kpi-value">{toplam_siparis}</div></a>'
     f'<a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
     f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
-    f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece sevk bekleyenleri göster">'
+    f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
     f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
     f'</div>',
     unsafe_allow_html=True
@@ -645,7 +644,7 @@ with col_filtre:
         else:
             secili_musteri = "[TÜMÜ]"
 
-        gizle_muhasebe = st.checkbox("Muhasebeye İletilenleri Gizle", key="f_gizle_muh")
+        gizle_tamamlanan = st.checkbox("Tamamlananları Gizle", key="f_gizle_muh")
         gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
 
         if ek_filtre_aktif or arama.strip():
@@ -654,8 +653,8 @@ with col_filtre:
 # Filtreleme Uygulama
 filtered = df_sip.copy()
 
-if gizle_muhasebe:
-    filtered = filtered[filtered["operasyon"] != "MUHASEBEYE İLETİLDİ"]
+if gizle_tamamlanan:
+    filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
 if gizle_iptal:
     filtered = filtered[(filtered["operasyon"] != "İPTAL EDİLDİ") & (filtered["durum"] != "İptal")]
 if secili_op != "[TÜMÜ]":
@@ -698,7 +697,8 @@ else:
         "İŞLENDİ": "#0284c7",
         "ONAY BEKLİYOR": "#f97316",
         "ONAYLANDI": "#16a34a",
-        "MUHASEBEYE İLETİLDİ": "#475569",
+        "TAMAMLANDI": "#16a34a",
+        "MUHASEBEYE İLETİLDİ": "#16a34a",
         "İPTAL EDİLDİ": "#dc2626",
         "KISMİ EVRAK": "#7c3aed"
     }
@@ -707,7 +707,8 @@ else:
         "İŞLENDİ": "🔵",
         "ONAY BEKLİYOR": "🟠",
         "ONAYLANDI": "🟢",
-        "MUHASEBEYE İLETİLDİ": "✔️",
+        "TAMAMLANDI": "✅",
+        "MUHASEBEYE İLETİLDİ": "✅",
         "İPTAL EDİLDİ": "🔴",
         "KISMİ EVRAK": "🟣"
     }
