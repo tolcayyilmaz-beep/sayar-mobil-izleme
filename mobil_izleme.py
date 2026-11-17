@@ -179,6 +179,98 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:las
     width: auto !important;
     min-width: 54px !important;
 }
+/* Yönetici Onay Bekleyen Kart Satırı: Sol Expander + Sağ ONAYLA Butonu */
+div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) {
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    margin-bottom: 3px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:first-child {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 78px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child button {
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 11.5px !important;
+    border-radius: 9px !important;
+    padding: 0 10px !important;
+    height: 100% !important;
+    min-height: 48px !important;
+    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child button:hover {
+    background-color: #ea580c !important;
+}
+/* Tam Ekran Onay İnceleme Kartı ve Alt Aksiyon Butonları */
+.fullscreen-review-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top: 4px solid #f97316;
+    border-radius: 12px;
+    padding: 14px 12px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+.fullscreen-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+.fullscreen-review-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+}
+div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(1) button {
+    background-color: #16a34a !important;
+    border: 1px solid #15803d !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    height: 44px !important;
+    border-radius: 9px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(2) button {
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    height: 44px !important;
+    border-radius: 9px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(3) button {
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    height: 44px !important;
+    border-radius: 9px !important;
+}
 /* Arama Kutusu ve Şifre Alanı Beyaz Zemin */
 div[data-testid="stTextInput"] input {
     background-color: #ffffff !important;
@@ -407,6 +499,7 @@ def check_password():
         st.session_state.yetki_tipi = None
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
+        st.session_state.onay_inceleme_sip_no = None
         st.query_params.clear()
         st.rerun()
 
@@ -487,6 +580,14 @@ if "sayfa_limiti" not in st.session_state:
     st.session_state.sayfa_limiti = 50
 if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
+if "onay_inceleme_sip_no" not in st.session_state:
+    st.session_state.onay_inceleme_sip_no = None
+
+def onay_inceleme_ac(sip_no):
+    st.session_state.onay_inceleme_sip_no = sip_no
+
+def onay_inceleme_kapat():
+    st.session_state.onay_inceleme_sip_no = None
 
 def filtreleri_sifirla():
     st.session_state.kpi_mod = "SEVK"
@@ -522,6 +623,7 @@ if "kpi" in st.query_params:
         st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
         st.session_state.sayfa_limiti = 50
+        st.session_state.onay_inceleme_sip_no = None
     st.query_params.pop("kpi", None)
     st.rerun()
 
@@ -593,6 +695,184 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
+OP_RENK = {
+    "İŞLENDİ": "#0284c7",
+    "ONAY BEKLİYOR": "#f97316",
+    "ONAYLANDI": "#16a34a",
+    "TAMAMLANDI": "#16a34a",
+    "MUHASEBEYE İLETİLDİ": "#16a34a",
+    "İPTAL EDİLDİ": "#dc2626",
+    "KISMİ EVRAK": "#7c3aed"
+}
+
+OP_IKON = {
+    "İŞLENDİ": "🔵",
+    "ONAY BEKLİYOR": "🟠",
+    "ONAYLANDI": "🟢",
+    "TAMAMLANDI": "✅",
+    "MUHASEBEYE İLETİLDİ": "✅",
+    "İPTAL EDİLDİ": "🔴",
+    "KISMİ EVRAK": "🟣"
+}
+
+ETIKET_MAP = {
+    "firma": "Tedarikçi Firma",
+    "musteri": "Müşteri",
+    "santiye": "Şantiye",
+    "tarih": "Sipariş Tarihi",
+    "siparis_tarihi": "Sipariş Tarihi",
+    "siparis_veren": "Sipariş Veren",
+    "plaka": "Araç Plakası",
+    "arac_plaka": "Araç Plakası",
+    "sofor": "Şoför",
+    "telefon": "Telefon",
+    "teslim_tarihi": "Teslim Tarihi",
+    "sevk_tarihi": "Sevk Tarihi",
+    "onay_tarihi": "Onay Tarihi",
+    "onaylayan": "Onaylayan",
+    "irsaliye_no": "İrsaliye No",
+    "fatura_no": "Fatura No",
+    "odeme_sekli": "Ödeme Şekli",
+    "nakliye": "Nakliye",
+    "aciklama": "Açıklama / Not",
+    "notlar": "Not"
+}
+
+oncelik = [
+    "firma", "musteri", "santiye", "tarih", "siparis_tarihi",
+    "siparis_veren", "teslim_tarihi", "sevk_tarihi", "plaka",
+    "sofor", "irsaliye_no", "aciklama", "notlar"
+]
+
+kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
+
+def siparis_detay_html_olustur(row, sip_no):
+    """Siparişin genel bilgi ızgarası ve ürün kalemleri tablosu HTML çıktısını üretir."""
+    op_val = str(row.get("operasyon") or "-")
+    op_upper = op_val.upper()
+    renk = OP_RENK.get(op_upper, "#475569")
+    durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
+
+    haric_sutunlar = {
+        "id", "siparis_no", "operasyon", "durum",
+        "musteri" if yetki_tipi == "MUSTERI" else ""
+    }
+
+    sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
+    grid_items_html = ""
+    for col_name in sirali_sutunlar:
+        if col_name.lower() in haric_sutunlar:
+            continue
+        val = row.get(col_name)
+        if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
+            continue
+
+        etiket = ETIKET_MAP.get(col_name.lower(), col_name.replace("_", " ").title())
+        deger_str = html.escape(str(val).strip())
+
+        span_style = ' style="grid-column: span 2;"' if col_name.lower() in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
+        grid_items_html += (
+            f'<div{span_style}>'
+            f'<span class="info-item-label">{html.escape(etiket)}</span>'
+            f'<span class="info-item-val">{deger_str}</span>'
+            f'</div>'
+        )
+
+    grid_html = f'<div class="info-grid">{grid_items_html}</div>' if grid_items_html else ""
+
+    tablo_html = ""
+    kalemler = kalem_gruplari.get(sip_no)
+    if kalemler is not None and not kalemler.empty:
+        olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
+        ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
+
+        olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
+        miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
+
+        olasi_birim = ["birim", "birimi", "olcu_birimi"]
+        birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
+
+        haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
+        kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
+
+        if ad_sutunu is None and kalan_sutunlar:
+            ad_sutunu = kalan_sutunlar.pop(0)
+        if miktar_sutunu is None and kalan_sutunlar:
+            miktar_sutunu = kalan_sutunlar.pop(0)
+
+        satirlar_html = ""
+        for _, k_row in kalemler.iterrows():
+            urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
+            miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
+            if isinstance(miktar_val, float) and miktar_val.is_integer():
+                miktar_val = int(miktar_val)
+            miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
+            birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
+
+            satirlar_html += (
+                f"<tr>"
+                f"<td>{urun_adi}</td>"
+                f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
+                f"<td class='urun-miktar'>{miktar_str}</td>"
+                f"</tr>"
+            )
+
+        tablo_html = (
+            f"<table class='urun-table'>"
+            f"<thead><tr>"
+            f"<th>Malzeme / Ürün</th>"
+            f"<th style='text-align:left;'>Birim</th>"
+            f"<th style='text-align:right;'>Miktar</th>"
+            f"</tr></thead>"
+            f"<tbody>{satirlar_html}</tbody>"
+            f"</table>"
+        )
+
+    rozet_html = (
+        f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
+        f"<span class='durum-plain'>Durum: {durum_gosterim}</span>"
+    )
+    return rozet_html, grid_html, tablo_html
+
+# ==============================================================================
+# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
+# ==============================================================================
+aktif_inceleme_no = st.session_state.get("onay_inceleme_sip_no")
+if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
+    secili_df = df_sip[df_sip["siparis_no"] == aktif_inceleme_no]
+    if secili_df.empty:
+        st.session_state.onay_inceleme_sip_no = None
+        st.rerun()
+
+    inceleme_row = secili_df.iloc[0]
+    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no)
+
+    st.markdown(
+        f'<div class="fullscreen-review-card">'
+        f'<div class="fullscreen-review-header">'
+        f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
+        f'</div>'
+        f'{rozet_html}'
+        f'{grid_html}'
+        f'{tablo_html}'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+    col_onay, col_revize, col_red = st.columns(3)
+    with col_onay:
+        st.markdown('<span class="review-actions-marker" style="display:none;"></span>', unsafe_allow_html=True)
+        st.button("✅ ONAYLA", key=f"fs_onayla_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+    with col_revize:
+        st.button("✏️ REVİZE", key=f"fs_revize_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+    with col_red:
+        st.button("❌ REDDET", key=f"fs_reddet_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+
+    st.stop()
+
+# ==============================================================================
+# ANA LİSTE VE KPI GÖRÜNÜMÜ
+# ==============================================================================
 # 3. Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
@@ -727,70 +1007,11 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    OP_RENK = {
-        "İŞLENDİ": "#0284c7",
-        "ONAY BEKLİYOR": "#f97316",
-        "ONAYLANDI": "#16a34a",
-        "TAMAMLANDI": "#16a34a",
-        "MUHASEBEYE İLETİLDİ": "#16a34a",
-        "İPTAL EDİLDİ": "#dc2626",
-        "KISMİ EVRAK": "#7c3aed"
-    }
-
-    OP_IKON = {
-        "İŞLENDİ": "🔵",
-        "ONAY BEKLİYOR": "🟠",
-        "ONAYLANDI": "🟢",
-        "TAMAMLANDI": "✅",
-        "MUHASEBEYE İLETİLDİ": "✅",
-        "İPTAL EDİLDİ": "🔴",
-        "KISMİ EVRAK": "🟣"
-    }
-
-    # N+1 Optimizasyonu
-    kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
-
-    # Kart içinde zaten üstte veya rozette gösterilen sistem sütunları
-    haric_sutunlar = {
-        "id", "siparis_no", "operasyon", "durum",
-        "musteri" if yetki_tipi == "MUSTERI" else ""
-    }
-
-    ETIKET_MAP = {
-        "firma": "Tedarikçi Firma",
-        "musteri": "Müşteri",
-        "santiye": "Şantiye",
-        "tarih": "Sipariş Tarihi",
-        "siparis_tarihi": "Sipariş Tarihi",
-        "siparis_veren": "Sipariş Veren",
-        "plaka": "Araç Plakası",
-        "arac_plaka": "Araç Plakası",
-        "sofor": "Şoför",
-        "telefon": "Telefon",
-        "teslim_tarihi": "Teslim Tarihi",
-        "sevk_tarihi": "Sevk Tarihi",
-        "onay_tarihi": "Onay Tarihi",
-        "onaylayan": "Onaylayan",
-        "irsaliye_no": "İrsaliye No",
-        "fatura_no": "Fatura No",
-        "odeme_sekli": "Ödeme Şekli",
-        "nakliye": "Nakliye",
-        "aciklama": "Açıklama / Not",
-        "notlar": "Not"
-    }
-
-    oncelik = [
-        "firma", "musteri", "santiye", "tarih", "siparis_tarihi",
-        "siparis_veren", "teslim_tarihi", "sevk_tarihi", "plaka",
-        "sofor", "irsaliye_no", "aciklama", "notlar"
-    ]
-
     # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
-        renk = OP_RENK.get(op_upper, "#475569")
         durum_ikon = OP_IKON.get(op_upper, "⚪")
 
         firma_str = row.get("firma") or "-"
@@ -814,87 +1035,34 @@ else:
                 f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
             )
 
-        durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
+        rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
-        with st.expander(baslik):
-            st.markdown(
-                f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-                f"<span class='durum-plain'>Durum: {durum_gosterim}</span>",
-                unsafe_allow_html=True
-            )
-
-            # Siparişler tablosundaki tüm dolu sütunları dinamik olarak göster
-            sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
-            grid_items_html = ""
-            for col_name in sirali_sutunlar:
-                if col_name.lower() in haric_sutunlar:
-                    continue
-                val = row.get(col_name)
-                if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
-                    continue
-
-                etiket = ETIKET_MAP.get(col_name.lower(), col_name.replace("_", " ").title())
-                deger_str = html.escape(str(val).strip())
-
-                span_style = ' style="grid-column: span 2;"' if col_name.lower() in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
-                grid_items_html += (
-                    f'<div{span_style}>'
-                    f'<span class="info-item-label">{html.escape(etiket)}</span>'
-                    f'<span class="info-item-val">{deger_str}</span>'
-                    f'</div>'
+        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında ONAYLA butonu
+        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
+            col_kart, col_onay_btn = st.columns([5, 1])
+            with col_kart:
+                with st.expander(baslik):
+                    st.markdown(rozet_html, unsafe_allow_html=True)
+                    if grid_html:
+                        st.markdown(grid_html, unsafe_allow_html=True)
+                    if tablo_html:
+                        st.markdown(tablo_html, unsafe_allow_html=True)
+            with col_onay_btn:
+                st.markdown('<span class="onay-btn-marker" style="display:none;"></span>', unsafe_allow_html=True)
+                st.button(
+                    "ONAYLA",
+                    key=f"btn_onayla_{sip_no}",
+                    on_click=onay_inceleme_ac,
+                    args=(sip_no,),
+                    use_container_width=True
                 )
-
-            if grid_items_html:
-                st.markdown(f'<div class="info-grid">{grid_items_html}</div>', unsafe_allow_html=True)
-
-            # Sipariş Kalemleri Tablosu (Malzeme / Ürün | Birim | Miktar)
-            kalemler = kalem_gruplari.get(sip_no)
-            if kalemler is not None and not kalemler.empty:
-                olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-                ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
-
-                olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
-                miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
-
-                olasi_birim = ["birim", "birimi", "olcu_birimi"]
-                birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
-
-                haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
-                kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
-
-                if ad_sutunu is None and kalan_sutunlar:
-                    ad_sutunu = kalan_sutunlar.pop(0)
-                if miktar_sutunu is None and kalan_sutunlar:
-                    miktar_sutunu = kalan_sutunlar.pop(0)
-
-                satirlar_html = ""
-                for _, k_row in kalemler.iterrows():
-                    urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
-                    miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
-                    if isinstance(miktar_val, float) and miktar_val.is_integer():
-                        miktar_val = int(miktar_val)
-                    miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
-                    birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
-
-                    satirlar_html += (
-                        f"<tr>"
-                        f"<td>{urun_adi}</td>"
-                        f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
-                        f"<td class='urun-miktar'>{miktar_str}</td>"
-                        f"</tr>"
-                    )
-
-                st.markdown(
-                    f"<table class='urun-table'>"
-                    f"<thead><tr>"
-                    f"<th>Malzeme / Ürün</th>"
-                    f"<th style='text-align:left;'>Birim</th>"
-                    f"<th style='text-align:right;'>Miktar</th>"
-                    f"</tr></thead>"
-                    f"<tbody>{satirlar_html}</tbody>"
-                    f"</table>",
-                    unsafe_allow_html=True
-                )
+        else:
+            with st.expander(baslik):
+                st.markdown(rozet_html, unsafe_allow_html=True)
+                if grid_html:
+                    st.markdown(grid_html, unsafe_allow_html=True)
+                if tablo_html:
+                    st.markdown(tablo_html, unsafe_allow_html=True)
 
     # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
