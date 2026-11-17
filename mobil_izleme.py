@@ -489,13 +489,13 @@ if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
 
 def filtreleri_sifirla():
-    st.session_state.kpi_mod = "TUMU"
+    st.session_state.kpi_mod = "SEVK"
     st.session_state.arama_metni = ""
     st.session_state.f_op = "[TÜMÜ]"
     st.session_state.f_firma = "[TÜMÜ]"
     st.session_state.f_musteri = "[TÜMÜ]"
-    st.session_state.f_gizle_muh = False
-    st.session_state.f_gizle_ipt = False
+    st.session_state.f_gizle_muh = True
+    st.session_state.f_gizle_ipt = True
     st.session_state.sayfa_limiti = 50
 
 if st.query_params.get("action") == "refresh":
@@ -506,12 +506,19 @@ if st.query_params.get("action") == "refresh":
 
 if "kpi" in st.query_params:
     secilen_kpi = st.query_params.get("kpi", "").upper()
-    if secilen_kpi in ("TUMU", "ONAY", "SEVK"):
+    if secilen_kpi in ("TAMAMLANDI", "ONAY", "SEVK"):
         if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
             st.session_state.kpi_mod = "SEVK"
         else:
             st.session_state.kpi_mod = secilen_kpi
-        st.session_state.f_op = "ONAY BEKLİYOR" if st.session_state.kpi_mod == "ONAY" else "[TÜMÜ]"
+
+        if st.session_state.kpi_mod == "ONAY":
+            st.session_state.f_op = "ONAY BEKLİYOR"
+        elif st.session_state.kpi_mod == "TAMAMLANDI":
+            st.session_state.f_op = "TAMAMLANDI"
+        else:
+            st.session_state.f_op = "[TÜMÜ]"
+
         st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
         st.session_state.sayfa_limiti = 50
@@ -587,7 +594,7 @@ elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
 # 3. Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi
-toplam_siparis = len(df_sip)
+tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
     df_sip[
@@ -597,14 +604,14 @@ sevk_bekleyen = len(
 )
 
 kpi_mod = st.session_state.kpi_mod
-cls_tumu = "kpi-active" if kpi_mod == "TUMU" else ""
+cls_tamamlandi = "kpi-active" if kpi_mod == "TAMAMLANDI" else ""
 cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
 cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
 
 st.markdown(
     f'<div class="kpi-grid">'
-    f'<a href="?kpi=TUMU{token_param}" target="_self" class="kpi-card kpi-blue {cls_tumu}" title="Tüm siparişleri göster">'
-    f'<div class="kpi-label">Toplam Sipariş</div><div class="kpi-value">{toplam_siparis}</div></a>'
+    f'<a href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
+    f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
     f'<a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
     f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
     f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
@@ -619,7 +626,12 @@ firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist()
 musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
 
 if "f_op" not in st.session_state:
-    st.session_state.f_op = "ONAY BEKLİYOR" if kpi_mod == "ONAY" else "[TÜMÜ]"
+    if kpi_mod == "ONAY":
+        st.session_state.f_op = "ONAY BEKLİYOR"
+    elif kpi_mod == "TAMAMLANDI":
+        st.session_state.f_op = "TAMAMLANDI"
+    else:
+        st.session_state.f_op = "[TÜMÜ]"
 if st.session_state.f_op not in op_listesi:
     st.session_state.f_op = "[TÜMÜ]"
 if "f_firma" not in st.session_state or st.session_state.f_firma not in firma_listesi:
@@ -677,7 +689,10 @@ if gizle_iptal:
         (filtered["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
     ]
 if secili_op != "[TÜMÜ]":
-    filtered = filtered[filtered["operasyon"] == secili_op]
+    if secili_op == "TAMAMLANDI":
+        filtered = filtered[filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
+    else:
+        filtered = filtered[filtered["operasyon"] == secili_op]
 if secili_firma != "[TÜMÜ]":
     filtered = filtered[filtered["firma"] == secili_firma]
 if secili_musteri != "[TÜMÜ]":
