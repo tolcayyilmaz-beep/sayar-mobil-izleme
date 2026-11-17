@@ -179,121 +179,6 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:las
     width: auto !important;
     min-width: 54px !important;
 }
-/* Görünmez Marker Kapsayıcılarının Dikey Boşluk Oluşturmasını Engelle */
-div[data-testid="stElementContainer"]:has(.onay-btn-marker),
-div[data-testid="stElementContainer"]:has(.review-actions-marker) {
-    display: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 0 !important;
-}
-/* Yönetici Onay Bekleyen Kart Satırı: Sol Expander + Sağ Dar Tik Butonu (Aynı Hizada) */
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] {
-    flex-wrap: nowrap !important;
-    align-items: flex-start !important;
-    gap: 6px !important;
-    margin-bottom: 3px !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:first-child {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:first-child div[data-testid="stExpander"] {
-    margin-bottom: 0 !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child {
-    flex: 0 0 44px !important;
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button {
-    background-color: #f97316 !important;
-    border: 1px solid #ea580c !important;
-    color: #ffffff !important;
-    border-radius: 9px !important;
-    padding: 0 !important;
-    width: 44px !important;
-    min-width: 44px !important;
-    height: 46px !important;
-    min-height: 46px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button p {
-    font-size: 20px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    margin: 0 !important;
-    color: #ffffff !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button:hover {
-    background-color: #ea580c !important;
-}
-/* Tam Ekran Onay İnceleme Kartı ve Alt Aksiyon Butonları (Aynı Hizada) */
-.fullscreen-review-card {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-top: 4px solid #f97316;
-    border-radius: 12px;
-    padding: 14px 12px;
-    margin-top: 6px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-}
-.fullscreen-review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-    gap: 8px;
-}
-.fullscreen-review-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: #0f172a;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] {
-    flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    gap: 8px !important;
-    margin-top: 8px !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div {
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] button {
-    height: 44px !important;
-    min-height: 44px !important;
-    border-radius: 9px !important;
-    margin: 0 !important;
-    padding: 0 6px !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] button p {
-    font-weight: 800 !important;
-    font-size: 13px !important;
-    margin: 0 !important;
-    color: #ffffff !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(1) button {
-    background-color: #16a34a !important;
-    border: 1px solid #15803d !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
-    background-color: #f97316 !important;
-    border: 1px solid #ea580c !important;
-}
-div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(3) button {
-    background-color: #dc2626 !important;
-    border: 1px solid #b91c1c !important;
-}
 /* Arama Kutusu ve Şifre Alanı Beyaz Zemin */
 div[data-testid="stTextInput"] input {
     background-color: #ffffff !important;
@@ -354,6 +239,104 @@ div[data-testid="stExpander"] summary p {
     color: #0f172a !important;
     margin: 0 !important;
     line-height: 1.32 !important;
+}
+/* Yönetici Onay Bekleyen Kart: Kartın Sağında Aynı Hizada Ufak Tik Butonu */
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) {
+    display: none !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] {
+    position: relative !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] div[data-testid="stExpander"] {
+    width: calc(100% - 48px) !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] {
+    position: relative !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+a.mini-onay-btn {
+    position: absolute !important;
+    right: 0 !important;
+    top: -52px !important;
+    width: 42px !important;
+    height: 46px !important;
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
+    border-radius: 9px !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
+    z-index: 10 !important;
+}
+a.mini-onay-btn:active {
+    background-color: #ea580c !important;
+    transform: scale(0.96);
+}
+/* Tam Ekran Onay İnceleme Kartı ve Yan Yana Alt Butonlar */
+.fullscreen-review-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top: 4px solid #f97316;
+    border-radius: 12px;
+    padding: 14px 12px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+.fullscreen-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+.fullscreen-review-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.review-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+a.review-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    border-radius: 9px;
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
+}
+a.review-action-btn:active {
+    transform: scale(0.98);
+}
+.btn-approve {
+    background-color: #16a34a !important;
+    border: 1px solid #15803d !important;
+}
+.btn-revise {
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
+}
+.btn-reject {
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
 }
 .info-grid {
     display: grid;
@@ -606,12 +589,6 @@ if "arama_metni" not in st.session_state:
 if "onay_inceleme_sip_no" not in st.session_state:
     st.session_state.onay_inceleme_sip_no = None
 
-def onay_inceleme_ac(sip_no):
-    st.session_state.onay_inceleme_sip_no = sip_no
-
-def onay_inceleme_kapat():
-    st.session_state.onay_inceleme_sip_no = None
-
 def filtreleri_sifirla():
     st.session_state.kpi_mod = "SEVK"
     st.session_state.arama_metni = ""
@@ -626,6 +603,18 @@ if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
     st.session_state.sayfa_limiti = 50
     st.query_params.pop("action", None)
+    st.rerun()
+
+if "incele" in st.query_params:
+    incele_val = st.query_params.get("incele", "").strip()
+    if incele_val.isdigit():
+        st.session_state.onay_inceleme_sip_no = int(incele_val)
+    st.query_params.pop("incele", None)
+    st.rerun()
+
+if "incele_kapat" in st.query_params:
+    st.session_state.onay_inceleme_sip_no = None
+    st.query_params.pop("incele_kapat", None)
     st.rerun()
 
 if "kpi" in st.query_params:
@@ -878,18 +867,14 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
+        f'</div>'
+        f'<div class="review-btn-grid">'
+        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-approve">ONAYLA</a>'
+        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-revise">REVİZE</a>'
+        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-reject">REDDET</a>'
         f'</div>',
         unsafe_allow_html=True
     )
-
-    st.markdown('<span class="review-actions-marker"></span>', unsafe_allow_html=True)
-    col_onay, col_revize, col_red = st.columns(3)
-    with col_onay:
-        st.button("ONAYLA", key=f"fs_onayla_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
-    with col_revize:
-        st.button("REVİZE", key=f"fs_revize_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
-    with col_red:
-        st.button("REDDET", key=f"fs_reddet_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
 
     st.stop()
 
@@ -1060,25 +1045,19 @@ else:
 
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
-        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında dar tik butonu
+        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında aynı hizada ufak tik butonu
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            st.markdown('<span class="onay-btn-marker"></span>', unsafe_allow_html=True)
-            col_kart, col_onay_btn = st.columns([6, 1])
-            with col_kart:
-                with st.expander(baslik):
-                    st.markdown(rozet_html, unsafe_allow_html=True)
-                    if grid_html:
-                        st.markdown(grid_html, unsafe_allow_html=True)
-                    if tablo_html:
-                        st.markdown(tablo_html, unsafe_allow_html=True)
-            with col_onay_btn:
-                st.button(
-                    "✓",
-                    key=f"btn_onayla_{sip_no}",
-                    on_click=onay_inceleme_ac,
-                    args=(sip_no,),
-                    use_container_width=True
-                )
+            st.markdown('<span class="onay-row-anchor"></span>', unsafe_allow_html=True)
+            with st.expander(baslik):
+                st.markdown(rozet_html, unsafe_allow_html=True)
+                if grid_html:
+                    st.markdown(grid_html, unsafe_allow_html=True)
+                if tablo_html:
+                    st.markdown(tablo_html, unsafe_allow_html=True)
+            st.markdown(
+                f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>',
+                unsafe_allow_html=True
+            )
         else:
             with st.expander(baslik):
                 st.markdown(rozet_html, unsafe_allow_html=True)
