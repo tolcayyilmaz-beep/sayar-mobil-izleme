@@ -59,7 +59,7 @@ a[href*="streamlit.io/cloud"] {
 }
 /* Streamlit blokları arasındaki genel dikey boşluğu daralt */
 [data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
+    gap: 0.35rem !important;
 }
 /* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
 .header-banner {
@@ -212,49 +212,17 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Standart Sipariş Kartları ve Çekmeceler */
-div[data-testid="stExpander"] {
-    background-color: #ffffff !important;
-    border-radius: 9px !important;
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
-    margin-bottom: 3px !important;
-    overflow: hidden;
-}
-div[data-testid="stExpander"] summary {
-    display: flex !important;
-    align-items: center !important;
-    background-color: #ffffff !important;
-    padding-top: 7px !important;
-    padding-bottom: 7px !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    line-height: 1.32 !important;
-}
-div[data-testid="stExpander"] summary:hover {
-    background-color: #f8fafc !important;
-}
-div[data-testid="stExpander"] summary p {
-    font-size: 13px !important;
-    color: #0f172a !important;
-    margin: 0 !important;
-    line-height: 1.32 !important;
-}
-/* Saf HTML Yönetici Onay Bekleyen Satırı: Kart + Sağda Aynı Hizada Ufak Tik Butonu */
-div[data-testid="stElementContainer"]:has(.onay-flex-row) {
-    margin-bottom: 3px !important;
-    position: relative;
-    z-index: 2;
-}
-.onay-flex-row {
+/* Birleştirilmiş Tek Tip Sipariş Kartı Satırı (Hem Standart Hem Onay Bekleyen İçin) */
+.sip-row-wrap {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 6px;
     width: 100%;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 details.custom-sip-card {
     flex: 1 1 auto;
@@ -275,7 +243,7 @@ details.custom-sip-card > summary {
     padding: 7px 10px;
     cursor: pointer;
     user-select: none;
-    min-height: 48px;
+    height: 48px;
     box-sizing: border-box;
 }
 details.custom-sip-card > summary::-webkit-details-marker {
@@ -298,7 +266,7 @@ details.custom-sip-card[open] .custom-card-arrow {
     flex: 1;
     min-width: 0;
     font-size: 13px;
-    line-height: 1.32;
+    line-height: 1.3;
     color: #0f172a;
 }
 .custom-card-line1 {
@@ -321,7 +289,7 @@ details.custom-sip-card[open] .custom-card-arrow {
 a.mini-onay-btn {
     flex: 0 0 42px;
     width: 42px;
-    min-height: 48px;
+    height: 48px;
     box-sizing: border-box;
     background-color: #f97316;
     border: 1px solid #ea580c;
@@ -516,7 +484,7 @@ a.review-action-btn:active {
 """, unsafe_allow_html=True)
 
 def md_temizle(metin):
-    """Expander başlığında Markdown karakterlerinin biçim bozmasını önler."""
+    """Kart başlığında özel karakterlerin biçim bozmasını önler."""
     return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
 
 def durum_metni_formatla(durum_val):
@@ -1074,7 +1042,7 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    # 6. Odaklı ve Sıkılaştırılmış 2 Satırlı Mobil Sipariş Kartları
+    # 6. Tek Tip ve Eşit Hizalı Mobil Sipariş Kartları
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
@@ -1093,45 +1061,32 @@ else:
 
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
-        # Yönetici girişinde "ONAY BEKLİYOR" siparişleri için tek blok yatay Flexbox satırı
-        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
-            satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
-
-            st.markdown(
-                f'<div class="onay-flex-row">'
-                f'<details class="custom-sip-card">'
-                f'<summary>'
-                f'<span class="custom-card-arrow">❯</span>'
-                f'<div class="custom-card-lines">'
-                f'<div class="custom-card-line1">{satir1_html}</div>'
-                f'<div class="custom-card-line2">{satir2_html}</div>'
-                f'</div>'
-                f'</summary>'
-                f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
-                f'</details>'
-                f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
+        if yetki_tipi == "MUSTERI":
+            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
         else:
-            if yetki_tipi == "MUSTERI":
-                baslik = (
-                    f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-                    f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-                )
-            else:
-                baslik = (
-                    f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-                    f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-                )
+            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
+        satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
-            with st.expander(baslik):
-                st.markdown(rozet_html, unsafe_allow_html=True)
-                if grid_html:
-                    st.markdown(grid_html, unsafe_allow_html=True)
-                if tablo_html:
-                    st.markdown(tablo_html, unsafe_allow_html=True)
+        onay_buton_html = ""
+        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
+            onay_buton_html = f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
+
+        st.markdown(
+            f'<div class="sip-row-wrap">'
+            f'<details class="custom-sip-card">'
+            f'<summary>'
+            f'<span class="custom-card-arrow">❯</span>'
+            f'<div class="custom-card-lines">'
+            f'<div class="custom-card-line1">{satir1_html}</div>'
+            f'<div class="custom-card-line2">{satir2_html}</div>'
+            f'</div>'
+            f'</summary>'
+            f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
+            f'</details>'
+            f'{onay_buton_html}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
     # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
