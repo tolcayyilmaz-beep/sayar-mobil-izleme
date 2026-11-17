@@ -240,28 +240,42 @@ div[data-testid="stExpander"] summary p {
     margin: 0 !important;
     line-height: 1.32 !important;
 }
-/* Yönetici Onay Bekleyen Kart: Kartın Sağında Aynı Hizada Ufak Tik Butonu */
+/* Yönetici Onay Bekleyen Kart: Kartı butona göre daralt ve birebir aynı hizaya getir */
 div[data-testid="stElementContainer"]:has(.onay-row-anchor) {
     display: none !important;
 }
 div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] {
-    position: relative !important;
+    padding-right: 48px !important;
+    box-sizing: border-box !important;
 }
 div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] div[data-testid="stExpander"] {
-    width: calc(100% - 48px) !important;
+    margin-bottom: 0 !important;
+    min-height: 46px !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] div[data-testid="stExpander"] summary {
+    min-height: 44px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
 }
 div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] {
-    position: relative !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-a.mini-onay-btn {
-    position: absolute !important;
-    right: 0 !important;
-    top: -52px !important;
+    margin-top: -53.2px !important;
+    margin-bottom: 3px !important;
+    margin-left: auto !important;
     width: 42px !important;
     height: 46px !important;
+    display: flex !important;
+    align-items: stretch !important;
+    z-index: 10 !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] > div {
+    width: 42px !important;
+    height: 46px !important;
+    display: flex !important;
+}
+a.mini-onay-btn {
+    width: 42px !important;
+    height: 46px !important;
+    box-sizing: border-box !important;
     background-color: #f97316 !important;
     border: 1px solid #ea580c !important;
     border-radius: 9px !important;
@@ -273,7 +287,6 @@ a.mini-onay-btn {
     align-items: center !important;
     justify-content: center !important;
     box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
-    z-index: 10 !important;
 }
 a.mini-onay-btn:active {
     background-color: #ea580c !important;
