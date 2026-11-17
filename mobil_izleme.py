@@ -240,41 +240,40 @@ div[data-testid="stExpander"] summary p {
     margin: 0 !important;
     line-height: 1.32 !important;
 }
-/* Yönetici Onay Bekleyen Kart: Kartı butona göre daralt ve birebir aynı hizaya getir */
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) {
-    display: none !important;
+/* Yönetici Onay Bekleyen Kart Container: Kart + Sağda Aynı Hizada Ufak Tik Butonu */
+div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
 }
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] {
-    padding-right: 48px !important;
-    box-sizing: border-box !important;
+div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:first-child {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: calc(100% - 48px) !important;
 }
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] div[data-testid="stExpander"] {
+div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:first-child div[data-testid="stExpander"] {
     margin-bottom: 0 !important;
-    min-height: 46px !important;
+    height: 100% !important;
 }
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] div[data-testid="stExpander"] summary {
-    min-height: 44px !important;
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
-}
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] {
-    margin-top: -53.2px !important;
-    margin-bottom: 3px !important;
-    margin-left: auto !important;
+div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:last-child {
+    flex: 0 0 42px !important;
     width: 42px !important;
-    height: 46px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
     display: flex !important;
     align-items: stretch !important;
-    z-index: 10 !important;
 }
-div[data-testid="stElementContainer"]:has(.onay-row-anchor) + div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] > div {
-    width: 42px !important;
-    height: 46px !important;
+div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:last-child > div {
+    width: 100% !important;
     display: flex !important;
+    align-items: stretch !important;
 }
 a.mini-onay-btn {
     width: 42px !important;
-    height: 46px !important;
+    min-height: 46px !important;
+    height: 100% !important;
     box-sizing: border-box !important;
     background-color: #f97316 !important;
     border: 1px solid #ea580c !important;
@@ -1060,17 +1059,17 @@ else:
 
         # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında aynı hizada ufak tik butonu
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            st.markdown('<span class="onay-row-anchor"></span>', unsafe_allow_html=True)
-            with st.expander(baslik):
-                st.markdown(rozet_html, unsafe_allow_html=True)
-                if grid_html:
-                    st.markdown(grid_html, unsafe_allow_html=True)
-                if tablo_html:
-                    st.markdown(tablo_html, unsafe_allow_html=True)
-            st.markdown(
-                f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>',
-                unsafe_allow_html=True
-            )
+            with st.container():
+                with st.expander(baslik):
+                    st.markdown(rozet_html, unsafe_allow_html=True)
+                    if grid_html:
+                        st.markdown(grid_html, unsafe_allow_html=True)
+                    if tablo_html:
+                        st.markdown(tablo_html, unsafe_allow_html=True)
+                st.markdown(
+                    f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>',
+                    unsafe_allow_html=True
+                )
         else:
             with st.expander(baslik):
                 st.markdown(rozet_html, unsafe_allow_html=True)
