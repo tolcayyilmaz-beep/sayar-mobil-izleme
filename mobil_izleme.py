@@ -59,7 +59,7 @@ a[href*="streamlit.io/cloud"] {
 }
 /* Streamlit blokları arasındaki genel dikey boşluğu daralt */
 [data-testid="stVerticalBlock"] {
-    gap: 0.35rem !important;
+    gap: 0.45rem !important;
 }
 /* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
 .header-banner {
@@ -212,7 +212,16 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Birleştirilmiş Tek Tip Sipariş Kartı Satırı (Hem Standart Hem Onay Bekleyen İçin) */
+/* Tek Blok Sipariş Listesi Kapsayıcısı */
+.sip-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+/* Sipariş Satırı (Kart + Sağda Opsiyonel Tik Butonu) */
 .sip-row-wrap {
     display: flex;
     flex-direction: row;
@@ -231,7 +240,7 @@ details.custom-sip-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 9px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -283,8 +292,9 @@ details.custom-sip-card[open] .custom-card-arrow {
     text-overflow: ellipsis;
 }
 .custom-card-body {
-    padding: 4px 10px 10px 10px;
-    border-top: 1px solid #f1f5f9;
+    padding: 6px 10px 10px 10px;
+    border-top: 1px solid #e2e8f0;
+    background-color: #ffffff;
 }
 a.mini-onay-btn {
     flex: 0 0 42px;
@@ -301,7 +311,7 @@ a.mini-onay-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 1px 2px rgba(249, 115, 22, 0.25);
 }
 a.mini-onay-btn:active {
     background-color: #ea580c;
@@ -1042,7 +1052,8 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    # 6. Tek Tip ve Eşit Hizalı Mobil Sipariş Kartları
+    # 6. Tüm Kartları Tek Bir Flexbox Kapsayıcıda Toplama (Üst Üste Binme Sıfır)
+    kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
@@ -1071,7 +1082,7 @@ else:
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
             onay_buton_html = f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
 
-        st.markdown(
+        kart_parcalari.append(
             f'<div class="sip-row-wrap">'
             f'<details class="custom-sip-card">'
             f'<summary>'
@@ -1084,9 +1095,11 @@ else:
             f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
             f'</details>'
             f'{onay_buton_html}'
-            f'</div>',
-            unsafe_allow_html=True
+            f'</div>'
         )
+
+    kart_parcalari.append('</div>')
+    st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
 
     # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
