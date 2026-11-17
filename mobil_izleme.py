@@ -179,41 +179,60 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:las
     width: auto !important;
     min-width: 54px !important;
 }
-/* Yönetici Onay Bekleyen Kart Satırı: Sol Expander + Sağ ONAYLA Butonu */
-div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) {
+/* Görünmez Marker Kapsayıcılarının Dikey Boşluk Oluşturmasını Engelle */
+div[data-testid="stElementContainer"]:has(.onay-btn-marker),
+div[data-testid="stElementContainer"]:has(.review-actions-marker) {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+}
+/* Yönetici Onay Bekleyen Kart Satırı: Sol Expander + Sağ Dar Tik Butonu (Aynı Hizada) */
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] {
     flex-wrap: nowrap !important;
-    align-items: stretch !important;
+    align-items: flex-start !important;
     gap: 6px !important;
     margin-bottom: 3px !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:first-child {
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:first-child {
     flex: 1 1 auto !important;
     min-width: 0 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 78px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:first-child div[data-testid="stExpander"] {
+    margin-bottom: 0 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child button {
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child {
+    flex: 0 0 44px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button {
     background-color: #f97316 !important;
     border: 1px solid #ea580c !important;
     color: #ffffff !important;
-    font-weight: 800 !important;
-    font-size: 11.5px !important;
     border-radius: 9px !important;
-    padding: 0 10px !important;
-    height: 100% !important;
-    min-height: 48px !important;
+    padding: 0 !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child button:hover {
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button p {
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+}
+div[data-testid="stElementContainer"]:has(.onay-btn-marker) + div[data-testid="stHorizontalBlock"] > div:last-child button:hover {
     background-color: #ea580c !important;
 }
-/* Tam Ekran Onay İnceleme Kartı ve Alt Aksiyon Butonları */
+/* Tam Ekran Onay İnceleme Kartı ve Alt Aksiyon Butonları (Aynı Hizada) */
 .fullscreen-review-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -238,38 +257,42 @@ div[data-testid="stHorizontalBlock"]:has(.onay-btn-marker) > div:last-child butt
     font-weight: 800;
     color: #0f172a;
 }
-div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) {
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] {
     flex-wrap: nowrap !important;
+    align-items: stretch !important;
     gap: 8px !important;
     margin-top: 8px !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div {
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div {
     flex: 1 1 0 !important;
     min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(1) button {
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] button {
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 9px !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+}
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] button p {
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+}
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(1) button {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
-    color: #ffffff !important;
-    font-weight: 800 !important;
-    height: 44px !important;
-    border-radius: 9px !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(2) button {
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
     background-color: #f97316 !important;
     border: 1px solid #ea580c !important;
-    color: #ffffff !important;
-    font-weight: 800 !important;
-    height: 44px !important;
-    border-radius: 9px !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.review-actions-marker) > div:nth-child(3) button {
+div[data-testid="stElementContainer"]:has(.review-actions-marker) + div[data-testid="stHorizontalBlock"] > div:nth-child(3) button {
     background-color: #dc2626 !important;
     border: 1px solid #b91c1c !important;
-    color: #ffffff !important;
-    font-weight: 800 !important;
-    height: 44px !important;
-    border-radius: 9px !important;
 }
 /* Arama Kutusu ve Şifre Alanı Beyaz Zemin */
 div[data-testid="stTextInput"] input {
@@ -859,14 +882,14 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         unsafe_allow_html=True
     )
 
+    st.markdown('<span class="review-actions-marker"></span>', unsafe_allow_html=True)
     col_onay, col_revize, col_red = st.columns(3)
     with col_onay:
-        st.markdown('<span class="review-actions-marker" style="display:none;"></span>', unsafe_allow_html=True)
-        st.button("✅ ONAYLA", key=f"fs_onayla_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+        st.button("ONAYLA", key=f"fs_onayla_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
     with col_revize:
-        st.button("✏️ REVİZE", key=f"fs_revize_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+        st.button("REVİZE", key=f"fs_revize_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
     with col_red:
-        st.button("❌ REDDET", key=f"fs_reddet_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
+        st.button("REDDET", key=f"fs_reddet_{aktif_inceleme_no}", on_click=onay_inceleme_kapat, use_container_width=True)
 
     st.stop()
 
@@ -1037,9 +1060,10 @@ else:
 
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
-        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında ONAYLA butonu
+        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında dar tik butonu
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            col_kart, col_onay_btn = st.columns([5, 1])
+            st.markdown('<span class="onay-btn-marker"></span>', unsafe_allow_html=True)
+            col_kart, col_onay_btn = st.columns([6, 1])
             with col_kart:
                 with st.expander(baslik):
                     st.markdown(rozet_html, unsafe_allow_html=True)
@@ -1048,9 +1072,8 @@ else:
                     if tablo_html:
                         st.markdown(tablo_html, unsafe_allow_html=True)
             with col_onay_btn:
-                st.markdown('<span class="onay-btn-marker" style="display:none;"></span>', unsafe_allow_html=True)
                 st.button(
-                    "ONAYLA",
+                    "✓",
                     key=f"btn_onayla_{sip_no}",
                     on_click=onay_inceleme_ac,
                     args=(sip_no,),
