@@ -225,11 +225,11 @@ div[data-testid="stExpander"] summary {
     display: flex !important;
     align-items: center !important;
     background-color: #ffffff !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
     padding-left: 10px !important;
     padding-right: 10px !important;
-    line-height: 1.3 !important;
+    line-height: 1.32 !important;
 }
 div[data-testid="stExpander"] summary:hover {
     background-color: #f8fafc !important;
@@ -241,6 +241,11 @@ div[data-testid="stExpander"] summary p {
     line-height: 1.32 !important;
 }
 /* Saf HTML Yönetici Onay Bekleyen Satırı: Kart + Sağda Aynı Hizada Ufak Tik Butonu */
+div[data-testid="stElementContainer"]:has(.onay-flex-row) {
+    margin-bottom: 3px !important;
+    position: relative;
+    z-index: 2;
+}
 .onay-flex-row {
     display: flex;
     flex-direction: row;
@@ -248,16 +253,19 @@ div[data-testid="stExpander"] summary p {
     align-items: stretch;
     gap: 6px;
     width: 100%;
-    margin-bottom: 3px;
+    margin: 0;
+    padding: 0;
 }
 details.custom-sip-card {
     flex: 1 1 auto;
     min-width: 0;
+    margin: 0;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 9px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     overflow: hidden;
+    box-sizing: border-box;
 }
 details.custom-sip-card > summary {
     list-style: none;
@@ -267,7 +275,7 @@ details.custom-sip-card > summary {
     padding: 7px 10px;
     cursor: pointer;
     user-select: none;
-    min-height: 46px;
+    min-height: 48px;
     box-sizing: border-box;
 }
 details.custom-sip-card > summary::-webkit-details-marker {
@@ -313,7 +321,7 @@ details.custom-sip-card[open] .custom-card-arrow {
 a.mini-onay-btn {
     flex: 0 0 42px;
     width: 42px;
-    min-height: 46px;
+    min-height: 48px;
     box-sizing: border-box;
     background-color: #f97316;
     border: 1px solid #ea580c;
