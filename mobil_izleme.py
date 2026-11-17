@@ -212,7 +212,7 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Sipariş Kartları ve Çekmeceler: Kompakt Beyaz Zemin + Çelik Çerçeve */
+/* Standart Sipariş Kartları ve Çekmeceler */
 div[data-testid="stExpander"] {
     background-color: #ffffff !important;
     border-radius: 9px !important;
@@ -240,55 +240,95 @@ div[data-testid="stExpander"] summary p {
     margin: 0 !important;
     line-height: 1.32 !important;
 }
-/* Yönetici Onay Bekleyen Kart Container: Kart + Sağda Aynı Hizada Ufak Tik Butonu */
-div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    gap: 6px !important;
-    width: 100% !important;
+/* Saf HTML Yönetici Onay Bekleyen Satırı: Kart + Sağda Aynı Hizada Ufak Tik Butonu */
+.onay-flex-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 3px;
 }
-div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:first-child {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    width: calc(100% - 48px) !important;
+details.custom-sip-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
 }
-div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:first-child div[data-testid="stExpander"] {
-    margin-bottom: 0 !important;
-    height: 100% !important;
+details.custom-sip-card > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    user-select: none;
+    min-height: 46px;
+    box-sizing: border-box;
 }
-div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:last-child {
-    flex: 0 0 42px !important;
-    width: 42px !important;
-    min-width: 42px !important;
-    max-width: 42px !important;
-    display: flex !important;
-    align-items: stretch !important;
+details.custom-sip-card > summary::-webkit-details-marker {
+    display: none;
 }
-div[data-testid="stVerticalBlock"]:has(> div > div > .mini-onay-btn) > div:last-child > div {
-    width: 100% !important;
-    display: flex !important;
-    align-items: stretch !important;
+details.custom-sip-card > summary:hover {
+    background-color: #f8fafc;
+}
+.custom-card-arrow {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 700;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+details.custom-sip-card[open] .custom-card-arrow {
+    transform: rotate(90deg);
+}
+.custom-card-lines {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.32;
+    color: #0f172a;
+}
+.custom-card-line1 {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.custom-card-line2 {
+    font-weight: 400;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.custom-card-body {
+    padding: 4px 10px 10px 10px;
+    border-top: 1px solid #f1f5f9;
 }
 a.mini-onay-btn {
-    width: 42px !important;
-    min-height: 46px !important;
-    height: 100% !important;
-    box-sizing: border-box !important;
-    background-color: #f97316 !important;
-    border: 1px solid #ea580c !important;
-    border-radius: 9px !important;
+    flex: 0 0 42px;
+    width: 42px;
+    min-height: 46px;
+    box-sizing: border-box;
+    background-color: #f97316;
+    border: 1px solid #ea580c;
+    border-radius: 9px;
     color: #ffffff !important;
-    font-size: 20px !important;
-    font-weight: 900 !important;
+    font-size: 20px;
+    font-weight: 900;
     text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25);
 }
 a.mini-onay-btn:active {
-    background-color: #ea580c !important;
+    background-color: #ea580c;
     transform: scale(0.96);
 }
 /* Tam Ekran Onay İnceleme Kartı ve Yan Yana Alt Butonlar */
@@ -476,7 +516,6 @@ def durum_metni_formatla(durum_val):
     metin = str(durum_val or "-").strip()
     if not metin or metin == "-":
         return "-"
-    # Türkçe karakter duyarlı büyük harf kontrolü
     tr_upper = metin.replace("i", "İ").replace("ı", "I").upper()
     if tr_upper in ("SEVK EDİLDİ", "İPTAL", "İPTAL EDİLDİ"):
         return tr_upper
@@ -1044,33 +1083,41 @@ else:
         s_md = md_temizle(santiye_str)
         t_md = md_temizle(tarih_str)
 
-        if yetki_tipi == "MUSTERI":
-            baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-            )
-        else:
-            baslik = (
-                f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
-                f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
-            )
-
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
-        # Yönetici girişinde "ONAY BEKLİYOR" siparişlerinin kart sağında aynı hizada ufak tik butonu
+        # Yönetici girişinde "ONAY BEKLİYOR" siparişleri için tek blok yatay Flexbox satırı
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            with st.container():
-                with st.expander(baslik):
-                    st.markdown(rozet_html, unsafe_allow_html=True)
-                    if grid_html:
-                        st.markdown(grid_html, unsafe_allow_html=True)
-                    if tablo_html:
-                        st.markdown(tablo_html, unsafe_allow_html=True)
-                st.markdown(
-                    f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>',
-                    unsafe_allow_html=True
-                )
+            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
+            satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
+
+            st.markdown(
+                f'<div class="onay-flex-row">'
+                f'<details class="custom-sip-card">'
+                f'<summary>'
+                f'<span class="custom-card-arrow">❯</span>'
+                f'<div class="custom-card-lines">'
+                f'<div class="custom-card-line1">{satir1_html}</div>'
+                f'<div class="custom-card-line2">{satir2_html}</div>'
+                f'</div>'
+                f'</summary>'
+                f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
+                f'</details>'
+                f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
         else:
+            if yetki_tipi == "MUSTERI":
+                baslik = (
+                    f"{durum_ikon} **#{sip_no} | {f_md}**  \n"
+                    f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
+                )
+            else:
+                baslik = (
+                    f"{durum_ikon} **#{sip_no} | {f_md} ➔ {m_md}**  \n"
+                    f"📍 {s_md} \u00A0 • \u00A0  {t_md}"
+                )
+
             with st.expander(baslik):
                 st.markdown(rozet_html, unsafe_allow_html=True)
                 if grid_html:
