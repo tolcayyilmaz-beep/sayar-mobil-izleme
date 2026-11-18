@@ -1,5 +1,6 @@
 import os
 import base64
+import shutil
 import pathlib
 
 # Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
@@ -19,13 +20,21 @@ import streamlit as st
 from cryptography.fernet import Fernet
 
 def ios_ikon_yamala():
-    """Streamlit'in ana index.html <head> bölümüne iOS apple-touch-icon etiketlerini doğrudan ekler."""
+    """Logoyu Streamlit'in kendi statik dizinine kopyalar ve index.html <head> bölümüne iOS ikonlarını ekler."""
     try:
-        index_path = pathlib.Path(st.__file__).parent / "static" / "index.html"
+        st_static_dir = pathlib.Path(st.__file__).parent / "static"
+        
+        # Logoyu doğrudan Streamlit'in dahili static klasörüne kopyala (/static/logo.png olarak sunulur)
+        kaynak_logo = pathlib.Path("logo.png") if os.path.exists("logo.png") else pathlib.Path("static/logo.png")
+        if kaynak_logo.exists():
+            shutil.copy2(kaynak_logo, st_static_dir / "logo.png")
+
+        # index.html <head> içine /static/logo.png adresini ekle
+        index_path = st_static_dir / "index.html"
         html_icerik = index_path.read_text(encoding="utf-8")
         etiketler = (
-            '<link rel="apple-touch-icon" sizes="180x180" href="/app/static/logo.png">'
-            '<link rel="apple-touch-icon-precomposed" href="/app/static/logo.png">'
+            '<link rel="apple-touch-icon" sizes="180x180" href="/static/logo.png">'
+            '<link rel="apple-touch-icon-precomposed" href="/static/logo.png">'
             '<meta name="apple-mobile-web-app-capable" content="yes">'
             '<meta name="apple-mobile-web-app-title" content="Sayar Yapı">'
         )
