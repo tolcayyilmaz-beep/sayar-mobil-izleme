@@ -1,4 +1,5 @@
 import os
+import base64
 
 # Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
 if os.environ.get("STREAMLIT_SECRETS"):
@@ -16,10 +17,23 @@ import pandas as pd
 import streamlit as st
 from cryptography.fernet import Fernet
 
+def logo_base64_getir(dosya_yolu="logo.png"):
+    """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
+    if os.path.exists(dosya_yolu):
+        ext = os.path.splitext(dosya_yolu)[1].lower()
+        mime = "image/svg+xml" if ext == ".svg" else ("image/jpeg" if ext in (".jpg", ".jpeg") else "image/png")
+        with open(dosya_yolu, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("utf-8")
+        return f"data:{mime};base64,{encoded}"
+    return None
+
+LOGO_DATA_URI = logo_base64_getir("logo.png")
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
+
 # Sayfa ve Mobil Görünüm Ayarları
 st.set_page_config(
     page_title="Sayar Yapı | Sipariş İzleme",
-    page_icon="🏗️",
+    page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -80,6 +94,9 @@ a[href*="streamlit.io/cloud"] {
     min-width: 0;
 }
 .header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 15px;
     font-weight: 700;
     margin: 0;
@@ -89,10 +106,22 @@ a[href*="streamlit.io/cloud"] {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.header-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.header-logo {
+    height: 26px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
 .header-sub {
     font-size: 11px;
     color: #cbd5e1;
-    margin-top: 1px;
+    margin-top: 2px;
 }
 .header-actions {
     display: flex;
@@ -569,7 +598,13 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
-        st.markdown('<div class="header-banner"><div class="header-info"><div class="header-title">🏗️ SAYAR YAPI</div><div class="header-sub">Sipariş Takip ve İzleme Sistemi</div></div></div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="header-banner"><div class="header-info">'
+            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
+            f'<div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>'
+            f'</div></div>',
+            unsafe_allow_html=True
+        )
 
         if url_musteri:
             st.caption(f"Müşteri Girişi: **{url_musteri}**")
@@ -718,13 +753,13 @@ def verileri_getir():
 
 # Renk Kodlu Üst Başlık Şeridi
 if yetki_tipi == "MUSTERI":
-    baslik_metni = f"🏗️ SAYAR YAPI | {html.escape(str(yetki_deger))}"
+    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
     alt_metin = "Müşteri Sipariş İzleme Paneli"
 elif yetki_tipi == "SIPARIS_VEREN":
-    baslik_metni = f"🏗️ SAYAR YAPI | {html.escape(str(yetki_deger))}"
+    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
     alt_metin = "Personel Sipariş İzleme Paneli"
 else:
-    baslik_metni = "🏗️ SAYAR YAPI | Sipariş İzleme"
+    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Sipariş İzleme</span>'
     alt_metin = "Yönetici Canlı Takip Paneli"
 
 token_param = f"&token={aktif_token}" if aktif_token else ""
