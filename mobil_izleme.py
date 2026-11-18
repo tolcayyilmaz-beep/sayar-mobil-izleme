@@ -1,5 +1,6 @@
 import os
 import base64
+import pathlib
 
 # Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
 if os.environ.get("STREAMLIT_SECRETS"):
@@ -16,6 +17,25 @@ import requests
 import pandas as pd
 import streamlit as st
 from cryptography.fernet import Fernet
+
+def ios_ikon_yamala():
+    """Streamlit'in ana index.html <head> bölümüne iOS apple-touch-icon etiketlerini doğrudan ekler."""
+    try:
+        index_path = pathlib.Path(st.__file__).parent / "static" / "index.html"
+        html_icerik = index_path.read_text(encoding="utf-8")
+        etiketler = (
+            '<link rel="apple-touch-icon" sizes="180x180" href="/app/static/logo.png">'
+            '<link rel="apple-touch-icon-precomposed" href="/app/static/logo.png">'
+            '<meta name="apple-mobile-web-app-capable" content="yes">'
+            '<meta name="apple-mobile-web-app-title" content="Sayar Yapı">'
+        )
+        if "apple-touch-icon" not in html_icerik:
+            yeni_icerik = html_icerik.replace("<head>", f"<head>{etiketler}", 1)
+            index_path.write_text(yeni_icerik, encoding="utf-8")
+    except Exception:
+        pass
+
+ios_ikon_yamala()
 
 def logo_base64_getir(dosya_yolu="logo.png"):
     """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
@@ -37,17 +57,6 @@ st.set_page_config(
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
-)
-
-# iPhone "Ana Ekrana Ekle" ikonu ve tam ekran web uygulaması ayarları
-st.markdown(
-    """
-    <link rel="apple-touch-icon" sizes="180x180" href="/app/static/logo.png">
-    <link rel="apple-touch-icon-precomposed" href="/app/static/logo.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Sayar Yapı">
-    """,
-    unsafe_allow_html=True
 )
 
 # Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
