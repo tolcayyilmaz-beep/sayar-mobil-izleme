@@ -1,18 +1,11 @@
 import os
 import base64
 
-# Railway ortamı için .streamlit klasörü ve ayar dosyalarını otomatik oluştur
-os.makedirs(".streamlit", exist_ok=True)
-
+# Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
 if os.environ.get("STREAMLIT_SECRETS"):
+    os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
-
-# iPhone apple-touch-icon için statik dosya servisini otomatik aktifleştir
-config_toml_path = ".streamlit/config.toml"
-if not os.path.exists(config_toml_path):
-    with open(config_toml_path, "w", encoding="utf-8") as f:
-        f.write("[server]\nenableStaticServing = true\n")
 
 import json
 import time
@@ -22,7 +15,6 @@ import tempfile
 import requests
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 from cryptography.fernet import Fernet
 
 def logo_base64_getir(dosya_yolu="logo.png"):
@@ -47,28 +39,15 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iPhone "Ana Ekrana Ekle" ikonu için <head> içine apple-touch-icon enjekte et
-components.html(
+# iPhone "Ana Ekrana Ekle" ikonu ve tam ekran web uygulaması ayarları
+st.markdown(
     """
-    <script>
-    (function() {
-        const doc = window.parent.document;
-        const iconUrl = window.parent.location.origin + '/app/static/logo.png';
-        const rels = ['apple-touch-icon', 'apple-touch-icon-precomposed'];
-        rels.forEach(function(relName) {
-            let link = doc.querySelector("link[rel='" + relName + "']");
-            if (!link) {
-                link = doc.createElement('link');
-                link.rel = relName;
-                doc.head.appendChild(link);
-            }
-            link.href = iconUrl;
-        });
-    })();
-    </script>
+    <link rel="apple-touch-icon" sizes="180x180" href="/app/static/logo.png">
+    <link rel="apple-touch-icon-precomposed" href="/app/static/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Sayar Yapı">
     """,
-    height=0,
-    width=0
+    unsafe_allow_html=True
 )
 
 # Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
