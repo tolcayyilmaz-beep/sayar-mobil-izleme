@@ -397,15 +397,13 @@ a.review-action-btn:active {
     font-weight: 600;
     color: #0f172a;
 }
-.info-item-label-red {
-    font-size: 10.5px;
-    color: #dc2626;
-    font-weight: 700;
-    display: block;
-}
 .info-item-val-red {
     font-weight: 800;
     color: #dc2626;
+}
+.info-item-val-navy {
+    font-weight: 700;
+    color: #1e3a8a;
 }
 .urun-table {
     width: 100%;
@@ -817,6 +815,7 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         "musteri" if yetki_tipi == "MUSTERI" else ""
     }
     kirmizi_alanlar = {"firma", "musteri", "nakliye"}
+    lacivert_alanlar = {"aciklama", "notlar"}
 
     sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
     grid_items_html = ""
@@ -832,16 +831,16 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         deger_str = html.escape(str(val).strip())
 
         if vurgulu_onay and col_lower in kirmizi_alanlar:
-            lbl_cls = "info-item-label-red"
             val_cls = "info-item-val-red"
+        elif vurgulu_onay and col_lower in lacivert_alanlar:
+            val_cls = "info-item-val-navy"
         else:
-            lbl_cls = "info-item-label"
             val_cls = "info-item-val"
 
         span_style = ' style="grid-column: span 2;"' if col_lower in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
         grid_items_html += (
             f'<div{span_style}>'
-            f'<span class="{lbl_cls}">{html.escape(etiket)}</span>'
+            f'<span class="info-item-label">{html.escape(etiket)}</span>'
             f'<span class="{val_cls}">{deger_str}</span>'
             f'</div>'
         )
