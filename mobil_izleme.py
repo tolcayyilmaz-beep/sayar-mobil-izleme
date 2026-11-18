@@ -397,6 +397,16 @@ a.review-action-btn:active {
     font-weight: 600;
     color: #0f172a;
 }
+.info-item-label-red {
+    font-size: 10.5px;
+    color: #dc2626;
+    font-weight: 700;
+    display: block;
+}
+.info-item-val-red {
+    font-weight: 800;
+    color: #dc2626;
+}
 .urun-table {
     width: 100%;
     border-collapse: collapse;
@@ -795,7 +805,7 @@ oncelik = [
 
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-def siparis_detay_html_olustur(row, sip_no):
+def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
     """Siparişin genel bilgi ızgarası ve ürün kalemleri tablosu HTML çıktısını üretir."""
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
@@ -806,24 +816,33 @@ def siparis_detay_html_olustur(row, sip_no):
         "id", "siparis_no", "operasyon", "durum",
         "musteri" if yetki_tipi == "MUSTERI" else ""
     }
+    kirmizi_alanlar = {"firma", "musteri", "nakliye"}
 
     sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
     grid_items_html = ""
     for col_name in sirali_sutunlar:
-        if col_name.lower() in haric_sutunlar:
+        col_lower = col_name.lower()
+        if col_lower in haric_sutunlar:
             continue
         val = row.get(col_name)
         if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
             continue
 
-        etiket = ETIKET_MAP.get(col_name.lower(), col_name.replace("_", " ").title())
+        etiket = ETIKET_MAP.get(col_lower, col_name.replace("_", " ").title())
         deger_str = html.escape(str(val).strip())
 
-        span_style = ' style="grid-column: span 2;"' if col_name.lower() in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
+        if vurgulu_onay and col_lower in kirmizi_alanlar:
+            lbl_cls = "info-item-label-red"
+            val_cls = "info-item-val-red"
+        else:
+            lbl_cls = "info-item-label"
+            val_cls = "info-item-val"
+
+        span_style = ' style="grid-column: span 2;"' if col_lower in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
         grid_items_html += (
             f'<div{span_style}>'
-            f'<span class="info-item-label">{html.escape(etiket)}</span>'
-            f'<span class="info-item-val">{deger_str}</span>'
+            f'<span class="{lbl_cls}">{html.escape(etiket)}</span>'
+            f'<span class="{val_cls}">{deger_str}</span>'
             f'</div>'
         )
 
@@ -894,7 +913,7 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         st.rerun()
 
     inceleme_row = secili_df.iloc[0]
-    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no)
+    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
 
     st.markdown(
         f'<div class="fullscreen-review-card">'
