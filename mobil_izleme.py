@@ -1,11 +1,18 @@
 import os
 import base64
 
-# Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
+# Railway ortamı için .streamlit klasörü ve ayar dosyalarını otomatik oluştur
+os.makedirs(".streamlit", exist_ok=True)
+
 if os.environ.get("STREAMLIT_SECRETS"):
-    os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
+
+# iPhone apple-touch-icon için statik dosya servisini otomatik aktifleştir
+config_toml_path = ".streamlit/config.toml"
+if not os.path.exists(config_toml_path):
+    with open(config_toml_path, "w", encoding="utf-8") as f:
+        f.write("[server]\nenableStaticServing = true\n")
 
 import json
 import time
@@ -15,14 +22,16 @@ import tempfile
 import requests
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from cryptography.fernet import Fernet
 
 def logo_base64_getir(dosya_yolu="logo.png"):
     """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
-    if os.path.exists(dosya_yolu):
-        ext = os.path.splitext(dosya_yolu)[1].lower()
+    yol = dosya_yolu if os.path.exists(dosya_yolu) else os.path.join("static", dosya_yolu)
+    if os.path.exists(yol):
+        ext = os.path.splitext(yol)[1].lower()
         mime = "image/svg+xml" if ext == ".svg" else ("image/jpeg" if ext in (".jpg", ".jpeg") else "image/png")
-        with open(dosya_yolu, "rb") as f:
+        with open(yol, "rb") as f:
             encoded = base64.b64encode(f.read()).decode("utf-8")
         return f"data:{mime};base64,{encoded}"
     return None
@@ -36,6 +45,30 @@ st.set_page_config(
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
+)
+
+# iPhone "Ana Ekrana Ekle" ikonu için <head> içine apple-touch-icon enjekte et
+components.html(
+    """
+    <script>
+    (function() {
+        const doc = window.parent.document;
+        const iconUrl = window.parent.location.origin + '/app/static/logo.png';
+        const rels = ['apple-touch-icon', 'apple-touch-icon-precomposed'];
+        rels.forEach(function(relName) {
+            let link = doc.querySelector("link[rel='" + relName + "']");
+            if (!link) {
+                link = doc.createElement('link');
+                link.rel = relName;
+                doc.head.appendChild(link);
+            }
+            link.href = iconUrl;
+        });
+    })();
+    </script>
+    """,
+    height=0,
+    width=0
 )
 
 # Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
