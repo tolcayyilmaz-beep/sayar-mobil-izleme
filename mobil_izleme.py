@@ -9,6 +9,7 @@ if os.environ.get("STREAMLIT_SECRETS"):
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
+import re
 import json
 import time
 import html
@@ -20,27 +21,42 @@ import streamlit as st
 from cryptography.fernet import Fernet
 
 def ios_ikon_yamala():
-    """Logoyu Streamlit'in kendi statik dizinine kopyalar ve index.html <head> bölümüne iOS ikonlarını ekler."""
+    """Streamlit'in ana index.html <head> bölümüne iOS apple-touch-icon etiketlerini doğrudan ekler."""
     try:
         st_static_dir = pathlib.Path(st.__file__).parent / "static"
-        
-        # Logoyu doğrudan Streamlit'in dahili static klasörüne kopyala (/static/logo.png olarak sunulur)
+
+        # Yerel logo varsa dahili static klasörüne de kopyala
         kaynak_logo = pathlib.Path("logo.png") if os.path.exists("logo.png") else pathlib.Path("static/logo.png")
         if kaynak_logo.exists():
-            shutil.copy2(kaynak_logo, st_static_dir / "logo.png")
+            try:
+                shutil.copy2(kaynak_logo, st_static_dir / "logo.png")
+            except Exception:
+                pass
 
-        # index.html <head> içine /static/logo.png adresini ekle
+        # Secrets içinde LOGO_URL tanımlıysa onu kullan, yoksa /app/static/logo.png kullan
+        logo_url = ""
+        try:
+            logo_url = st.secrets.get("LOGO_URL", "").strip()
+        except Exception:
+            pass
+        if not logo_url:
+            logo_url = "/app/static/logo.png"
+
         index_path = st_static_dir / "index.html"
         html_icerik = index_path.read_text(encoding="utf-8")
+
+        # Eski eklenen iOS etiketlerini temizle ve güncel linkle yeniden yaz
+        html_icerik = re.sub(r'<link rel="apple-touch-icon[^>]*>', '', html_icerik)
+        html_icerik = re.sub(r'<meta name="apple-mobile-web-app-[^>]*>', '', html_icerik)
+
         etiketler = (
-            '<link rel="apple-touch-icon" sizes="180x180" href="/static/logo.png">'
-            '<link rel="apple-touch-icon-precomposed" href="/static/logo.png">'
+            f'<link rel="apple-touch-icon" sizes="180x180" href="{logo_url}">'
+            f'<link rel="apple-touch-icon-precomposed" href="{logo_url}">'
             '<meta name="apple-mobile-web-app-capable" content="yes">'
             '<meta name="apple-mobile-web-app-title" content="Sayar Yapı">'
         )
-        if "apple-touch-icon" not in html_icerik:
-            yeni_icerik = html_icerik.replace("<head>", f"<head>{etiketler}", 1)
-            index_path.write_text(yeni_icerik, encoding="utf-8")
+        yeni_icerik = html_icerik.replace("<head>", f"<head>{etiketler}", 1)
+        index_path.write_text(yeni_icerik, encoding="utf-8")
     except Exception:
         pass
 
