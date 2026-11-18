@@ -1,16 +1,14 @@
 import os
-import re
 import json
 import time
 import html
 import base64
-import shutil
-import pathlib
 import sqlite3
 import tempfile
 import requests
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from cryptography.fernet import Fernet
 
 # Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
@@ -33,7 +31,7 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 LOGO_DATA_URI = logo_base64_getir("logo.png")
 LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
 
-# Sayfa ve Mobil Görünüm Ayarları (Her zaman ilk Streamlit komutu olmalı)
+# Sayfa ve Mobil Görünüm Ayarları
 st.set_page_config(
     page_title="Sayar Yapı | Sipariş İzleme",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
@@ -41,45 +39,37 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-def ios_ikon_yamala():
-    """Streamlit'in ana index.html <head> bölümüne iOS apple-touch-icon etiketlerini ekler."""
-    try:
-        st_static_dir = pathlib.Path(st.__file__).parent / "static"
-        kaynak_logo = pathlib.Path("logo.png") if os.path.exists("logo.png") else pathlib.Path("static/logo.png")
-        if kaynak_logo.exists():
-            try:
-                shutil.copy2(kaynak_logo, st_static_dir / "logo.png")
-            except Exception:
-                pass
+# iOS Ana Ekran İkonunu Çekirdek Dosyalara Dokunmadan <head> İçine Enjekte Et
+logo_hedef_url = ""
+try:
+    if "LOGO_URL" in st.secrets:
+        logo_hedef_url = str(st.secrets["LOGO_URL"]).strip()
+except Exception:
+    pass
 
-        logo_url = ""
-        try:
-            if "LOGO_URL" in st.secrets:
-                logo_url = str(st.secrets["LOGO_URL"]).strip()
-        except Exception:
-            pass
+if not logo_hedef_url and LOGO_DATA_URI:
+    logo_hedef_url = LOGO_DATA_URI
 
-        if not logo_url:
-            logo_url = "/app/static/logo.png"
-
-        index_path = st_static_dir / "index.html"
-        if index_path.exists():
-            html_icerik = index_path.read_text(encoding="utf-8")
-            html_icerik = re.sub(r'<link rel="apple-touch-icon[^>]*>', '', html_icerik)
-            html_icerik = re.sub(r'<meta name="apple-mobile-web-app-[^>]*>', '', html_icerik)
-
-            etiketler = (
-                f'<link rel="apple-touch-icon" sizes="180x180" href="{logo_url}">'
-                f'<link rel="apple-touch-icon-precomposed" href="{logo_url}">'
-                '<meta name="apple-mobile-web-app-capable" content="yes">'
-                '<meta name="apple-mobile-web-app-title" content="Sayar Yapı">'
-            )
-            yeni_icerik = html_icerik.replace("<head>", f"<head>{etiketler}", 1)
-            index_path.write_text(yeni_icerik, encoding="utf-8")
-    except Exception:
-        pass
-
-ios_ikon_yamala()
+if logo_hedef_url:
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const head = doc.head || doc.getElementsByTagName('head')[0];
+            if (!head) return;
+            doc.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(el => el.remove());
+            const l1 = doc.createElement('link');
+            l1.rel = 'apple-touch-icon';
+            l1.sizes = '180x180';
+            l1.href = {json.dumps(logo_hedef_url)};
+            head.appendChild(l1);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
 # Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
 st.markdown("""
