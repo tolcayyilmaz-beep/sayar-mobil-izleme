@@ -824,6 +824,8 @@ OP_RENK = {
     "İŞLENDİ": "#0284c7",
     "ONAY BEKLİYOR": "#f97316",
     "ONAYLANDI": "#16a34a",
+    "REVİZE İSTENDİ": "#f59e0b",
+    "REDDEDİLDİ": "#dc2626",
     "TAMAMLANDI": "#16a34a",
     "MUHASEBEYE İLETİLDİ": "#16a34a",
     "İPTAL EDİLDİ": "#dc2626",
@@ -834,6 +836,8 @@ OP_IKON = {
     "İŞLENDİ": "🔵",
     "ONAY BEKLİYOR": "🟠",
     "ONAYLANDI": "🟢",
+    "REVİZE İSTENDİ": "🟡",
+    "REDDEDİLDİ": "⛔",
     "TAMAMLANDI": "✅",
     "MUHASEBEYE İLETİLDİ": "✅",
     "İPTAL EDİLDİ": "🔴",
@@ -841,32 +845,41 @@ OP_IKON = {
 }
 
 ETIKET_MAP = {
+    "tarih": "Sipariş Tarihi",
+    "sevk_tarihi": "Sevk Tarihi",
     "firma": "Tedarikçi Firma",
     "musteri": "Müşteri",
     "santiye": "Şantiye",
-    "tarih": "Sipariş Tarihi",
-    "siparis_tarihi": "Sipariş Tarihi",
-    "siparis_veren": "Sipariş Veren",
-    "plaka": "Araç Plakası",
-    "arac_plaka": "Araç Plakası",
-    "sofor": "Şoför",
-    "telefon": "Telefon",
-    "teslim_tarihi": "Teslim Tarihi",
-    "sevk_tarihi": "Sevk Tarihi",
-    "onay_tarihi": "Onay Tarihi",
-    "onaylayan": "Onaylayan",
-    "irsaliye_no": "İrsaliye No",
-    "fatura_no": "Fatura No",
-    "odeme_sekli": "Ödeme Şekli",
+    "sehir": "Şehir",
+    "fabrika": "Fabrika",
     "nakliye": "Nakliye",
-    "aciklama": "Açıklama / Not",
-    "notlar": "Not"
+    "yetkili": "Yetkili",
+    "telefon": "Telefon",
+    "arac": "Araç",
+    "ted_sip_no": "Ted.Sip.No",
+    "siparis_veren": "Sipariş Veren",
+    "notlar": "Not",
+    "plaka": "Plaka",
+    "nakliye_fatura": "Nakliye Fatura",
+    "firma_yetkili": "Firma Yetkili",
+    "siparis_gecen": "Sipariş Geçen"
 }
 
 oncelik = [
-    "firma", "musteri", "santiye", "tarih", "siparis_tarihi",
-    "siparis_veren", "teslim_tarihi", "sevk_tarihi", "plaka",
-    "sofor", "irsaliye_no", "aciklama", "notlar"
+    "tarih",
+    "sevk_tarihi",
+    "firma",
+    "musteri",
+    "santiye",
+    "sehir",
+    "fabrika",
+    "nakliye",
+    "yetkili",
+    "telefon",
+    "arac",
+    "ted_sip_no",
+    "siparis_veren",
+    "notlar"
 ]
 
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
@@ -880,10 +893,11 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
 
     haric_sutunlar = {
         "id", "siparis_no", "operasyon", "durum",
+        "plaka", "nakliye_fatura", "firma_yetkili", "siparis_gecen",
         "musteri" if yetki_tipi == "MUSTERI" else ""
     }
     kirmizi_alanlar = {"firma", "musteri", "nakliye"}
-    lacivert_alanlar = {"aciklama", "notlar"}
+    lacivert_alanlar = {"notlar"}
 
     sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
     grid_items_html = ""
@@ -892,11 +906,10 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         if col_lower in haric_sutunlar:
             continue
         val = row.get(col_name)
-        if pd.isna(val) or str(val).strip() in ("", "None", "nan"):
-            continue
+        bos_mu = pd.isna(val) or str(val).strip() in ("", "None", "nan")
 
         etiket = ETIKET_MAP.get(col_lower, col_name.replace("_", " ").title())
-        deger_str = html.escape(str(val).strip())
+        deger_str = "-" if bos_mu else html.escape(str(val).strip())
 
         if vurgulu_onay and col_lower in kirmizi_alanlar:
             val_cls = "info-item-val-red"
@@ -905,7 +918,7 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         else:
             val_cls = "info-item-val"
 
-        span_style = ' style="grid-column: span 2;"' if col_lower in ("aciklama", "notlar", "adres") or len(deger_str) > 35 else ""
+        span_style = ' style="grid-column: span 2;"' if col_lower == "notlar" or len(deger_str) > 35 else ""
         grid_items_html += (
             f'<div{span_style}>'
             f'<span class="info-item-label">{html.escape(etiket)}</span>'
