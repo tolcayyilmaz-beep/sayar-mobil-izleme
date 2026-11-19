@@ -7,6 +7,7 @@ import tempfile
 from datetime import datetime
 import pandas as pd
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 from cryptography.fernet import Fernet
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -272,6 +273,17 @@ OP_RENK = {
 QUEUE_FILE_NAME = "mobil_onaylar.json"
 
 
+def get_config(key: str, default=None):
+    """Önce Railway Ortam Değişkenlerini (os.environ), yoksa Streamlit Secrets'ı okur."""
+    env_val = os.environ.get(key)
+    if env_val is not None and str(env_val).strip() != "":
+        return env_val
+    try:
+        return st.secrets.get(key, default)
+    except StreamlitSecretNotFoundError:
+        return default
+
+
 def format_durum_text(val) -> str:
     metin = str(val or "").strip()
     if not metin:
@@ -297,8 +309,20 @@ def format_miktar(val) -> str:
 # GOOGLE DRIVE BAĞLANTISI & ONAY KUYRUĞU YAZMA
 # ==========================================
 def get_drive_service():
+    gcp_json_str = os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json_str:
+        service_info = json.loads(gcp_json_str)
+    else:
+        gcp_secret = get_config("gcp_service_account")
+        if not gcp_secret:
+            raise RuntimeError(
+                "Google Drive kimlik bilgileri bulunamadı! Railway Variables sekmesine "
+                "'GCP_SERVICE_ACCOUNT_JSON', 'GDRIVE_FOLDER_ID' ve 'DB_ENCRYPTION_KEY' ekleyin."
+            )
+        service_info = dict(gcp_secret)
+
     creds = service_account.Credentials.from_service_account_info(
-        dict(st.secrets["gcp_service_account"]),
+        service_info,
         scopes=["https://www.googleapis.com/auth/drive"]
     )
     return build("drive", "v3", credentials=creds, cache_discovery=False)
@@ -307,7 +331,11 @@ def get_drive_service():
 def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> bool:
     """Yönetici onay/revize/ret kararını Google Drive üzerindeki mobil_onaylar.json kuyruğuna ekler."""
     try:
-        folder_id = st.secrets["GDRIVE_FOLDER_ID"]
+        folder_id = get_config("GDRIVE_FOLDER_ID")
+        if not folder_id:
+            st.error("GDRIVE_FOLDER_ID ayarı eksik!")
+            return False
+
         service = get_drive_service()
 
         query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
@@ -334,7 +362,6 @@ def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> 
             except Exception:
                 mevcut_kuyruk = []
 
-        # Aynı sipariş için bekleyen önceki karar varsa güncelle
         mevcut_kuyruk = [k for k in mevcut_kuyruk if int(k.get("siparis_no", -1)) != int(siparis_no)]
         mevcut_kuyruk.append({
             "siparis_no": int(siparis_no),
@@ -355,7 +382,6 @@ def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> 
             }
             service.files().create(body=file_metadata, media_body=media, fields="id").execute()
 
-        # İyimser yerel önbellek güncellemesi
         if "lokal_kararlar" not in st.session_state:
             st.session_state["lokal_kararlar"] = {}
         st.session_state["lokal_kararlar"][int(siparis_no)] = {
@@ -371,10 +397,16 @@ def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> 
 @st.cache_data(ttl=25, show_spinner=False)
 def load_orders_from_drive():
     """Google Drive üzerindeki şifreli .db.enc dosyasını indirir, çözer ve tüm siparişleri tek seferde çeker."""
-    folder_id = st.secrets["GDRIVE_FOLDER_ID"]
-    db_filename = st.secrets.get("DB_FILENAME", "siparis_takip.db.enc")
-    fernet_key = st.secrets["DB_ENCRYPTION_KEY"].encode("utf-8")
+    folder_id = get_config("GDRIVE_FOLDER_ID")
+    db_filename = get_config("DB_FILENAME", "siparis_takip.db.enc")
+    enc_key = get_config("DB_ENCRYPTION_KEY")
 
+    if not folder_id or not enc_key:
+        raise RuntimeError(
+            "Eksik yapılandırma! Railway Variables bölümünde 'GDRIVE_FOLDER_ID' ve 'DB_ENCRYPTION_KEY' tanımlı olmalıdır."
+        )
+
+    fernet_key = enc_key.encode("utf-8")
     service = get_drive_service()
 
     query = f"name='{db_filename}' and '{folder_id}' in parents and trashed=false"
@@ -392,7 +424,6 @@ def load_orders_from_drive():
     file_id = file_meta["id"]
     modified_time = file_meta.get("modifiedTime", "")
 
-    # Bekleyen mobil karar kuyruğunu da oku
     bekleyen_kararlar = {}
     q_queue = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
     res_q = service.files().list(q=q_queue, fields="files(id)").execute()
@@ -454,7 +485,7 @@ def load_orders_from_drive():
 # ŞİFRE KORUMASI
 # ==========================================
 def check_mobile_password():
-    app_pass = st.secrets.get("APP_PASSWORD", "")
+    app_pass = get_config("APP_PASSWORD", "")
     if not app_pass:
         return True
 
@@ -644,7 +675,6 @@ def main():
     if "onay_inceleme_no" not in st.session_state:
         st.session_state["onay_inceleme_no"] = None
 
-    # 2 saniyelik geçici bildirim alanı
     flash_box = st.empty()
     flash_msg = st.session_state.pop("flash_mesaj", None)
     if flash_msg:
@@ -660,7 +690,6 @@ def main():
             st.rerun()
         return
 
-    # Bekleyen mobil kararları görüntülenen DataFrame üzerine uygula
     birlesik_kararlar = {}
     birlesik_kararlar.update(drive_kuyruk)
     birlesik_kararlar.update(st.session_state.get("lokal_kararlar", {}))
@@ -676,7 +705,6 @@ def main():
                     eski = str(r.get("notlar") or "").strip()
                     df.at[idx, "notlar"] = f"{eski}\n[Mobil {yeni_k}]: {ek_not}".strip() if eski else f"[Mobil {yeni_k}]: {ek_not}"
 
-    # 1) Onay İnceleme Ekranı Açık İse
     if st.session_state["onay_inceleme_no"] is not None:
         hedef_no = st.session_state["onay_inceleme_no"]
         secili_df = df[df["siparis_no"] == hedef_no]
@@ -689,7 +717,6 @@ def main():
         else:
             st.session_state["onay_inceleme_no"] = None
 
-    # 2) Normal Detay Ekranı Açık İse
     if st.session_state["selected_order_no"] is not None:
         hedef_no = st.session_state["selected_order_no"]
         secili_df = df[df["siparis_no"] == hedef_no]
@@ -702,7 +729,6 @@ def main():
         else:
             st.session_state["selected_order_no"] = None
 
-    # Üst Başlık ve Yenile Butonu
     col_h1, col_h2 = st.columns([4, 1])
     with col_h1:
         son_guncelleme = modified_time.replace("T", " ")[:16] if modified_time else "-"
@@ -718,7 +744,6 @@ def main():
             st.cache_data.clear()
             st.rerun()
 
-    # Tıklanabilir KPI Özet Kartları
     op_series = df["operasyon"].fillna("").astype(str).str.strip().str.upper()
     toplam_sayi = len(df)
     onay_bekleyen = int((op_series == "ONAY BEKLİYOR").sum())
@@ -746,7 +771,6 @@ def main():
         if st.button(f"TAMAM\n{tamamlanan}", key="kpi_tamam", type="primary" if aktif_kpi == "TAMAMLANDI" else "secondary", use_container_width=True):
             kpi_tikla("TAMAMLANDI")
 
-    # Arama ve Hızlı Filtreler
     arama = st.text_input(
         "Arama",
         placeholder="🔍 Firma, Müşteri, Şantiye, Fabrika veya Sipariş No ara...",
@@ -760,7 +784,6 @@ def main():
     with f2:
         tamam_gizle = st.checkbox("Tamamlananları Gizle", value=True)
 
-    # Filtreleme Uygulama
     filtered = df.copy()
     f_op = filtered["operasyon"].fillna("").astype(str).str.strip().str.upper()
 
@@ -835,7 +858,6 @@ def main():
         if len(filtered) > max_gosterim:
             st.info(f"İlk {max_gosterim} sipariş gösteriliyor. Diğer kayıtlar için arama veya filtre kullanabilirsiniz.")
 
-    # Geçici onay/revize/ret mesajını 2 saniye gösterip temizle
     if flash_msg:
         time.sleep(2)
         flash_box.empty()
