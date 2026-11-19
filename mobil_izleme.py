@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import time
 import html
@@ -9,13 +10,20 @@ import requests
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+from datetime import datetime
 from cryptography.fernet import Fernet
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 # Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
 if os.environ.get("STREAMLIT_SECRETS"):
     os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
+
+NTFY_TOPIC = "sayar_yapi_siparis_2026"
+QUEUE_FILE_NAME = "mobil_onaylar.json"
 
 def logo_base64_getir(dosya_yolu="logo.png"):
     """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
@@ -93,7 +101,6 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-/* Sayfa Zemini: Taş Grisi */
 .stApp, [data-testid="stAppViewContainer"] {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
@@ -104,11 +111,9 @@ a[href*="streamlit.io/cloud"] {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
 }
-/* Streamlit blokları arasındaki genel dikey boşluğu daralt */
 [data-testid="stVerticalBlock"] {
     gap: 0.45rem !important;
 }
-/* Kurumsal Başlık Şeridi: Arduvaz Lacivert + İnşaat Turuncusu Vurgu */
 .header-banner {
     display: flex;
     justify-content: space-between;
@@ -178,7 +183,6 @@ a[href*="streamlit.io/cloud"] {
 .icon-btn:active {
     background-color: #f97316;
 }
-/* Tıklanabilir Beyaz KPI Kartları */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -225,7 +229,6 @@ a.kpi-card:active {
     color: #0f172a;
     line-height: 1.2;
 }
-/* Arama + Popover Satırının Mobilde Yan Yana Kalması ve Üst Boşluk */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
@@ -241,17 +244,18 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:las
     width: auto !important;
     min-width: 54px !important;
 }
-/* Arama Kutusu ve Şifre Alanı Beyaz Zemin */
-div[data-testid="stTextInput"] input {
+div[data-testid="stTextInput"] input,
+div[data-testid="stTextArea"] textarea {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 9px !important;
     color: #0f172a !important;
+}
+div[data-testid="stTextInput"] input {
     height: 38px !important;
     padding-top: 6px !important;
     padding-bottom: 6px !important;
 }
-/* Giriş Formu Kart Görünümü */
 div[data-testid="stForm"] {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -259,7 +263,6 @@ div[data-testid="stForm"] {
     padding: 14px !important;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
-/* Popover Buton Tasarımı */
 div[data-testid="stPopover"] > button {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -274,7 +277,6 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #f97316 !important;
     background-color: #fff7ed !important;
 }
-/* Tek Blok Sipariş Listesi Kapsayıcısı */
 .sip-list-container {
     display: flex;
     flex-direction: column;
@@ -283,7 +285,6 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
     padding: 0;
 }
-/* Sipariş Satırı (Kart + Sağda Opsiyonel Tik Butonu) */
 .sip-row-wrap {
     display: flex;
     flex-direction: row;
@@ -379,7 +380,7 @@ a.mini-onay-btn:active {
     background-color: #ea580c;
     transform: scale(0.96);
 }
-/* Tam Ekran Onay İnceleme Kartı ve Yan Yana Alt Butonlar */
+/* Tam Ekran Onay İnceleme Kartı */
 .fullscreen-review-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -387,7 +388,7 @@ a.mini-onay-btn:active {
     border-radius: 12px;
     padding: 14px 12px;
     margin-top: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 .fullscreen-review-header {
@@ -404,39 +405,24 @@ a.mini-onay-btn:active {
     font-weight: 800;
     color: #0f172a;
 }
-.review-btn-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 8px;
-}
-a.review-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 44px;
-    border-radius: 9px;
-    color: #ffffff !important;
-    font-size: 13px;
-    font-weight: 800;
+a.close-review-link {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569 !important;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 9px;
     text-decoration: none !important;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
 }
-a.review-action-btn:active {
-    transform: scale(0.98);
+/* Mobil Onay / Revize / Reddet Native Buton Stilleri */
+div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
 }
-.btn-approve {
-    background-color: #16a34a !important;
-    border: 1px solid #15803d !important;
-}
-.btn-revise {
-    background-color: #f97316 !important;
-    border: 1px solid #ea580c !important;
-}
-.btn-reject {
-    background-color: #dc2626 !important;
-    border: 1px solid #b91c1c !important;
+div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) > div {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
 }
 .info-grid {
     display: grid;
@@ -510,7 +496,6 @@ a.review-action-btn:active {
     font-weight: 600;
     font-size: 12px;
 }
-/* Empty State & Sayfalama Stilleri */
 .empty-state-box {
     background-color: #ffffff;
     border: 1px dashed #cbd5e1;
@@ -564,11 +549,9 @@ a.review-action-btn:active {
 """, unsafe_allow_html=True)
 
 def md_temizle(metin):
-    """Kart başlığında özel karakterlerin biçim bozmasını önler."""
     return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
 
 def durum_metni_formatla(durum_val):
-    """Sipariş durumu içindeki 'Sevk Edildi' ve 'İptal' yazılarını büyük harfe çevirir."""
     metin = str(durum_val or "-").strip()
     if not metin or metin == "-":
         return "-"
@@ -576,6 +559,91 @@ def durum_metni_formatla(durum_val):
     if tr_upper in ("SEVK EDİLDİ", "İPTAL", "İPTAL EDİLDİ"):
         return tr_upper
     return metin
+
+# Google Drive API Servisi ve Onay Kuyruğu İşlemleri
+def get_gdrive_service():
+    sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
+    creds = service_account.Credentials.from_service_account_info(
+        sa_info,
+        scopes=["https://www.googleapis.com/auth/drive"]
+    )
+    return build("drive", "v3", credentials=creds, cache_discovery=False)
+
+def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
+    """Kararı Google Drive'daki mobil_onaylar.json dosyasına çakışmasız şekilde ekler."""
+    service = get_gdrive_service()
+    folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
+
+    query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
+    results = service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+
+    mevcut_kayitlar = []
+    file_id = None
+
+    if files:
+        file_id = files[0]["id"]
+        request = service.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+        try:
+            icerik = fh.getvalue().decode("utf-8").strip()
+            if icerik:
+                mevcut_kayitlar = json.loads(icerik)
+        except Exception:
+            mevcut_kayitlar = []
+
+    # Aynı sipariş için bekleyen eski bir karar varsa güncelle, yoksa sona ekle
+    mevcut_kayitlar = [k for k in mevcut_kayitlar if int(k.get("siparis_no", -1)) != int(siparis_no)]
+    mevcut_kayitlar.append({
+        "siparis_no": int(siparis_no),
+        "karar": karar,
+        "not": aciklama.strip(),
+        "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    json_bytes = json.dumps(mevcut_kayitlar, ensure_ascii=False, indent=2).encode("utf-8")
+    media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
+
+    if file_id:
+        service.files().update(fileId=file_id, media_body=media).execute()
+    else:
+        file_metadata = {
+            "name": QUEUE_FILE_NAME,
+            "parents": [folder_id]
+        }
+        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+
+def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, aciklama: str = ""):
+    """Yönetici kararını ntfy kanalına anlık bildirim olarak gönderir."""
+    try:
+        ikon_tag = "white_check_mark" if karar == "ONAYLANDI" else ("warning" if karar == "REVİZE İSTENDİ" else "no_entry")
+        baslik = f"Siparis #{siparis_no} - {karar}"
+        mesaj_satirlar = [
+            f"Karar: {karar}",
+            f"Firma: {firma or '-'}",
+            f"Musteri: {musteri or '-'}"
+        ]
+        if aciklama and aciklama.strip():
+            mesaj_satirlar.append(f"Not: {aciklama.strip()}")
+
+        mesaj = "\n".join(mesaj_satirlar)
+        headers = {
+            "Title": baslik.encode("utf-8").decode("latin-1", errors="ignore"),
+            "Priority": "high",
+            "Tags": ikon_tag
+        }
+        requests.post(
+            f"https://ntfy.sh/{NTFY_TOPIC}",
+            data=mesaj.encode("utf-8"),
+            headers=headers,
+            timeout=5
+        )
+    except Exception:
+        pass
 
 # Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
@@ -701,6 +769,10 @@ if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
 if "onay_inceleme_sip_no" not in st.session_state:
     st.session_state.onay_inceleme_sip_no = None
+if "yerel_kararlar" not in st.session_state:
+    st.session_state.yerel_kararlar = {}
+if "flash_mesaj" not in st.session_state:
+    st.session_state.flash_mesaj = None
 
 def filtreleri_sifirla():
     st.session_state.kpi_mod = "SEVK"
@@ -814,6 +886,22 @@ except Exception as e:
     st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
     st.stop()
 
+# Mobil oturumda verilen kararları ana DB güncellenene kadar anlık yansıt
+if st.session_state.yerel_kararlar and not df_sip.empty:
+    for s_no, karar_bilgi in list(st.session_state.yerel_kararlar.items()):
+        mask = df_sip["siparis_no"] == int(s_no)
+        if mask.any():
+            db_op = str(df_sip.loc[mask, "operasyon"].iloc[0] or "").upper()
+            if db_op == "ONAY BEKLİYOR":
+                df_sip.loc[mask, "operasyon"] = karar_bilgi["karar"]
+                if karar_bilgi.get("not"):
+                    mevcut_not = str(df_sip.loc[mask, "notlar"].iloc[0] or "").strip()
+                    ek_not = f"[Yönetici Notu - {karar_bilgi['karar']}]: {karar_bilgi['not']}"
+                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
+            else:
+                # Masaüstü veritabanı zaten güncellendiyse yerel önbellekten temizle
+                st.session_state.yerel_kararlar.pop(s_no, None)
+
 # Yetki Tipine Göre Veriyi Kısıtlama
 if yetki_tipi == "MUSTERI":
     df_sip = df_sip[df_sip["musteri"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
@@ -886,7 +974,6 @@ oncelik = [
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
 def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
-    """Siparişin genel bilgi ızgarası ve ürün kalemleri tablosu HTML çıktısını üretir."""
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
     renk = OP_RENK.get(op_upper, "#475569")
@@ -983,6 +1070,28 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
     )
     return rozet_html, grid_html, tablo_html
 
+def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str):
+    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve ntfy bildirimi gönderir."""
+    try:
+        with st.spinner("Karar kaydediliyor ve bildirim gönderiliyor..."):
+            onay_kuyruguna_yaz(sip_no, karar, aciklama)
+            onay_ntfy_gonder(
+                siparis_no=sip_no,
+                firma=str(row_data.get("firma") or "-"),
+                musteri=str(row_data.get("musteri") or "-"),
+                karar=karar,
+                aciklama=aciklama
+            )
+            st.session_state.yerel_kararlar[int(sip_no)] = {
+                "karar": karar,
+                "not": aciklama.strip()
+            }
+            st.session_state.onay_inceleme_sip_no = None
+            st.session_state.flash_mesaj = f"Sipariş #{sip_no} için '{karar}' kararı iletildi."
+        st.rerun()
+    except Exception as err:
+        st.error(f"Karar Google Drive'a yazılamadı: {err}")
+
 # ==============================================================================
 # YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
 # ==============================================================================
@@ -1000,25 +1109,47 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         f'<div class="fullscreen-review-card">'
         f'<div class="fullscreen-review-header">'
         f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
+        f'<a href="?incele_kapat=1{token_param}" target="_self" class="close-review-link">✕ Vazgeç</a>'
         f'</div>'
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
-        f'</div>'
-        f'<div class="review-btn-grid">'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-approve">ONAYLA</a>'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-revise">REVİZE</a>'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="review-action-btn btn-reject">REDDET</a>'
         f'</div>',
         unsafe_allow_html=True
     )
+
+    yonetici_notu = st.text_input(
+        "Yönetici Notu (Revize / Reddet için açıklama ekleyebilirsiniz):",
+        key=f"onay_not_{aktif_inceleme_no}",
+        placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin..."
+    )
+
+    col_b1, col_b2, col_b3 = st.columns(3)
+    with col_b1:
+        if st.button("✅ ONAYLA", use_container_width=True, type="primary"):
+            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", yonetici_notu)
+    with col_b2:
+        if st.button("🟡 REVİZE", use_container_width=True):
+            if not yonetici_notu.strip():
+                st.warning("Revize talebi için lütfen yukarıdaki kutuya kısa bir açıklama yazınız.")
+            else:
+                karari_uygula(aktif_inceleme_no, inceleme_row, "REVİZE İSTENDİ", yonetici_notu)
+    with col_b3:
+        if st.button("⛔ REDDET", use_container_width=True):
+            if not yonetici_notu.strip():
+                st.warning("Reddetme işlemi için lütfen yukarıdaki kutuya ret sebebini yazınız.")
+            else:
+                karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", yonetici_notu)
 
     st.stop()
 
 # ==============================================================================
 # ANA LİSTE VE KPI GÖRÜNÜMÜ
 # ==============================================================================
-# 3. Tıklanabilir Kompakt Yan Yana 3'lü KPI Şeridi
+if st.session_state.flash_mesaj:
+    st.success(st.session_state.flash_mesaj)
+    st.session_state.flash_mesaj = None
+
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -1045,7 +1176,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 4. Hızlı Arama + Yüzen Popover Filtre Menüsü
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
 musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
@@ -1103,7 +1233,6 @@ with col_filtre:
         if ek_filtre_aktif or arama.strip():
             st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
-# Filtreleme Uygulama
 filtered = df_sip.copy()
 
 if gizle_tamamlanan:
@@ -1136,7 +1265,6 @@ toplam_filtrelenen = len(filtered)
 gosterilen_limit = st.session_state.sayfa_limiti
 gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
-# 5. Boş Durum (Empty State) Kontrolü
 if toplam_filtrelenen == 0:
     st.markdown(
         '<div class="empty-state-box">'
@@ -1152,7 +1280,6 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    # 6. Tüm Kartları Tek Bir Flexbox Kapsayıcıda Toplama (Üst Üste Binme Sıfır)
     kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
@@ -1201,7 +1328,6 @@ else:
     kart_parcalari.append('</div>')
     st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
 
-    # 7. İlerleme Çubuğu ve "Daha Fazla Göster" Sayfalama
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
         f'<div class="pagination-box">'
