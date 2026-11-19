@@ -113,10 +113,6 @@ a[href*="streamlit.io/cloud"] {
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
 }
-.block-container.review-mode-container {
-    padding-top: 0.35rem !important;
-    padding-bottom: 84px !important;
-}
 [data-testid="stVerticalBlock"] {
     gap: 0.45rem !important;
 }
@@ -394,7 +390,7 @@ a.mini-onay-btn:active {
     border-radius: 11px;
     padding: 10px 11px 12px 11px;
     margin-top: 2px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
 }
 .fullscreen-review-header {
@@ -432,64 +428,52 @@ a.close-review-link {
 a.close-review-link:active {
     background-color: #e2e8f0;
 }
-/* İnceleme Modunda Alt Sabit Yatay Aksiyon Şeridi ve Renkli Butonlar */
-.review-action-bar {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 999 !important;
-    background-color: #ffffff !important;
-    border-top: 1px solid #cbd5e1 !important;
-    box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.12) !important;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) 10px !important;
-}
-.review-action-bar [data-testid="stHorizontalBlock"],
-.review-action-bar .stHorizontalBlock {
+/* İnceleme Modunda Yan Yana 3 Buton ve Renkleri */
+div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
-    margin: 0 !important;
-    width: 100% !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #cbd5e1 !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div,
-.review-action-bar .stHorizontalBlock > div {
+div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="column"] {
     flex: 1 1 0% !important;
     min-width: 0 !important;
     width: auto !important;
 }
-.review-action-bar button {
-    height: 42px !important;
-    font-weight: 800 !important;
-    font-size: 12.5px !important;
-    border-radius: 9px !important;
-    padding: 0 6px !important;
-    white-space: nowrap !important;
-    width: 100% !important;
-}
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(1) button {
+.st-key-btn_onayla button {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
     color: #ffffff !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
+    height: 42px !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(1) button:hover {
+.st-key-btn_onayla button:hover {
     background-color: #15803d !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(2) button {
+.st-key-btn_revize button {
     background-color: #facc15 !important;
     border: 1px solid #eab308 !important;
     color: #0f172a !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
+    height: 42px !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(2) button:hover {
+.st-key-btn_revize button:hover {
     background-color: #eab308 !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(3) button {
+.st-key-btn_reddet button {
     background-color: #dc2626 !important;
     border: 1px solid #b91c1c !important;
     color: #ffffff !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
+    height: 42px !important;
 }
-.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(3) button:hover {
+.st-key-btn_reddet button:hover {
     background-color: #b91c1c !important;
 }
 .info-grid {
@@ -1242,31 +1226,6 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
         st.session_state.onay_inceleme_sip_no = None
         st.rerun()
 
-    components.html(
-        """
-        <script>
-        (function() {
-            const doc = window.parent.document;
-            const bc = doc.querySelector('.block-container');
-            if (bc) bc.classList.add('review-mode-container');
-            const actionMarker = doc.getElementById('review-action-anchor');
-            if (actionMarker) {
-                let rowBlock = actionMarker.parentElement;
-                while (rowBlock && rowBlock !== doc.body) {
-                    if (rowBlock.getAttribute('data-testid') === 'stHorizontalBlock') {
-                        rowBlock.classList.add('review-action-bar');
-                        break;
-                    }
-                    rowBlock = rowBlock.parentElement;
-                }
-            }
-        })();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
-
     inceleme_row = secili_df.iloc[0]
     rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
 
@@ -1285,7 +1244,6 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
 
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
-        st.markdown('<span id="review-action-anchor" style="display:none;"></span>', unsafe_allow_html=True)
         if st.button("ONAYLA", use_container_width=True, key="btn_onayla"):
             karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
     with col_b2:
@@ -1296,20 +1254,6 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
             karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
 
     st.stop()
-else:
-    components.html(
-        """
-        <script>
-        (function() {
-            const doc = window.parent.document;
-            const bc = doc.querySelector('.block-container');
-            if (bc) bc.classList.remove('review-mode-container');
-        })();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
 
 # ==============================================================================
 # ANA LİSTE VE KPI GÖRÜNÜMÜ
