@@ -388,9 +388,9 @@ a.mini-onay-btn:active {
     border: 1px solid #cbd5e1;
     border-top: 4px solid #f97316;
     border-radius: 11px;
-    padding: 10px 11px 10px 11px;
+    padding: 10px 11px 12px 11px;
     margin-top: 2px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
 }
 .fullscreen-review-header {
@@ -428,82 +428,47 @@ a.close-review-link {
 a.close-review-link:active {
     background-color: #e2e8f0;
 }
-/* İnceleme Modunda 3 Butonu Yan Yana ve Renkli Gösterme */
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="ONAYLA"]),
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="REVİZE"]),
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="REDDET"]),
-.stHorizontalBlock:has(button[aria-label="ONAYLA"]) {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-    width: 100% !important;
-    margin-top: 8px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #cbd5e1 !important;
-    box-sizing: border-box !important;
+.onay-aksiyon-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #cbd5e1;
+    width: 100%;
+    box-sizing: border-box;
 }
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="ONAYLA"]) > div,
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="REVİZE"]) > div,
-div[data-testid="stHorizontalBlock"]:has(button[aria-label="REDDET"]) > div,
-.stHorizontalBlock:has(button[aria-label="ONAYLA"]) > div {
-    flex: 1 1 0% !important;
-    min-width: 0 !important;
-    max-width: 33.333% !important;
-    width: 33.333% !important;
+a.aksiyon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-decoration: none !important;
+    box-sizing: border-box;
+    padding: 0 6px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
 }
-button[aria-label="ONAYLA"] {
+a.aksiyon-btn:active {
+    transform: scale(0.98);
+}
+a.aksiyon-onayla {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
     color: #ffffff !important;
-    font-weight: 800 !important;
-    font-size: 12.5px !important;
-    border-radius: 9px !important;
-    height: 40px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    padding: 0 4px !important;
 }
-button[aria-label="ONAYLA"]:hover,
-button[aria-label="ONAYLA"]:focus {
-    background-color: #15803d !important;
-    border-color: #166534 !important;
-    color: #ffffff !important;
-}
-button[aria-label="REVİZE"] {
+a.aksiyon-revize {
     background-color: #facc15 !important;
     border: 1px solid #eab308 !important;
     color: #0f172a !important;
-    font-weight: 800 !important;
-    font-size: 12.5px !important;
-    border-radius: 9px !important;
-    height: 40px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    padding: 0 4px !important;
 }
-button[aria-label="REVİZE"]:hover,
-button[aria-label="REVİZE"]:focus {
-    background-color: #eab308 !important;
-    border-color: #ca8a04 !important;
-    color: #0f172a !important;
-}
-button[aria-label="REDDET"] {
+a.aksiyon-reddet {
     background-color: #dc2626 !important;
     border: 1px solid #b91c1c !important;
-    color: #ffffff !important;
-    font-weight: 800 !important;
-    font-size: 12.5px !important;
-    border-radius: 9px !important;
-    height: 40px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    padding: 0 4px !important;
-}
-button[aria-label="REDDET"]:hover,
-button[aria-label="REDDET"]:focus {
-    background-color: #b91c1c !important;
-    border-color: #991b1b !important;
     color: #ffffff !important;
 }
 .info-grid {
@@ -859,6 +824,8 @@ if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
 if "onay_inceleme_sip_no" not in st.session_state:
     st.session_state.onay_inceleme_sip_no = None
+if "bekleyen_revize_sip_no" not in st.session_state:
+    st.session_state.bekleyen_revize_sip_no = None
 if "yerel_kararlar" not in st.session_state:
     st.session_state.yerel_kararlar = {}
 if "flash_mesaj" not in st.session_state:
@@ -887,12 +854,17 @@ if "incele" in st.query_params:
     if incele_val.isdigit():
         st.session_state.onay_inceleme_sip_no = int(incele_val)
     st.query_params.pop("incele", None)
-    st.rerun()
 
 if "incele_kapat" in st.query_params:
     st.session_state.onay_inceleme_sip_no = None
+    st.session_state.bekleyen_revize_sip_no = None
     st.query_params.pop("incele_kapat", None)
+    st.query_params.pop("karar", None)
     st.rerun()
+
+bekleyen_karar_param = st.query_params.get("karar", "").strip().upper()
+if bekleyen_karar_param:
+    st.query_params.pop("karar", None)
 
 if "kpi" in st.query_params:
     secilen_kpi = st.query_params.get("kpi", "").upper()
@@ -1218,6 +1190,7 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
             "not": aciklama.strip()
         }
         st.session_state.onay_inceleme_sip_no = None
+        st.session_state.bekleyen_revize_sip_no = None
         st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
         st.cache_data.clear()
         st.rerun()
@@ -1243,6 +1216,7 @@ def revize_not_penceresi(sip_no: int, row_data):
                 karari_uygula(sip_no, row_data, "REVİZE İSTENDİ", revize_aciklama)
     with col_r2:
         if st.button("İptal", use_container_width=True):
+            st.session_state.bekleyen_revize_sip_no = None
             st.rerun()
 
 
@@ -1257,7 +1231,20 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
         st.rerun()
 
     inceleme_row = secili_df.iloc[0]
+
+    if bekleyen_karar_param == "ONAYLA":
+        karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
+    elif bekleyen_karar_param == "REDDET":
+        karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
+    elif bekleyen_karar_param == "REVIZE":
+        st.session_state.bekleyen_revize_sip_no = int(aktif_inceleme_no)
+
     rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
+
+    base_incele_href = f"?incele={aktif_inceleme_no}{token_param}"
+    onayla_href = f"{base_incele_href}&karar=ONAYLA"
+    revize_href = f"{base_incele_href}&karar=REVIZE"
+    reddet_href = f"{base_incele_href}&karar=REDDET"
 
     st.markdown(
         f'<div class="fullscreen-review-card">'
@@ -1268,20 +1255,17 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
+        f'<div class="onay-aksiyon-bar">'
+        f'<a href="{onayla_href}" target="_self" class="aksiyon-btn aksiyon-onayla">ONAYLA</a>'
+        f'<a href="{revize_href}" target="_self" class="aksiyon-btn aksiyon-revize">REVİZE</a>'
+        f'<a href="{reddet_href}" target="_self" class="aksiyon-btn aksiyon-reddet">REDDET</a>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    col_b1, col_b2, col_b3 = st.columns(3)
-    with col_b1:
-        if st.button("ONAYLA", use_container_width=True, key="btn_onayla"):
-            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
-    with col_b2:
-        if st.button("REVİZE", use_container_width=True, key="btn_revize"):
-            revize_not_penceresi(aktif_inceleme_no, inceleme_row)
-    with col_b3:
-        if st.button("REDDET", use_container_width=True, key="btn_reddet"):
-            karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
+    if st.session_state.get("bekleyen_revize_sip_no") == int(aktif_inceleme_no):
+        revize_not_penceresi(aktif_inceleme_no, inceleme_row)
 
     st.stop()
 
