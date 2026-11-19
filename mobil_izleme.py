@@ -837,7 +837,7 @@ yetki_deger = st.session_state.yetki_deger
 aktif_token = st.session_state.get("active_token") or st.query_params.get("token", "")
 
 # 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=15)
 def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
@@ -859,10 +859,42 @@ def verileri_getir():
         df_siparisler = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC", conn)
         df_kalemler = pd.read_sql_query("SELECT * FROM siparis_kalemleri", conn)
         conn.close()
-        return df_siparisler, df_kalemler
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+    # Drive'daki mobil_onaylar.json kuyruğunu da oku ve bekleyen kararları anlık yansıt
+    try:
+        service = get_gdrive_service()
+        folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
+        q = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
+        res = service.files().list(q=q, fields="files(id)").execute()
+        files = res.get("files", [])
+        if files:
+            req = service.files().get_media(fileId=files[0]["id"])
+            fh = io.BytesIO()
+            downloader = MediaIoBaseDownload(fh, req)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk()
+            kuyruk = json.loads(fh.getvalue().decode("utf-8") or "[]")
+            for k in kuyruk:
+                s_no = int(k.get("siparis_no", -1))
+                karar = str(k.get("karar") or "").strip()
+                k_not = str(k.get("not") or "").strip()
+                mask = df_siparisler["siparis_no"] == s_no
+                if mask.any() and karar:
+                    db_op = str(df_siparisler.loc[mask, "operasyon"].iloc[0] or "").upper()
+                    if db_op == "ONAY BEKLİYOR":
+                        df_siparisler.loc[mask, "operasyon"] = karar
+                        if k_not:
+                            mevcut_not = str(df_siparisler.loc[mask, "notlar"].iloc[0] or "").strip()
+                            ek_not = f"[Yönetici Notu - {karar}]: {k_not}"
+                            df_siparisler.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
+    except Exception:
+        pass
+
+    return df_siparisler, df_kalemler
 
 # Renk Kodlu Üst Başlık Şeridi
 if yetki_tipi == "MUSTERI":
