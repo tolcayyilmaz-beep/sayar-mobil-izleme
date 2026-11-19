@@ -432,58 +432,64 @@ a.close-review-link {
 a.close-review-link:active {
     background-color: #e2e8f0;
 }
-/* İnceleme Modunda Alt Sabit Aksiyon Şeridi ve Renkli Butonlar */
+/* İnceleme Modunda Alt Sabit Yatay Aksiyon Şeridi ve Renkli Butonlar */
 .review-action-bar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 999;
-    background-color: #ffffff;
-    border-top: 1px solid #cbd5e1;
-    box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.12);
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 999 !important;
+    background-color: #ffffff !important;
+    border-top: 1px solid #cbd5e1 !important;
+    box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.12) !important;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) 10px !important;
 }
+.review-action-bar [data-testid="stHorizontalBlock"],
 .review-action-bar .stHorizontalBlock {
+    display: flex !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
     margin: 0 !important;
+    width: 100% !important;
 }
+.review-action-bar [data-testid="stHorizontalBlock"] > div,
 .review-action-bar .stHorizontalBlock > div {
-    flex: 1 1 0 !important;
+    flex: 1 1 0% !important;
     min-width: 0 !important;
+    width: auto !important;
 }
-.review-action-bar .stButton > button {
+.review-action-bar button {
     height: 42px !important;
     font-weight: 800 !important;
     font-size: 12.5px !important;
     border-radius: 9px !important;
     padding: 0 6px !important;
     white-space: nowrap !important;
+    width: 100% !important;
 }
-.review-action-bar .stButton:nth-of-type(1) > button,
-.review-action-bar .stHorizontalBlock > div:nth-child(1) button {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(1) button {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
     color: #ffffff !important;
 }
-.review-action-bar .stHorizontalBlock > div:nth-child(1) button:hover {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(1) button:hover {
     background-color: #15803d !important;
 }
-.review-action-bar .stHorizontalBlock > div:nth-child(2) button {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(2) button {
     background-color: #facc15 !important;
     border: 1px solid #eab308 !important;
     color: #0f172a !important;
 }
-.review-action-bar .stHorizontalBlock > div:nth-child(2) button:hover {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(2) button:hover {
     background-color: #eab308 !important;
 }
-.review-action-bar .stHorizontalBlock > div:nth-child(3) button {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(3) button {
     background-color: #dc2626 !important;
     border: 1px solid #b91c1c !important;
     color: #ffffff !important;
 }
-.review-action-bar .stHorizontalBlock > div:nth-child(3) button:hover {
+.review-action-bar [data-testid="stHorizontalBlock"] > div:nth-child(3) button:hover {
     background-color: #b91c1c !important;
 }
 .info-grid {
@@ -1245,13 +1251,13 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
             if (bc) bc.classList.add('review-mode-container');
             const actionMarker = doc.getElementById('review-action-anchor');
             if (actionMarker) {
-                let wrap = actionMarker.parentElement;
-                while (wrap && wrap !== doc.body) {
-                    if (wrap.getAttribute('data-testid') === 'stVerticalBlock' && wrap.querySelector('.stHorizontalBlock')) {
-                        wrap.classList.add('review-action-bar');
+                let rowBlock = actionMarker.parentElement;
+                while (rowBlock && rowBlock !== doc.body) {
+                    if (rowBlock.getAttribute('data-testid') === 'stHorizontalBlock') {
+                        rowBlock.classList.add('review-action-bar');
                         break;
                     }
-                    wrap = wrap.parentElement;
+                    rowBlock = rowBlock.parentElement;
                 }
             }
         })();
@@ -1277,16 +1283,16 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
         unsafe_allow_html=True
     )
 
-    st.markdown('<div id="review-action-anchor" style="display:none;"></div>', unsafe_allow_html=True)
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
-        if st.button("✅ ONAYLA", use_container_width=True):
+        st.markdown('<span id="review-action-anchor" style="display:none;"></span>', unsafe_allow_html=True)
+        if st.button("ONAYLA", use_container_width=True, key="btn_onayla"):
             karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
     with col_b2:
-        if st.button("🟡 REVİZE", use_container_width=True):
+        if st.button("REVİZE", use_container_width=True, key="btn_revize"):
             revize_not_penceresi(aktif_inceleme_no, inceleme_row)
     with col_b3:
-        if st.button("⛔ REDDET", use_container_width=True):
+        if st.button("REDDET", use_container_width=True, key="btn_reddet"):
             karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
 
     st.stop()
