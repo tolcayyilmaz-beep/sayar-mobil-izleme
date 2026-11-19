@@ -858,8 +858,8 @@ ETIKET_MAP = {
     "arac": "Araç",
     "ted_sip_no": "Ted.Sip.No",
     "siparis_veren": "Sipariş Veren",
-    "notlar": "Not",
     "plaka": "Plaka",
+    "notlar": "Not",
     "nakliye_fatura": "Nakliye Fatura",
     "firma_yetkili": "Firma Yetkili",
     "siparis_gecen": "Sipariş Geçen"
@@ -879,6 +879,7 @@ oncelik = [
     "arac",
     "ted_sip_no",
     "siparis_veren",
+    "plaka",
     "notlar"
 ]
 
@@ -893,7 +894,7 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
 
     haric_sutunlar = {
         "id", "siparis_no", "operasyon", "durum",
-        "plaka", "nakliye_fatura", "firma_yetkili", "siparis_gecen",
+        "nakliye_fatura", "firma_yetkili", "siparis_gecen",
         "musteri" if yetki_tipi == "MUSTERI" else ""
     }
     kirmizi_alanlar = {"firma", "musteri", "nakliye"}
