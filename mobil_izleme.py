@@ -24,6 +24,7 @@ if os.environ.get("STREAMLIT_SECRETS"):
 
 NTFY_TOPIC = "sayar_yapi_siparis_2026"
 QUEUE_FILE_NAME = "mobil_onaylar.json"
+SAYFA_BOYUTU = 30
 
 
 def logo_base64_getir(dosya_yolu="logo.png"):
@@ -620,6 +621,29 @@ def get_gdrive_service():
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
+@st.cache_data(ttl=20)
+def onay_kuyruguna_oku():
+    """Drive'daki mobil_onaylar.json kuyruğunu kısa süreli önbellekle okur."""
+    try:
+        service = get_gdrive_service()
+        folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
+        q = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
+        res = service.files().list(q=q, fields="files(id)").execute()
+        files = res.get("files", [])
+        if not files:
+            return []
+        req = service.files().get_media(fileId=files[0]["id"])
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, req)
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+        icerik = fh.getvalue().decode("utf-8").strip()
+        return json.loads(icerik) if icerik else []
+    except Exception:
+        return []
+
+
 def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
     """Kararı Google Drive'daki mobil_onaylar.json dosyasına çakışmasız şekilde ekler."""
     service = get_gdrive_service()
@@ -819,7 +843,7 @@ check_password()
 if "kpi_mod" not in st.session_state:
     st.session_state.kpi_mod = "SEVK"
 if "sayfa_limiti" not in st.session_state:
-    st.session_state.sayfa_limiti = 50
+    st.session_state.sayfa_limiti = SAYFA_BOYUTU
 if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
 if "onay_inceleme_sip_no" not in st.session_state:
@@ -840,12 +864,12 @@ def filtreleri_sifirla():
     st.session_state.f_musteri = "[TÜMÜ]"
     st.session_state.f_gizle_muh = True
     st.session_state.f_gizle_ipt = True
-    st.session_state.sayfa_limiti = 50
+    st.session_state.sayfa_limiti = SAYFA_BOYUTU
 
 
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
-    st.session_state.sayfa_limiti = 50
+    st.session_state.sayfa_limiti = SAYFA_BOYUTU
     st.query_params.pop("action", None)
     st.rerun()
 
@@ -883,7 +907,7 @@ if "kpi" in st.query_params:
 
         st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.sayfa_limiti = 50
+        st.session_state.sayfa_limiti = SAYFA_BOYUTU
         st.session_state.onay_inceleme_sip_no = None
     st.query_params.pop("kpi", None)
     st.rerun()
@@ -895,7 +919,7 @@ inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inc
 
 
 # 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
-@st.cache_data(ttl=15)
+@st.cache_data(ttl=60)
 def verileri_getir():
     file_id = st.secrets["GDRIVE_FILE_ID"]
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
@@ -920,37 +944,6 @@ def verileri_getir():
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
-
-    # Drive'daki mobil_onaylar.json kuyruğunu da oku ve bekleyen kararları anlık yansıt
-    try:
-        service = get_gdrive_service()
-        folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
-        q = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
-        res = service.files().list(q=q, fields="files(id)").execute()
-        files = res.get("files", [])
-        if files:
-            req = service.files().get_media(fileId=files[0]["id"])
-            fh = io.BytesIO()
-            downloader = MediaIoBaseDownload(fh, req)
-            done = False
-            while not done:
-                _, done = downloader.next_chunk()
-            kuyruk = json.loads(fh.getvalue().decode("utf-8") or "[]")
-            for k in kuyruk:
-                s_no = int(k.get("siparis_no", -1))
-                karar = str(k.get("karar") or "").strip()
-                k_not = str(k.get("not") or "").strip()
-                mask = df_siparisler["siparis_no"] == s_no
-                if mask.any() and karar:
-                    db_op = str(df_siparisler.loc[mask, "operasyon"].iloc[0] or "").upper()
-                    if db_op == "ONAY BEKLİYOR":
-                        df_siparisler.loc[mask, "operasyon"] = karar
-                        if k_not:
-                            mevcut_not = str(df_siparisler.loc[mask, "notlar"].iloc[0] or "").strip()
-                            ek_not = f"[Yönetici Notu - {karar}]: {k_not}"
-                            df_siparisler.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
-    except Exception:
-        pass
 
     return df_siparisler, df_kalemler
 
@@ -982,6 +975,22 @@ if not inceleme_aktif_mi:
 
 try:
     df_sip, df_kalem = verileri_getir()
+    kuyruk = onay_kuyruguna_oku()
+    if kuyruk and not df_sip.empty:
+        df_sip = df_sip.copy()
+        for k in kuyruk:
+            s_no = int(k.get("siparis_no", -1))
+            karar = str(k.get("karar") or "").strip()
+            k_not = str(k.get("not") or "").strip()
+            mask = df_sip["siparis_no"] == s_no
+            if mask.any() and karar:
+                db_op = str(df_sip.loc[mask, "operasyon"].iloc[0] or "").upper()
+                if db_op == "ONAY BEKLİYOR":
+                    df_sip.loc[mask, "operasyon"] = karar
+                    if k_not:
+                        mevcut_not = str(df_sip.loc[mask, "notlar"].iloc[0] or "").strip()
+                        ek_not = f"[Yönetici Notu - {karar}]: {k_not}"
+                        df_sip.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
 except Exception as e:
     st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
     st.stop()
@@ -1073,7 +1082,58 @@ oncelik = [
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
 
-def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
+def kalem_tablosu_html_olustur(sip_no):
+    kalemler = kalem_gruplari.get(sip_no)
+    if kalemler is None or kalemler.empty:
+        return ""
+
+    olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
+    ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
+
+    olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
+    miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
+
+    olasi_birim = ["birim", "birimi", "olcu_birimi"]
+    birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
+
+    haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
+    kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
+
+    if ad_sutunu is None and kalan_sutunlar:
+        ad_sutunu = kalan_sutunlar.pop(0)
+    if miktar_sutunu is None and kalan_sutunlar:
+        miktar_sutunu = kalan_sutunlar.pop(0)
+
+    satirlar_html = ""
+    for _, k_row in kalemler.iterrows():
+        urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
+        miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
+        if isinstance(miktar_val, float) and miktar_val.is_integer():
+            miktar_val = int(miktar_val)
+        miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
+        birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
+
+        satirlar_html += (
+            f"<tr>"
+            f"<td>{urun_adi}</td>"
+            f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
+            f"<td class='urun-miktar'>{miktar_str}</td>"
+            f"</tr>"
+        )
+
+    return (
+        f"<table class='urun-table'>"
+        f"<thead><tr>"
+        f"<th>Malzeme / Ürün</th>"
+        f"<th style='text-align:left;'>Birim</th>"
+        f"<th style='text-align:right;'>Miktar</th>"
+        f"</tr></thead>"
+        f"<tbody>{satirlar_html}</tbody>"
+        f"</table>"
+    )
+
+
+def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False, tablo_dahil_et=True):
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
     renk = OP_RENK.get(op_upper, "#475569")
@@ -1118,54 +1178,7 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         )
 
     grid_html = f'<div class="info-grid">{grid_items_html}</div>' if grid_items_html else ""
-
-    tablo_html = ""
-    kalemler = kalem_gruplari.get(sip_no)
-    if kalemler is not None and not kalemler.empty:
-        olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-        ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
-
-        olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
-        miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
-
-        olasi_birim = ["birim", "birimi", "olcu_birimi"]
-        birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
-
-        haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
-        kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
-
-        if ad_sutunu is None and kalan_sutunlar:
-            ad_sutunu = kalan_sutunlar.pop(0)
-        if miktar_sutunu is None and kalan_sutunlar:
-            miktar_sutunu = kalan_sutunlar.pop(0)
-
-        satirlar_html = ""
-        for _, k_row in kalemler.iterrows():
-            urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
-            miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
-            if isinstance(miktar_val, float) and miktar_val.is_integer():
-                miktar_val = int(miktar_val)
-            miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
-            birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
-
-            satirlar_html += (
-                f"<tr>"
-                f"<td>{urun_adi}</td>"
-                f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
-                f"<td class='urun-miktar'>{miktar_str}</td>"
-                f"</tr>"
-            )
-
-        tablo_html = (
-            f"<table class='urun-table'>"
-            f"<thead><tr>"
-            f"<th>Malzeme / Ürün</th>"
-            f"<th style='text-align:left;'>Birim</th>"
-            f"<th style='text-align:right;'>Miktar</th>"
-            f"</tr></thead>"
-            f"<tbody>{satirlar_html}</tbody>"
-            f"</table>"
-        )
+    tablo_html = kalem_tablosu_html_olustur(sip_no) if tablo_dahil_et else ""
 
     rozet_html = (
         f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
@@ -1239,7 +1252,9 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     elif bekleyen_karar_param == "REVIZE":
         st.session_state.bekleyen_revize_sip_no = int(aktif_inceleme_no)
 
-    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
+    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(
+        inceleme_row, aktif_inceleme_no, vurgulu_onay=True, tablo_dahil_et=True
+    )
 
     base_incele_href = f"?incele={aktif_inceleme_no}{token_param}"
     onayla_href = f"{base_incele_href}&karar=ONAYLA"
@@ -1408,9 +1423,12 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
+    kalem_haritasi = {}
     kart_parcalari = ['<div class="sip-list-container">']
+
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
+        sip_key = str(sip_no)
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
         durum_ikon = OP_IKON.get(op_upper, "⚪")
@@ -1425,12 +1443,13 @@ else:
         s_md = md_temizle(santiye_str)
         t_md = md_temizle(tarih_str)
 
-        rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
+        rozet_html, grid_html, _ = siparis_detay_html_olustur(row, sip_no, tablo_dahil_et=False)
+        kalem_haritasi[sip_key] = kalem_tablosu_html_olustur(sip_no)
 
         if yetki_tipi == "MUSTERI":
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
+            satir1_html = f"{durum_ikon} #{html.escape(sip_key)} | {html.escape(f_md)}"
         else:
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
+            satir1_html = f"{durum_ikon} #{html.escape(sip_key)} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
         satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
         onay_buton_html = ""
@@ -1439,7 +1458,7 @@ else:
 
         kart_parcalari.append(
             f'<div class="sip-row-wrap">'
-            f'<details class="custom-sip-card">'
+            f'<details class="custom-sip-card" data-sip-no="{html.escape(sip_key)}">'
             f'<summary>'
             f'<span class="custom-card-arrow">❯</span>'
             f'<div class="custom-card-lines">'
@@ -1447,7 +1466,7 @@ else:
             f'<div class="custom-card-line2">{satir2_html}</div>'
             f'</div>'
             f'</summary>'
-            f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
+            f'<div class="custom-card-body">{rozet_html}{grid_html}<div class="lazy-kalem-slot"></div></div>'
             f'</details>'
             f'{onay_buton_html}'
             f'</div>'
@@ -1455,6 +1474,34 @@ else:
 
     kart_parcalari.append('</div>')
     st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
+
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const kalemMap = {json.dumps(kalem_haritasi)};
+            function doldur(detailsEl) {{
+                if (!detailsEl.open) return;
+                const sipNo = detailsEl.getAttribute('data-sip-no');
+                const slot = detailsEl.querySelector('.lazy-kalem-slot');
+                if (!slot || slot.getAttribute('data-loaded') === '1') return;
+                slot.innerHTML = kalemMap[sipNo] || '';
+                slot.setAttribute('data-loaded', '1');
+            }}
+            doc.querySelectorAll('details.custom-sip-card').forEach(el => {{
+                doldur(el);
+                if (!el.getAttribute('data-lazy-bound')) {{
+                    el.addEventListener('toggle', () => doldur(el));
+                    el.setAttribute('data-lazy-bound', '1');
+                }}
+            }});
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
@@ -1467,9 +1514,9 @@ else:
 
     if gosterilen_adet < toplam_filtrelenen:
         kalan = toplam_filtrelenen - gosterilen_adet
-        eklenecek = min(50, kalan)
+        eklenecek = min(SAYFA_BOYUTU, kalan)
         if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
-            st.session_state.sayfa_limiti += 50
+            st.session_state.sayfa_limiti += SAYFA_BOYUTU
             st.rerun()
 
 if flash_msg:
