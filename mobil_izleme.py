@@ -428,7 +428,7 @@ a.close-review-link {
 a.close-review-link:active {
     background-color: #e2e8f0;
 }
-/* İnceleme Modunda Yan Yana 3 Buton ve Renkleri */
+/* İnceleme Modunda Yan Yana 3 Eşit Buton ve Renkleri */
 div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) {
     display: flex !important;
     flex-direction: row !important;
@@ -437,11 +437,19 @@ div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) {
     margin-top: 8px !important;
     padding-top: 8px !important;
     border-top: 1px solid #cbd5e1 !important;
+    width: 100% !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="column"] {
     flex: 1 1 0% !important;
     min-width: 0 !important;
+    max-width: 33.333% !important;
     width: auto !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="column"] > div,
+div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="column"] .stButton {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
 }
 .st-key-btn_onayla button {
     background-color: #16a34a !important;
@@ -450,6 +458,9 @@ div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="
     font-weight: 800 !important;
     border-radius: 9px !important;
     height: 42px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 4px !important;
 }
 .st-key-btn_onayla button:hover {
     background-color: #15803d !important;
@@ -461,6 +472,9 @@ div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="
     font-weight: 800 !important;
     border-radius: 9px !important;
     height: 42px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 4px !important;
 }
 .st-key-btn_revize button:hover {
     background-color: #eab308 !important;
@@ -472,6 +486,9 @@ div[data-testid="stHorizontalBlock"]:has(.st-key-btn_onayla) > div[data-testid="
     font-weight: 800 !important;
     border-radius: 9px !important;
     height: 42px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 4px !important;
 }
 .st-key-btn_reddet button:hover {
     background-color: #b91c1c !important;
