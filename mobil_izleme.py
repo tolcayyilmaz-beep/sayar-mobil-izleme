@@ -257,8 +257,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# RENK HARİTALARI & YARDIMCI FONKSİYONLAR
+# VARSAYILAN SABİTLER & RENK HARİTASI
 # ==========================================
+DEFAULT_GDRIVE_FOLDER_ID = "1y_Bx2hwsjXut9qIQ-PF7hj5lNHV78jDp"
+DEFAULT_DB_FILENAME = "siparis_takip.db.enc"
+SERVICE_ACCOUNT_FILE = "gdrive_service_account.json"
+QUEUE_FILE_NAME = "mobil_onaylar.json"
+
 OP_RENK = {
     "İŞLENDİ": "#0284c7",
     "ONAY BEKLİYOR": "#ea580c",
@@ -270,18 +275,26 @@ OP_RENK = {
     "KISMİ EVRAK": "#7c3aed"
 }
 
-QUEUE_FILE_NAME = "mobil_onaylar.json"
-
 
 def get_config(key: str, default=None):
-    """Önce Railway Ortam Değişkenlerini (os.environ), yoksa Streamlit Secrets'ı okur."""
+    """Önce Railway Ortam Değişkenlerini (os.environ), yoksa Streamlit Secrets'ı, yoksa varsayılanı okur."""
     env_val = os.environ.get(key)
     if env_val is not None and str(env_val).strip() != "":
-        return env_val
+        return str(env_val).strip()
     try:
-        return st.secrets.get(key, default)
+        val = st.secrets.get(key, default)
+        return val if val is not None else default
     except StreamlitSecretNotFoundError:
         return default
+
+
+def get_encryption_key() -> str:
+    """Farklı değişken isimleriyle tanımlanmış olabilecek Fernet anahtarını bulur."""
+    for aday in ("DB_ENCRYPTION_KEY", "FERNET_KEY", "SECRET_KEY", "ENCRYPTION_KEY"):
+        val = get_config(aday)
+        if val:
+            return str(val).strip()
+    return ""
 
 
 def format_durum_text(val) -> str:
@@ -309,33 +322,43 @@ def format_miktar(val) -> str:
 # GOOGLE DRIVE BAĞLANTISI & ONAY KUYRUĞU YAZMA
 # ==========================================
 def get_drive_service():
-    gcp_json_str = os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
+    """Ortam değişkeni, Streamlit Secrets veya repo içindeki gdrive_service_account.json ile bağlanır."""
+    gcp_json_str = (
+        os.environ.get("GCP_SERVICE_ACCOUNT_JSON")
+        or os.environ.get("GOOGLE_CREDENTIALS_JSON")
+        or os.environ.get("SERVICE_ACCOUNT_JSON")
+    )
+
     if gcp_json_str:
         service_info = json.loads(gcp_json_str)
+        creds = service_account.Credentials.from_service_account_info(
+            service_info,
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
+    elif os.path.exists(SERVICE_ACCOUNT_FILE):
+        creds = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE,
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
     else:
         gcp_secret = get_config("gcp_service_account")
         if not gcp_secret:
             raise RuntimeError(
-                "Google Drive kimlik bilgileri bulunamadı! Railway Variables sekmesine "
-                "'GCP_SERVICE_ACCOUNT_JSON', 'GDRIVE_FOLDER_ID' ve 'DB_ENCRYPTION_KEY' ekleyin."
+                "Google Drive kimlik dosyası bulunamadı! Repo klasörüne 'gdrive_service_account.json' "
+                "ekleyin veya Railway Variables kısmına 'GCP_SERVICE_ACCOUNT_JSON' tanımlayın."
             )
-        service_info = dict(gcp_secret)
+        creds = service_account.Credentials.from_service_account_info(
+            dict(gcp_secret),
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
 
-    creds = service_account.Credentials.from_service_account_info(
-        service_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
 def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> bool:
     """Yönetici onay/revize/ret kararını Google Drive üzerindeki mobil_onaylar.json kuyruğuna ekler."""
     try:
-        folder_id = get_config("GDRIVE_FOLDER_ID")
-        if not folder_id:
-            st.error("GDRIVE_FOLDER_ID ayarı eksik!")
-            return False
-
+        folder_id = get_config("GDRIVE_FOLDER_ID", DEFAULT_GDRIVE_FOLDER_ID)
         service = get_drive_service()
 
         query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
@@ -397,13 +420,14 @@ def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> 
 @st.cache_data(ttl=25, show_spinner=False)
 def load_orders_from_drive():
     """Google Drive üzerindeki şifreli .db.enc dosyasını indirir, çözer ve tüm siparişleri tek seferde çeker."""
-    folder_id = get_config("GDRIVE_FOLDER_ID")
-    db_filename = get_config("DB_FILENAME", "siparis_takip.db.enc")
-    enc_key = get_config("DB_ENCRYPTION_KEY")
+    folder_id = get_config("GDRIVE_FOLDER_ID", DEFAULT_GDRIVE_FOLDER_ID)
+    db_filename = get_config("DB_FILENAME", DEFAULT_DB_FILENAME)
+    enc_key = get_encryption_key()
 
-    if not folder_id or not enc_key:
+    if not enc_key:
         raise RuntimeError(
-            "Eksik yapılandırma! Railway Variables bölümünde 'GDRIVE_FOLDER_ID' ve 'DB_ENCRYPTION_KEY' tanımlı olmalıdır."
+            "Veritabanı şifre çözme anahtarı eksik! Lütfen Railway Variables bölümüne "
+            "'DB_ENCRYPTION_KEY' değişkenini ekleyin."
         )
 
     fernet_key = enc_key.encode("utf-8")
