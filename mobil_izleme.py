@@ -406,14 +406,22 @@ a.mini-onay-btn:active {
     color: #0f172a;
 }
 a.close-review-link {
-    font-size: 12px;
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    font-weight: 800;
     color: #475569 !important;
     background-color: #f1f5f9;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
-    padding: 4px 9px;
     text-decoration: none !important;
+    flex-shrink: 0;
+}
+a.close-review-link:active {
+    background-color: #e2e8f0;
 }
 /* Mobil Onay / Revize / Reddet Native Buton Stilleri */
 div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) {
@@ -984,6 +992,9 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         "nakliye_fatura", "firma_yetkili", "siparis_gecen",
         "musteri" if yetki_tipi == "MUSTERI" else ""
     }
+    if vurgulu_onay:
+        haric_sutunlar.update({"yetkili", "telefon", "plaka"})
+
     kirmizi_alanlar = {"firma", "musteri", "nakliye"}
     lacivert_alanlar = {"notlar"}
 
@@ -1070,27 +1081,46 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
     )
     return rozet_html, grid_html, tablo_html
 
-def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str):
+def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
     """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve ntfy bildirimi gönderir."""
     try:
-        with st.spinner("Karar kaydediliyor ve bildirim gönderiliyor..."):
-            onay_kuyruguna_yaz(sip_no, karar, aciklama)
-            onay_ntfy_gonder(
-                siparis_no=sip_no,
-                firma=str(row_data.get("firma") or "-"),
-                musteri=str(row_data.get("musteri") or "-"),
-                karar=karar,
-                aciklama=aciklama
-            )
-            st.session_state.yerel_kararlar[int(sip_no)] = {
-                "karar": karar,
-                "not": aciklama.strip()
-            }
-            st.session_state.onay_inceleme_sip_no = None
-            st.session_state.flash_mesaj = f"Sipariş #{sip_no} için '{karar}' kararı iletildi."
+        onay_kuyruguna_yaz(sip_no, karar, aciklama)
+        onay_ntfy_gonder(
+            siparis_no=sip_no,
+            firma=str(row_data.get("firma") or "-"),
+            musteri=str(row_data.get("musteri") or "-"),
+            karar=karar,
+            aciklama=aciklama
+        )
+        st.session_state.yerel_kararlar[int(sip_no)] = {
+            "karar": karar,
+            "not": aciklama.strip()
+        }
+        st.session_state.onay_inceleme_sip_no = None
+        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
         st.rerun()
     except Exception as err:
         st.error(f"Karar Google Drive'a yazılamadı: {err}")
+
+@st.dialog("Revize Notu")
+def revize_not_penceresi(sip_no: int, row_data):
+    st.caption(f"Sipariş #{sip_no} için revize açıklaması giriniz:")
+    revize_aciklama = st.text_area(
+        "Revize Açıklaması",
+        placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin...",
+        height=100,
+        label_visibility="collapsed"
+    )
+    col_r1, col_r2 = st.columns(2)
+    with col_r1:
+        if st.button("Gönder", type="primary", use_container_width=True):
+            if not revize_aciklama.strip():
+                st.warning("Lütfen kısa bir revize açıklaması yazınız.")
+            else:
+                karari_uygula(sip_no, row_data, "REVİZE İSTENDİ", revize_aciklama)
+    with col_r2:
+        if st.button("İptal", use_container_width=True):
+            st.rerun()
 
 # ==============================================================================
 # YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
@@ -1109,7 +1139,7 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         f'<div class="fullscreen-review-card">'
         f'<div class="fullscreen-review-header">'
         f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="close-review-link">✕ Vazgeç</a>'
+        f'<a href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
         f'</div>'
         f'{rozet_html}'
         f'{grid_html}'
@@ -1118,36 +1148,26 @@ if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
         unsafe_allow_html=True
     )
 
-    yonetici_notu = st.text_input(
-        "Yönetici Notu (Revize / Reddet için açıklama ekleyebilirsiniz):",
-        key=f"onay_not_{aktif_inceleme_no}",
-        placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin..."
-    )
-
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
         if st.button("✅ ONAYLA", use_container_width=True, type="primary"):
-            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", yonetici_notu)
+            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
     with col_b2:
         if st.button("🟡 REVİZE", use_container_width=True):
-            if not yonetici_notu.strip():
-                st.warning("Revize talebi için lütfen yukarıdaki kutuya kısa bir açıklama yazınız.")
-            else:
-                karari_uygula(aktif_inceleme_no, inceleme_row, "REVİZE İSTENDİ", yonetici_notu)
+            revize_not_penceresi(aktif_inceleme_no, inceleme_row)
     with col_b3:
         if st.button("⛔ REDDET", use_container_width=True):
-            if not yonetici_notu.strip():
-                st.warning("Reddetme işlemi için lütfen yukarıdaki kutuya ret sebebini yazınız.")
-            else:
-                karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", yonetici_notu)
+            karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
 
     st.stop()
 
 # ==============================================================================
 # ANA LİSTE VE KPI GÖRÜNÜMÜ
 # ==============================================================================
-if st.session_state.flash_mesaj:
-    st.success(st.session_state.flash_mesaj)
+flash_box = st.empty()
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
+    flash_box.success(flash_msg)
     st.session_state.flash_mesaj = None
 
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
@@ -1343,3 +1363,7 @@ else:
         if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
             st.session_state.sayfa_limiti += 50
             st.rerun()
+
+if flash_msg:
+    time.sleep(2)
+    flash_box.empty()
