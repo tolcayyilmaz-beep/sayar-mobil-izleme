@@ -1,1345 +1,845 @@
-import os
 import io
+import os
 import json
 import time
-import html
-import base64
 import sqlite3
 import tempfile
-import requests
+from datetime import datetime
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
-from datetime import datetime
 from cryptography.fernet import Fernet
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
-if os.environ.get("STREAMLIT_SECRETS"):
-    os.makedirs(".streamlit", exist_ok=True)
-    with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
-        f.write(os.environ["STREAMLIT_SECRETS"])
-
-NTFY_TOPIC = "sayar_yapi_siparis_2026"
-QUEUE_FILE_NAME = "mobil_onaylar.json"
-
-def logo_base64_getir(dosya_yolu="logo.png"):
-    """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
-    yol = dosya_yolu if os.path.exists(dosya_yolu) else os.path.join("static", dosya_yolu)
-    if os.path.exists(yol):
-        ext = os.path.splitext(yol)[1].lower()
-        mime = "image/svg+xml" if ext == ".svg" else ("image/jpeg" if ext in (".jpg", ".jpeg") else "image/png")
-        with open(yol, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode("utf-8")
-        return f"data:{mime};base64,{encoded}"
-    return None
-
-LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
-
-# Sayfa ve Mobil Görünüm Ayarları
+# ==========================================
+# SAYFA YAPILANDIRMASI
+# ==========================================
 st.set_page_config(
     page_title="Sayar Yapı | Sipariş İzleme",
-    page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
+    page_icon="🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonunu Çekirdek Dosyalara Dokunmadan <head> İçine Enjekte Et
-logo_hedef_url = ""
-try:
-    if "LOGO_URL" in st.secrets:
-        logo_hedef_url = str(st.secrets["LOGO_URL"]).strip()
-except Exception:
-    pass
-
-if not logo_hedef_url and LOGO_DATA_URI:
-    logo_hedef_url = LOGO_DATA_URI
-
-if logo_hedef_url:
-    components.html(
-        f"""
-        <script>
-        (function() {{
-            const doc = window.parent.document;
-            const head = doc.head || doc.getElementsByTagName('head')[0];
-            if (!head) return;
-            doc.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(el => el.remove());
-            const l1 = doc.createElement('link');
-            l1.rel = 'apple-touch-icon';
-            l1.sizes = '180x180';
-            l1.href = {json.dumps(logo_hedef_url)};
-            head.appendChild(l1);
-        }})();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
-
-# Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
+# ==========================================
+# ÖZEL MOBİL TASARIM CSS
+# ==========================================
 st.markdown("""
 <style>
-header[data-testid="stHeader"],
-[data-testid="stToolbar"],
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-[data-testid="manage-app-button"],
-footer,
-.stAppDeployButton,
-.viewerBadge_container__r5tak,
-.viewerBadge_link__qRIco,
-div[class*="viewerBadge"],
-div[class*="StatusWidget"],
-div[class*="profileContainer"],
-div[class*="profilePreview"],
-a[href*="streamlit.io/cloud"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-.stApp, [data-testid="stAppViewContainer"] {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-}
-.block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 1.5rem !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-}
-[data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
-}
-.header-banner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-left: 5px solid #f97316;
-    border-radius: 10px;
-    padding: 9px 12px;
-    margin-bottom: 4px;
-    color: #f8fafc;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
-    gap: 8px;
-}
-.header-info {
-    flex: 1;
-    min-width: 0;
-}
-.header-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 15px;
-    font-weight: 700;
-    margin: 0;
-    color: #ffffff;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.header-title span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.header-logo {
-    height: 26px;
-    width: auto;
-    object-fit: contain;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-.header-sub {
-    font-size: 11px;
-    color: #cbd5e1;
-    margin-top: 2px;
-}
-.header-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff !important;
-    text-decoration: none !important;
-    font-size: 16px;
-    cursor: pointer;
-}
-.icon-btn:active {
-    background-color: #f97316;
-}
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-a.kpi-card {
-    display: block;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 7px 8px;
-    text-align: center;
-    text-decoration: none !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
-    cursor: pointer;
-}
-a.kpi-card:hover {
-    background-color: #f8fafc;
-}
-a.kpi-card:active {
-    transform: scale(0.98);
-}
-.kpi-blue { border-top: 3px solid #0284c7 !important; }
-.kpi-orange { border-top: 3px solid #f97316 !important; }
-.kpi-green { border-top: 3px solid #16a34a !important; }
-.kpi-active {
-    background-color: #ffffff !important;
-    border: 2px solid #ef4444 !important;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-.kpi-label {
-    font-size: 11px;
-    color: #475569;
-    font-weight: 600;
-    margin-bottom: 1px;
-    white-space: nowrap;
-}
-.kpi-value {
-    font-size: 19px;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1.2;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 6px !important;
-    margin-top: 12px !important;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 54px !important;
-}
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    color: #0f172a !important;
-}
-div[data-testid="stTextInput"] input {
-    height: 38px !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-}
-div[data-testid="stForm"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    padding: 14px !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-}
-div[data-testid="stPopover"] > button {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    color: #0f172a !important;
-    height: 38px !important;
-    padding: 0 10px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-}
-div[data-testid="stPopover"] > button:hover {
-    border-color: #f97316 !important;
-    background-color: #fff7ed !important;
-}
-.sip-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-}
-.sip-row-wrap {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: flex-start;
-    gap: 6px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-details.custom-sip-card {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    overflow: hidden;
-    box-sizing: border-box;
-}
-details.custom-sip-card > summary {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    cursor: pointer;
-    user-select: none;
-    height: 48px;
-    box-sizing: border-box;
-}
-details.custom-sip-card > summary::-webkit-details-marker {
-    display: none;
-}
-details.custom-sip-card > summary:hover {
-    background-color: #f8fafc;
-}
-.custom-card-arrow {
-    font-size: 11px;
-    color: #475569;
-    font-weight: 700;
-    transition: transform 0.15s ease;
-    flex-shrink: 0;
-}
-details.custom-sip-card[open] .custom-card-arrow {
-    transform: rotate(90deg);
-}
-.custom-card-lines {
-    flex: 1;
-    min-width: 0;
-    font-size: 13px;
-    line-height: 1.3;
-    color: #0f172a;
-}
-.custom-card-line1 {
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.custom-card-line2 {
-    font-weight: 400;
-    color: #334155;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.custom-card-body {
-    padding: 6px 10px 10px 10px;
-    border-top: 1px solid #e2e8f0;
-    background-color: #ffffff;
-}
-a.mini-onay-btn {
-    flex: 0 0 42px;
-    width: 42px;
-    height: 48px;
-    box-sizing: border-box;
-    background-color: #f97316;
-    border: 1px solid #ea580c;
-    border-radius: 9px;
-    color: #ffffff !important;
-    font-size: 20px;
-    font-weight: 900;
-    text-decoration: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 2px rgba(249, 115, 22, 0.25);
-}
-a.mini-onay-btn:active {
-    background-color: #ea580c;
-    transform: scale(0.96);
-}
-/* Tam Ekran Onay İnceleme Kartı */
-.fullscreen-review-card {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-top: 4px solid #f97316;
-    border-radius: 12px;
-    padding: 14px 12px;
-    margin-top: 6px;
-    margin-bottom: 8px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-}
-.fullscreen-review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-    gap: 8px;
-}
-.fullscreen-review-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: #0f172a;
-}
-a.close-review-link {
-    font-size: 12px;
-    font-weight: 700;
-    color: #475569 !important;
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 4px 9px;
-    text-decoration: none !important;
-}
-/* Mobil Onay / Revize / Reddet Native Buton Stilleri */
-div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) {
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-}
-div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) > div {
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
-}
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 10px;
-    font-size: 12.5px;
-    margin-top: 6px;
-    margin-bottom: 8px;
-    padding: 8px;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-}
-.info-item-label {
-    font-size: 10.5px;
-    color: #64748b;
-    display: block;
-}
-.info-item-val {
-    font-weight: 600;
-    color: #0f172a;
-}
-.info-item-val-red {
-    font-weight: 800;
-    color: #dc2626;
-}
-.info-item-val-navy {
-    font-weight: 700;
-    color: #1e3a8a;
-}
-.urun-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 4px;
-    font-size: 12.5px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-}
-.urun-table th {
-    background-color: #1e293b;
-    color: #f8fafc;
-    text-align: left;
-    padding: 6px 8px;
-    font-weight: 600;
-    font-size: 11.5px;
-}
-.urun-table td {
-    padding: 6px 8px;
-    color: #0f172a;
-    border-bottom: 1px solid #e2e8f0;
-}
-.urun-table tr:nth-child(even) td {
-    background-color: #f8fafc;
-}
-.urun-miktar {
-    font-weight: 700;
-    text-align: right;
-    white-space: nowrap;
-}
-.badge {
-    padding: 3px 8px;
-    border-radius: 5px;
-    color: white;
-    font-weight: bold;
-    font-size: 11.5px;
-    display: inline-block;
-}
-.durum-plain {
-    color: #0f172a;
-    font-weight: 600;
-    font-size: 12px;
-}
-.empty-state-box {
-    background-color: #ffffff;
-    border: 1px dashed #cbd5e1;
-    border-radius: 12px;
-    padding: 28px 16px;
-    text-align: center;
-    margin-top: 8px;
-    margin-bottom: 10px;
-}
-.empty-state-icon {
-    font-size: 32px;
-    margin-bottom: 6px;
-}
-.empty-state-title {
-    font-size: 14.5px;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-.empty-state-desc {
-    font-size: 12.5px;
-    color: #64748b;
-}
-.pagination-box {
-    margin-top: 12px;
-    margin-bottom: 6px;
-    text-align: center;
-}
-.pagination-text {
-    font-size: 11.5px;
-    color: #64748b;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-.progress-track {
-    width: 100%;
-    max-width: 240px;
-    height: 5px;
-    background-color: #e2e8f0;
-    border-radius: 999px;
-    margin: 0 auto 8px auto;
-    overflow: hidden;
-}
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
-    border-radius: 999px;
-    transition: width 0.25s ease;
-}
+    .block-container {
+        padding-top: 1.1rem !important;
+        padding-bottom: 2.5rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        max-width: 760px !important;
+        margin: 0 auto !important;
+    }
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        height: 0.5rem !important;
+    }
+    #MainMenu, footer { visibility: hidden; }
+
+    /* Kompakt Kapatma (✕) Butonu */
+    button[kind="tertiary"] {
+        padding: 0.15rem 0.55rem !important;
+        min-height: 2rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        color: #94a3b8 !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        background-color: #1e293b !important;
+    }
+    button[kind="tertiary"]:hover {
+        color: #f8fafc !important;
+        border-color: #64748b !important;
+    }
+
+    /* Başlık Alanı */
+    .app-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 1px solid #334155;
+        border-left: 5px solid #0284c7;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+    }
+    .app-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #f8fafc;
+        margin: 0;
+        letter-spacing: 0.3px;
+    }
+    .app-subtitle {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+
+    /* KPI Kartları */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 6px !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+    }
+    div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        padding: 6px 4px !important;
+        min-height: 54px !important;
+        height: auto !important;
+        width: 100% !important;
+        color: #f8fafc !important;
+        line-height: 1.15 !important;
+        transition: all 0.15s ease-in-out !important;
+    }
+    div[data-testid="stHorizontalBlock"] button[kind="secondary"]:hover {
+        border-color: #475569 !important;
+    }
+    div[data-testid="stHorizontalBlock"] button[kind="primary"] {
+        background-color: #1e293b !important;
+        border: 2px solid #ef4444 !important;
+        border-radius: 10px !important;
+        padding: 6px 4px !important;
+        min-height: 54px !important;
+        height: auto !important;
+        width: 100% !important;
+        color: #f8fafc !important;
+        line-height: 1.15 !important;
+    }
+    div[data-testid="stHorizontalBlock"] button[kind="primary"]:hover,
+    div[data-testid="stHorizontalBlock"] button[kind="primary"]:focus {
+        background-color: #1e293b !important;
+        border: 2px solid #ef4444 !important;
+        color: #f8fafc !important;
+    }
+    div[data-testid="stHorizontalBlock"] button p {
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        white-space: pre-line !important;
+        text-align: center !important;
+    }
+
+    /* Arama ve Filtre Kutuları */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        color: #f8fafc !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Sipariş Kartı */
+    .order-card {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    }
+    .card-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+    }
+    .card-company {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #f8fafc;
+        margin-bottom: 2px;
+        line-height: 1.25;
+    }
+    .card-customer {
+        font-size: 0.90rem;
+        font-weight: 600;
+        color: #38bdf8;
+        margin-bottom: 2px;
+    }
+    .card-site {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 4px;
+    }
+    .card-date-row {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        font-weight: 600;
+        border-top: 1px solid #334155;
+        padding-top: 6px;
+        margin-top: 4px;
+    }
+
+    /* Detay & Onay İnceleme Paneli */
+    .detail-box {
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .detail-item {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 7px 10px;
+    }
+    .detail-label {
+        font-size: 0.70rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .detail-val {
+        font-size: 0.84rem;
+        color: #f8fafc;
+        font-weight: 700;
+        margin-top: 1px;
+        word-break: break-word;
+    }
+    .note-box {
+        background-color: #1e293b;
+        border-left: 3px solid #f59e0b;
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: #fef3c7;
+    }
+    .product-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-top: 6px;
+    }
+    .product-name {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .product-qty {
+        font-size: 0.84rem;
+        font-weight: 800;
+        color: #38bdf8;
+        white-space: nowrap;
+        margin-left: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-def md_temizle(metin):
-    return str(metin or "-").replace("*", "").replace("_", " ").replace("`", "").strip()
-
-def durum_metni_formatla(durum_val):
-    metin = str(durum_val or "-").strip()
-    if not metin or metin == "-":
-        return "-"
-    tr_upper = metin.replace("i", "İ").replace("ı", "I").upper()
-    if tr_upper in ("SEVK EDİLDİ", "İPTAL", "İPTAL EDİLDİ"):
-        return tr_upper
-    return metin
-
-# Google Drive API Servisi ve Onay Kuyruğu İşlemleri
-def get_gdrive_service():
-    sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
-    creds = service_account.Credentials.from_service_account_info(
-        sa_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
-
-def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
-    """Kararı Google Drive'daki mobil_onaylar.json dosyasına çakışmasız şekilde ekler."""
-    service = get_gdrive_service()
-    folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
-
-    query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id, name)").execute()
-    files = results.get("files", [])
-
-    mevcut_kayitlar = []
-    file_id = None
-
-    if files:
-        file_id = files[0]["id"]
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        try:
-            icerik = fh.getvalue().decode("utf-8").strip()
-            if icerik:
-                mevcut_kayitlar = json.loads(icerik)
-        except Exception:
-            mevcut_kayitlar = []
-
-    # Aynı sipariş için bekleyen eski bir karar varsa güncelle, yoksa sona ekle
-    mevcut_kayitlar = [k for k in mevcut_kayitlar if int(k.get("siparis_no", -1)) != int(siparis_no)]
-    mevcut_kayitlar.append({
-        "siparis_no": int(siparis_no),
-        "karar": karar,
-        "not": aciklama.strip(),
-        "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-
-    json_bytes = json.dumps(mevcut_kayitlar, ensure_ascii=False, indent=2).encode("utf-8")
-    media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
-
-    if file_id:
-        service.files().update(fileId=file_id, media_body=media).execute()
-    else:
-        file_metadata = {
-            "name": QUEUE_FILE_NAME,
-            "parents": [folder_id]
-        }
-        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-
-def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, aciklama: str = ""):
-    """Yönetici kararını ntfy kanalına anlık bildirim olarak gönderir."""
-    try:
-        ikon_tag = "white_check_mark" if karar == "ONAYLANDI" else ("warning" if karar == "REVİZE İSTENDİ" else "no_entry")
-        baslik = f"Siparis #{siparis_no} - {karar}"
-        mesaj_satirlar = [
-            f"Karar: {karar}",
-            f"Firma: {firma or '-'}",
-            f"Musteri: {musteri or '-'}"
-        ]
-        if aciklama and aciklama.strip():
-            mesaj_satirlar.append(f"Not: {aciklama.strip()}")
-
-        mesaj = "\n".join(mesaj_satirlar)
-        headers = {
-            "Title": baslik.encode("utf-8").decode("latin-1", errors="ignore"),
-            "Priority": "high",
-            "Tags": ikon_tag
-        }
-        requests.post(
-            f"https://ntfy.sh/{NTFY_TOPIC}",
-            data=mesaj.encode("utf-8"),
-            headers=headers,
-            timeout=5
-        )
-    except Exception:
-        pass
-
-# Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
-def token_olustur(yetki_tipi, yetki_deger, gun=90):
-    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-    fernet = Fernet(secret_key)
-    payload = json.dumps({
-        "tip": yetki_tipi,
-        "deger": yetki_deger,
-        "exp": int(time.time()) + (gun * 86400)
-    }).encode("utf-8")
-    return fernet.encrypt(payload).decode("utf-8")
-
-def token_dogrula(token_str):
-    try:
-        secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-        fernet = Fernet(secret_key)
-        data = json.loads(fernet.decrypt(token_str.encode("utf-8")).decode("utf-8"))
-        if data.get("exp", 0) > int(time.time()):
-            return data.get("tip"), data.get("deger")
-    except Exception:
-        pass
-    return None, None
-
-# 1. Rol, Müşteri ve Sipariş Veren Bazlı Şifre + Beni Hatırla Kontrolü
-def check_password():
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-        st.session_state.yetki_tipi = None
-        st.session_state.yetki_deger = None
-        st.session_state.active_token = ""
-
-    if st.query_params.get("action") == "logout":
-        st.session_state.authenticated = False
-        st.session_state.yetki_tipi = None
-        st.session_state.yetki_deger = None
-        st.session_state.active_token = ""
-        st.session_state.onay_inceleme_sip_no = None
-        st.query_params.clear()
-        st.rerun()
-
-    url_token = st.query_params.get("token", "")
-    if url_token:
-        t_tip, t_deger = token_dogrula(url_token)
-        if t_tip:
-            st.session_state.authenticated = True
-            st.session_state.yetki_tipi = t_tip
-            st.session_state.yetki_deger = t_deger
-            st.session_state.active_token = url_token
-        else:
-            st.query_params.pop("token", None)
-
-    url_musteri = st.query_params.get("musteri", "")
-    url_veren = st.query_params.get("veren", "")
-
-    if not st.session_state.authenticated:
-        st.markdown(
-            f'<div class="header-banner"><div class="header-info">'
-            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
-            f'<div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>'
-            f'</div></div>',
-            unsafe_allow_html=True
-        )
-
-        if url_musteri:
-            st.caption(f"Müşteri Girişi: **{url_musteri}**")
-        elif url_veren:
-            st.caption(f"Personel Girişi: **{url_veren}**")
-
-        with st.form("login_form", clear_on_submit=False):
-            pin = st.text_input("Erişim Şifresi:", type="password")
-            beni_hatirla = st.checkbox("Beni Hatırla", value=True)
-            giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
-
-        if giris_yapildi:
-            basarili_tip = None
-            basarili_deger = None
-
-            if pin == st.secrets["APP_PASSWORD"]:
-                basarili_tip = "YONETICI"
-                basarili_deger = None
-
-            if not basarili_tip and not url_veren:
-                musteri_map = st.secrets.get("MUSTERI_SIFRELERI", {})
-                for m_adi, m_sifre in musteri_map.items():
-                    if pin == str(m_sifre):
-                        if not url_musteri or url_musteri.strip().upper() == m_adi.strip().upper():
-                            basarili_tip = "MUSTERI"
-                            basarili_deger = m_adi
-                            break
-
-            if not basarili_tip and not url_musteri:
-                veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
-                for v_adi, v_sifre in veren_map.items():
-                    if pin == str(v_sifre):
-                        if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
-                            basarili_tip = "SIPARIS_VEREN"
-                            basarili_deger = v_adi
-                            break
-
-            if basarili_tip:
-                st.session_state.authenticated = True
-                st.session_state.yetki_tipi = basarili_tip
-                st.session_state.yetki_deger = basarili_deger
-                if beni_hatirla:
-                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
-                    st.session_state.active_token = yeni_token
-                    st.query_params["token"] = yeni_token
-                else:
-                    st.session_state.active_token = ""
-                st.rerun()
-            else:
-                st.error("Hatalı erişim şifresi!")
-        st.stop()
-
-check_password()
-
-# Session State Varsayılanları
-if "kpi_mod" not in st.session_state:
-    st.session_state.kpi_mod = "SEVK"
-if "sayfa_limiti" not in st.session_state:
-    st.session_state.sayfa_limiti = 50
-if "arama_metni" not in st.session_state:
-    st.session_state.arama_metni = ""
-if "onay_inceleme_sip_no" not in st.session_state:
-    st.session_state.onay_inceleme_sip_no = None
-if "yerel_kararlar" not in st.session_state:
-    st.session_state.yerel_kararlar = {}
-if "flash_mesaj" not in st.session_state:
-    st.session_state.flash_mesaj = None
-
-def filtreleri_sifirla():
-    st.session_state.kpi_mod = "SEVK"
-    st.session_state.arama_metni = ""
-    st.session_state.f_op = "[TÜMÜ]"
-    st.session_state.f_firma = "[TÜMÜ]"
-    st.session_state.f_musteri = "[TÜMÜ]"
-    st.session_state.f_gizle_muh = True
-    st.session_state.f_gizle_ipt = True
-    st.session_state.sayfa_limiti = 50
-
-if st.query_params.get("action") == "refresh":
-    st.cache_data.clear()
-    st.session_state.sayfa_limiti = 50
-    st.query_params.pop("action", None)
-    st.rerun()
-
-if "incele" in st.query_params:
-    incele_val = st.query_params.get("incele", "").strip()
-    if incele_val.isdigit():
-        st.session_state.onay_inceleme_sip_no = int(incele_val)
-    st.query_params.pop("incele", None)
-    st.rerun()
-
-if "incele_kapat" in st.query_params:
-    st.session_state.onay_inceleme_sip_no = None
-    st.query_params.pop("incele_kapat", None)
-    st.rerun()
-
-if "kpi" in st.query_params:
-    secilen_kpi = st.query_params.get("kpi", "").upper()
-    if secilen_kpi in ("TAMAMLANDI", "ONAY", "SEVK"):
-        if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
-            st.session_state.kpi_mod = "SEVK"
-        else:
-            st.session_state.kpi_mod = secilen_kpi
-
-        if st.session_state.kpi_mod == "ONAY":
-            st.session_state.f_op = "ONAY BEKLİYOR"
-        elif st.session_state.kpi_mod == "TAMAMLANDI":
-            st.session_state.f_op = "TAMAMLANDI"
-        else:
-            st.session_state.f_op = "[TÜMÜ]"
-
-        st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.sayfa_limiti = 50
-        st.session_state.onay_inceleme_sip_no = None
-    st.query_params.pop("kpi", None)
-    st.rerun()
-
-yetki_tipi = st.session_state.yetki_tipi
-yetki_deger = st.session_state.yetki_deger
-aktif_token = st.session_state.get("active_token") or st.query_params.get("token", "")
-
-# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
-@st.cache_data(ttl=30)
-def verileri_getir():
-    file_id = st.secrets["GDRIVE_FILE_ID"]
-    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-
-    download_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
-    response = requests.get(download_url, timeout=15)
-    response.raise_for_status()
-
-    fernet = Fernet(secret_key)
-    decrypted_bytes = fernet.decrypt(response.content)
-
-    tmp_path = None
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-            tmp_file.write(decrypted_bytes)
-            tmp_path = tmp_file.name
-
-        conn = sqlite3.connect(tmp_path)
-        df_siparisler = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC", conn)
-        df_kalemler = pd.read_sql_query("SELECT * FROM siparis_kalemleri", conn)
-        conn.close()
-        return df_siparisler, df_kalemler
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
-
-# Renk Kodlu Üst Başlık Şeridi
-if yetki_tipi == "MUSTERI":
-    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
-    alt_metin = "Müşteri Sipariş İzleme Paneli"
-elif yetki_tipi == "SIPARIS_VEREN":
-    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
-    alt_metin = "Personel Sipariş İzleme Paneli"
-else:
-    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Sipariş İzleme</span>'
-    alt_metin = "Yönetici Canlı Takip Paneli"
-
-token_param = f"&token={aktif_token}" if aktif_token else ""
-refresh_href = f"?action=refresh{token_param}"
-
-st.markdown(
-    f'<div class="header-banner">'
-    f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
-    f'<div class="header-actions">'
-    f'<a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
-    f'<a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
-    f'</div></div>',
-    unsafe_allow_html=True
-)
-
-try:
-    df_sip, df_kalem = verileri_getir()
-except Exception as e:
-    st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
-    st.stop()
-
-# Mobil oturumda verilen kararları ana DB güncellenene kadar anlık yansıt
-if st.session_state.yerel_kararlar and not df_sip.empty:
-    for s_no, karar_bilgi in list(st.session_state.yerel_kararlar.items()):
-        mask = df_sip["siparis_no"] == int(s_no)
-        if mask.any():
-            db_op = str(df_sip.loc[mask, "operasyon"].iloc[0] or "").upper()
-            if db_op == "ONAY BEKLİYOR":
-                df_sip.loc[mask, "operasyon"] = karar_bilgi["karar"]
-                if karar_bilgi.get("not"):
-                    mevcut_not = str(df_sip.loc[mask, "notlar"].iloc[0] or "").strip()
-                    ek_not = f"[Yönetici Notu - {karar_bilgi['karar']}]: {karar_bilgi['not']}"
-                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
-            else:
-                # Masaüstü veritabanı zaten güncellendiyse yerel önbellekten temizle
-                st.session_state.yerel_kararlar.pop(s_no, None)
-
-# Yetki Tipine Göre Veriyi Kısıtlama
-if yetki_tipi == "MUSTERI":
-    df_sip = df_sip[df_sip["musteri"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
-elif yetki_tipi == "SIPARIS_VEREN":
-    df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
-
+# ==========================================
+# RENK HARİTALARI & YARDIMCI FONKSİYONLAR
+# ==========================================
 OP_RENK = {
     "İŞLENDİ": "#0284c7",
-    "ONAY BEKLİYOR": "#f97316",
-    "ONAYLANDI": "#16a34a",
-    "REVİZE İSTENDİ": "#f59e0b",
+    "ONAY BEKLİYOR": "#ea580c",
+    "ONAYLANDI": "#0d9488",
+    "REVİZE İSTENDİ": "#d97706",
     "REDDEDİLDİ": "#dc2626",
     "TAMAMLANDI": "#16a34a",
-    "MUHASEBEYE İLETİLDİ": "#16a34a",
     "İPTAL EDİLDİ": "#dc2626",
     "KISMİ EVRAK": "#7c3aed"
 }
 
-OP_IKON = {
-    "İŞLENDİ": "🔵",
-    "ONAY BEKLİYOR": "🟠",
-    "ONAYLANDI": "🟢",
-    "REVİZE İSTENDİ": "🟡",
-    "REDDEDİLDİ": "⛔",
-    "TAMAMLANDI": "✅",
-    "MUHASEBEYE İLETİLDİ": "✅",
-    "İPTAL EDİLDİ": "🔴",
-    "KISMİ EVRAK": "🟣"
-}
+QUEUE_FILE_NAME = "mobil_onaylar.json"
 
-ETIKET_MAP = {
-    "tarih": "Sipariş Tarihi",
-    "sevk_tarihi": "Sevk Tarihi",
-    "firma": "Tedarikçi Firma",
-    "musteri": "Müşteri",
-    "santiye": "Şantiye",
-    "sehir": "Şehir",
-    "fabrika": "Fabrika",
-    "nakliye": "Nakliye",
-    "yetkili": "Yetkili",
-    "telefon": "Telefon",
-    "arac": "Araç",
-    "ted_sip_no": "Ted.Sip.No",
-    "siparis_veren": "Sipariş Veren",
-    "plaka": "Plaka",
-    "notlar": "Not",
-    "nakliye_fatura": "Nakliye Fatura",
-    "firma_yetkili": "Firma Yetkili",
-    "siparis_gecen": "Sipariş Geçen"
-}
 
-oncelik = [
-    "tarih",
-    "sevk_tarihi",
-    "firma",
-    "musteri",
-    "santiye",
-    "sehir",
-    "fabrika",
-    "nakliye",
-    "yetkili",
-    "telefon",
-    "arac",
-    "ted_sip_no",
-    "siparis_veren",
-    "plaka",
-    "notlar"
-]
+def format_durum_text(val) -> str:
+    metin = str(val or "").strip()
+    if not metin:
+        return ""
+    tr_upper = metin.replace("i", "İ").replace("ı", "I").upper()
+    if tr_upper in ("SEVK EDİLDİ", "İPTAL"):
+        return tr_upper
+    return metin
 
-kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
-def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
-    op_val = str(row.get("operasyon") or "-")
-    op_upper = op_val.upper()
-    renk = OP_RENK.get(op_upper, "#475569")
-    durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
-
-    haric_sutunlar = {
-        "id", "siparis_no", "operasyon", "durum",
-        "nakliye_fatura", "firma_yetkili", "siparis_gecen",
-        "musteri" if yetki_tipi == "MUSTERI" else ""
-    }
-    kirmizi_alanlar = {"firma", "musteri", "nakliye"}
-    lacivert_alanlar = {"notlar"}
-
-    sirali_sutunlar = [c for c in oncelik if c in row.index] + [c for c in row.index if c not in oncelik]
-    grid_items_html = ""
-    for col_name in sirali_sutunlar:
-        col_lower = col_name.lower()
-        if col_lower in haric_sutunlar:
-            continue
-        val = row.get(col_name)
-        bos_mu = pd.isna(val) or str(val).strip() in ("", "None", "nan")
-
-        etiket = ETIKET_MAP.get(col_lower, col_name.replace("_", " ").title())
-        deger_str = "-" if bos_mu else html.escape(str(val).strip())
-
-        if vurgulu_onay and col_lower in kirmizi_alanlar:
-            val_cls = "info-item-val-red"
-        elif vurgulu_onay and col_lower in lacivert_alanlar:
-            val_cls = "info-item-val-navy"
-        else:
-            val_cls = "info-item-val"
-
-        span_style = ' style="grid-column: span 2;"' if col_lower == "notlar" or len(deger_str) > 35 else ""
-        grid_items_html += (
-            f'<div{span_style}>'
-            f'<span class="info-item-label">{html.escape(etiket)}</span>'
-            f'<span class="{val_cls}">{deger_str}</span>'
-            f'</div>'
-        )
-
-    grid_html = f'<div class="info-grid">{grid_items_html}</div>' if grid_items_html else ""
-
-    tablo_html = ""
-    kalemler = kalem_gruplari.get(sip_no)
-    if kalemler is not None and not kalemler.empty:
-        olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-        ad_sutunu = next((c for c in olasi_ad if c in kalemler.columns), None)
-
-        olasi_miktar = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
-        miktar_sutunu = next((c for c in olasi_miktar if c in kalemler.columns), None)
-
-        olasi_birim = ["birim", "birimi", "olcu_birimi"]
-        birim_sutunu = next((c for c in olasi_birim if c in kalemler.columns), None)
-
-        haric = {"id", "siparis_no", ad_sutunu, miktar_sutunu, birim_sutunu}
-        kalan_sutunlar = [c for c in kalemler.columns if c not in haric]
-
-        if ad_sutunu is None and kalan_sutunlar:
-            ad_sutunu = kalan_sutunlar.pop(0)
-        if miktar_sutunu is None and kalan_sutunlar:
-            miktar_sutunu = kalan_sutunlar.pop(0)
-
-        satirlar_html = ""
-        for _, k_row in kalemler.iterrows():
-            urun_adi = html.escape(str(k_row.get(ad_sutunu) or "-")) if ad_sutunu else "-"
-            miktar_val = k_row.get(miktar_sutunu) if miktar_sutunu else "-"
-            if isinstance(miktar_val, float) and miktar_val.is_integer():
-                miktar_val = int(miktar_val)
-            miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
-            birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
-
-            satirlar_html += (
-                f"<tr>"
-                f"<td>{urun_adi}</td>"
-                f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
-                f"<td class='urun-miktar'>{miktar_str}</td>"
-                f"</tr>"
-            )
-
-        tablo_html = (
-            f"<table class='urun-table'>"
-            f"<thead><tr>"
-            f"<th>Malzeme / Ürün</th>"
-            f"<th style='text-align:left;'>Birim</th>"
-            f"<th style='text-align:right;'>Miktar</th>"
-            f"</tr></thead>"
-            f"<tbody>{satirlar_html}</tbody>"
-            f"</table>"
-        )
-
-    rozet_html = (
-        f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
-        f"<span class='durum-plain'>Durum: {durum_gosterim}</span>"
-    )
-    return rozet_html, grid_html, tablo_html
-
-def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str):
-    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve ntfy bildirimi gönderir."""
+def format_miktar(val) -> str:
+    if val is None:
+        return ""
+    s = str(val).strip()
     try:
-        with st.spinner("Karar kaydediliyor ve bildirim gönderiliyor..."):
-            onay_kuyruguna_yaz(sip_no, karar, aciklama)
-            onay_ntfy_gonder(
-                siparis_no=sip_no,
-                firma=str(row_data.get("firma") or "-"),
-                musteri=str(row_data.get("musteri") or "-"),
-                karar=karar,
-                aciklama=aciklama
-            )
-            st.session_state.yerel_kararlar[int(sip_no)] = {
-                "karar": karar,
-                "not": aciklama.strip()
+        f = float(s)
+        return str(int(f)) if f.is_integer() else str(f)
+    except ValueError:
+        return s
+
+
+# ==========================================
+# GOOGLE DRIVE BAĞLANTISI & ONAY KUYRUĞU YAZMA
+# ==========================================
+def get_drive_service():
+    creds = service_account.Credentials.from_service_account_info(
+        dict(st.secrets["gcp_service_account"]),
+        scopes=["https://www.googleapis.com/auth/drive"]
+    )
+    return build("drive", "v3", credentials=creds, cache_discovery=False)
+
+
+def mobil_karar_gonder(siparis_no: int, yeni_karar: str, aciklama: str = "") -> bool:
+    """Yönetici onay/revize/ret kararını Google Drive üzerindeki mobil_onaylar.json kuyruğuna ekler."""
+    try:
+        folder_id = st.secrets["GDRIVE_FOLDER_ID"]
+        service = get_drive_service()
+
+        query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
+        results = service.files().list(q=query, fields="files(id, name)").execute()
+        files = results.get("files", [])
+
+        mevcut_kuyruk = []
+        file_id = None
+
+        if files:
+            file_id = files[0]["id"]
+            request = service.files().get_media(fileId=file_id)
+            fh = io.BytesIO()
+            downloader = MediaIoBaseDownload(fh, request)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk()
+            try:
+                icerik = fh.getvalue().decode("utf-8").strip()
+                if icerik:
+                    mevcut_kuyruk = json.loads(icerik)
+                    if not isinstance(mevcut_kuyruk, list):
+                        mevcut_kuyruk = []
+            except Exception:
+                mevcut_kuyruk = []
+
+        # Aynı sipariş için bekleyen önceki karar varsa güncelle
+        mevcut_kuyruk = [k for k in mevcut_kuyruk if int(k.get("siparis_no", -1)) != int(siparis_no)]
+        mevcut_kuyruk.append({
+            "siparis_no": int(siparis_no),
+            "karar": yeni_karar,
+            "not": aciklama.strip(),
+            "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        json_bytes = json.dumps(mevcut_kuyruk, ensure_ascii=False, indent=2).encode("utf-8")
+        media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
+
+        if file_id:
+            service.files().update(fileId=file_id, media_body=media).execute()
+        else:
+            file_metadata = {
+                "name": QUEUE_FILE_NAME,
+                "parents": [folder_id]
             }
-            st.session_state.onay_inceleme_sip_no = None
-            st.session_state.flash_mesaj = f"Sipariş #{sip_no} için '{karar}' kararı iletildi."
-        st.rerun()
-    except Exception as err:
-        st.error(f"Karar Google Drive'a yazılamadı: {err}")
+            service.files().create(body=file_metadata, media_body=media, fields="id").execute()
 
-# ==============================================================================
-# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
-# ==============================================================================
-aktif_inceleme_no = st.session_state.get("onay_inceleme_sip_no")
-if yetki_tipi == "YONETICI" and aktif_inceleme_no is not None:
-    secili_df = df_sip[df_sip["siparis_no"] == aktif_inceleme_no]
-    if secili_df.empty:
-        st.session_state.onay_inceleme_sip_no = None
-        st.rerun()
+        # İyimser yerel önbellek güncellemesi
+        if "lokal_kararlar" not in st.session_state:
+            st.session_state["lokal_kararlar"] = {}
+        st.session_state["lokal_kararlar"][int(siparis_no)] = {
+            "karar": yeni_karar,
+            "not": aciklama.strip()
+        }
+        return True
+    except Exception as e:
+        st.error(f"Karar Google Drive'a iletilemedi: {e}")
+        return False
 
-    inceleme_row = secili_df.iloc[0]
-    rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
 
-    st.markdown(
-        f'<div class="fullscreen-review-card">'
-        f'<div class="fullscreen-review-header">'
-        f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="close-review-link">✕ Vazgeç</a>'
-        f'</div>'
-        f'{rozet_html}'
-        f'{grid_html}'
-        f'{tablo_html}'
-        f'</div>',
-        unsafe_allow_html=True
+@st.cache_data(ttl=25, show_spinner=False)
+def load_orders_from_drive():
+    """Google Drive üzerindeki şifreli .db.enc dosyasını indirir, çözer ve tüm siparişleri tek seferde çeker."""
+    folder_id = st.secrets["GDRIVE_FOLDER_ID"]
+    db_filename = st.secrets.get("DB_FILENAME", "siparis_takip.db.enc")
+    fernet_key = st.secrets["DB_ENCRYPTION_KEY"].encode("utf-8")
+
+    service = get_drive_service()
+
+    query = f"name='{db_filename}' and '{folder_id}' in parents and trashed=false"
+    results = service.files().list(
+        q=query,
+        fields="files(id, name, modifiedTime)",
+        orderBy="modifiedTime desc"
+    ).execute()
+    files = results.get("files", [])
+
+    if not files:
+        raise FileNotFoundError(f"Google Drive klasöründe '{db_filename}' dosyası bulunamadı.")
+
+    file_meta = files[0]
+    file_id = file_meta["id"]
+    modified_time = file_meta.get("modifiedTime", "")
+
+    # Bekleyen mobil karar kuyruğunu da oku
+    bekleyen_kararlar = {}
+    q_queue = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
+    res_q = service.files().list(q=q_queue, fields="files(id)").execute()
+    q_files = res_q.get("files", [])
+    if q_files:
+        req_q = service.files().get_media(fileId=q_files[0]["id"])
+        fh_q = io.BytesIO()
+        dl_q = MediaIoBaseDownload(fh_q, req_q)
+        done_q = False
+        while not done_q:
+            _, done_q = dl_q.next_chunk()
+        try:
+            q_list = json.loads(fh_q.getvalue().decode("utf-8"))
+            if isinstance(q_list, list):
+                for item in q_list:
+                    bekleyen_kararlar[int(item["siparis_no"])] = {
+                        "karar": item.get("karar", ""),
+                        "not": item.get("not", "")
+                    }
+        except Exception:
+            pass
+
+    request = service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+
+    fernet = Fernet(fernet_key)
+    decrypted_bytes = fernet.decrypt(fh.getvalue())
+
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+        tmp.write(decrypted_bytes)
+        tmp_path = tmp.name
+
+    try:
+        conn = sqlite3.connect(tmp_path)
+        df_orders = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC", conn)
+        df_items = pd.read_sql_query("SELECT siparis_no, urun, birim, miktar FROM siparis_kalemleri", conn)
+        conn.close()
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    items_map = {}
+    for _, r in df_items.iterrows():
+        s_no = int(r["siparis_no"])
+        items_map.setdefault(s_no, []).append({
+            "urun": str(r["urun"] or ""),
+            "birim": str(r["birim"] or ""),
+            "miktar": format_miktar(r["miktar"])
+        })
+
+    return df_orders, items_map, modified_time, bekleyen_kararlar
+
+
+# ==========================================
+# ŞİFRE KORUMASI
+# ==========================================
+def check_mobile_password():
+    app_pass = st.secrets.get("APP_PASSWORD", "")
+    if not app_pass:
+        return True
+
+    if st.session_state.get("mobil_auth_ok"):
+        return True
+
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-title">SAYAR YAPI | MOBİL ERİŞİM</div>
+        <div class="app-subtitle">Sipariş izleme ekranına erişmek için şifre giriniz</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    pwd = st.text_input("Erişim Şifresi", type="password", placeholder="Şifrenizi girin...")
+    if st.button("Giriş Yap", type="primary", use_container_width=True):
+        if pwd == app_pass:
+            st.session_state["mobil_auth_ok"] = True
+            st.rerun()
+        else:
+            st.error("Hatalı şifre!")
+    return False
+
+
+# ==========================================
+# REVİZE NOTU AÇILIR PENCERESİ (DIALOG)
+# ==========================================
+@st.dialog("Revize Notu")
+def revize_not_penceresi(siparis_no: int):
+    st.caption(f"Sipariş #{siparis_no} için revize açıklaması giriniz:")
+    revize_notu = st.text_area(
+        "Revize Açıklaması",
+        placeholder="Revize sebebini yazınız...",
+        height=110,
+        label_visibility="collapsed"
     )
+    c_gonder, c_iptal = st.columns(2)
+    with c_gonder:
+        if st.button("Revize Gönder", type="primary", use_container_width=True):
+            if mobil_karar_gonder(siparis_no, "REVİZE İSTENDİ", revize_notu):
+                st.session_state["flash_mesaj"] = f"Sipariş #{siparis_no} REVİZE İSTENDİ kararı iletildi."
+                st.session_state["onay_inceleme_no"] = None
+                st.rerun()
+    with c_iptal:
+        if st.button("İptal", use_container_width=True):
+            st.rerun()
 
-    yonetici_notu = st.text_input(
-        "Yönetici Notu (Revize / Reddet için açıklama ekleyebilirsiniz):",
-        key=f"onay_not_{aktif_inceleme_no}",
-        placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin..."
-    )
 
-    col_b1, col_b2, col_b3 = st.columns(3)
-    with col_b1:
-        if st.button("✅ ONAYLA", use_container_width=True, type="primary"):
-            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", yonetici_notu)
-    with col_b2:
-        if st.button("🟡 REVİZE", use_container_width=True):
-            if not yonetici_notu.strip():
-                st.warning("Revize talebi için lütfen yukarıdaki kutuya kısa bir açıklama yazınız.")
-            else:
-                karari_uygula(aktif_inceleme_no, inceleme_row, "REVİZE İSTENDİ", yonetici_notu)
-    with col_b3:
-        if st.button("⛔ REDDET", use_container_width=True):
-            if not yonetici_notu.strip():
-                st.warning("Reddetme işlemi için lütfen yukarıdaki kutuya ret sebebini yazınız.")
-            else:
-                karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", yonetici_notu)
+# ==========================================
+# DETAY & ONAY İNCELEME EKRANLARI
+# ==========================================
+def render_onay_inceleme_ekrani(row, items):
+    """'Onayla / İncele' tıklandığında açılan sadeleştirilmiş onay ekranı."""
+    sip_no = int(row["siparis_no"])
+    op_val = str(row.get("operasyon") or "ONAY BEKLİYOR").strip().upper()
+    op_bg = OP_RENK.get(op_val, "#ea580c")
 
-    st.stop()
+    col_baslik, col_kapat = st.columns([8, 1])
+    with col_baslik:
+        st.markdown(f"### 📋 Sipariş Onay İncelemesi — #{sip_no}")
+    with col_kapat:
+        if st.button("✕", key="btn_vazgec_top", type="tertiary"):
+            st.session_state["onay_inceleme_no"] = None
+            st.rerun()
 
-# ==============================================================================
-# ANA LİSTE VE KPI GÖRÜNÜMÜ
-# ==============================================================================
-if st.session_state.flash_mesaj:
-    st.success(st.session_state.flash_mesaj)
-    st.session_state.flash_mesaj = None
+    st.markdown(f"""
+    <div class="detail-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.95rem; font-weight:800; color:#f8fafc;">{row.get('firma') or '-'}</span>
+            <span class="badge" style="background-color:{op_bg};">{op_val}</span>
+        </div>
+        <div style="font-size:0.86rem; font-weight:700; color:#38bdf8; margin-top:3px;">{row.get('musteri') or '-'}</div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Sipariş Tarihi</div><div class="detail-val">{row.get('tarih') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Sevk Tarihi</div><div class="detail-val">{row.get('sevk_tarihi') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Şantiye</div><div class="detail-val">{row.get('santiye') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Şehir</div><div class="detail-val">{row.get('sehir') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Fabrika</div><div class="detail-val">{row.get('fabrika') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Nakliye</div><div class="detail-val">{row.get('nakliye') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Araç Tipi</div><div class="detail-val">{row.get('arac') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Ted. Sip. No</div><div class="detail-val">{row.get('ted_sip_no') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Sipariş Veren</div><div class="detail-val">{row.get('siparis_veren') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Firma Yetkili</div><div class="detail-val">{row.get('firma_yetkili') or '-'}</div></div>
+        </div>
+        {f'<div class="note-box"><b>Mevcut Not:</b> {row.get("notlar")}</div>' if str(row.get("notlar") or "").strip() else ''}
+    </div>
+    """, unsafe_allow_html=True)
 
-tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
-onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
-sevk_bekleyen = len(
-    df_sip[
-        (~df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ", "İPTAL EDİLDİ"])) &
-        (df_sip["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
-    ]
-)
-
-kpi_mod = st.session_state.kpi_mod
-cls_tamamlandi = "kpi-active" if kpi_mod == "TAMAMLANDI" else ""
-cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
-cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
-
-st.markdown(
-    f'<div class="kpi-grid">'
-    f'<a href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
-    f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
-    f'<a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
-    f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
-    f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
-    f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
-    f'</div>',
-    unsafe_allow_html=True
-)
-
-op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
-firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
-musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
-
-if "f_op" not in st.session_state:
-    if kpi_mod == "ONAY":
-        st.session_state.f_op = "ONAY BEKLİYOR"
-    elif kpi_mod == "TAMAMLANDI":
-        st.session_state.f_op = "TAMAMLANDI"
+    st.markdown("**📦 Sipariş Ürün Kalemleri**")
+    if not items:
+        st.info("Bu siparişe ait ürün kalemi bulunmuyor.")
     else:
-        st.session_state.f_op = "[TÜMÜ]"
-if st.session_state.f_op not in op_listesi:
-    st.session_state.f_op = "[TÜMÜ]"
-if "f_firma" not in st.session_state or st.session_state.f_firma not in firma_listesi:
-    st.session_state.f_firma = "[TÜMÜ]"
-if "f_musteri" not in st.session_state or st.session_state.f_musteri not in musteri_listesi:
-    st.session_state.f_musteri = "[TÜMÜ]"
-if "f_gizle_muh" not in st.session_state:
-    st.session_state.f_gizle_muh = (kpi_mod == "SEVK")
-if "f_gizle_ipt" not in st.session_state:
-    st.session_state.f_gizle_ipt = (kpi_mod == "SEVK")
+        for it in items:
+            birim_str = f" {it['birim']}" if it["birim"] else ""
+            st.markdown(f"""
+            <div class="product-row">
+                <span class="product-name">{it['urun']}</span>
+                <span class="product-qty">{it['miktar']}{birim_str}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-ek_filtre_aktif = (
-    st.session_state.f_op != "[TÜMÜ]" or
-    st.session_state.f_firma != "[TÜMÜ]" or
-    st.session_state.f_musteri != "[TÜMÜ]" or
-    st.session_state.f_gizle_muh or
-    st.session_state.f_gizle_ipt
-)
-popover_etiket = "⚙️ •" if ek_filtre_aktif else "⚙️"
+    st.markdown("---")
+    st.markdown("**⚡ Yönetici Kararı**")
 
-col_arama, col_filtre = st.columns([5, 1])
-with col_arama:
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("✅ Onayla", key="btn_karar_onayla", type="primary", use_container_width=True):
+            if mobil_karar_gonder(sip_no, "ONAYLANDI", ""):
+                st.session_state["flash_mesaj"] = f"Sipariş #{sip_no} ONAYLANDI kararı iletildi."
+                st.session_state["onay_inceleme_no"] = None
+                st.rerun()
+
+    with b2:
+        if st.button("🔄 Revize", key="btn_karar_revize", use_container_width=True):
+            revize_not_penceresi(sip_no)
+
+    with b3:
+        if st.button("❌ Reddet", key="btn_karar_reddet", use_container_width=True):
+            if mobil_karar_gonder(sip_no, "REDDEDİLDİ", ""):
+                st.session_state["flash_mesaj"] = f"Sipariş #{sip_no} REDDEDİLDİ kararı iletildi."
+                st.session_state["onay_inceleme_no"] = None
+                st.rerun()
+
+
+def render_detay_ekrani(row, items):
+    """Normal sipariş kartından 'Detay' tıklandığında açılan tam görünüm."""
+    sip_no = int(row["siparis_no"])
+    op_val = str(row.get("operasyon") or "-").strip().upper()
+    durum_val = format_durum_text(row.get("durum")) or "-"
+    op_bg = OP_RENK.get(op_val, "#475569")
+
+    if st.button("← Sipariş Listesine Dön", use_container_width=True):
+        st.session_state["selected_order_no"] = None
+        st.rerun()
+
+    st.markdown(f"""
+    <div class="detail-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:1.1rem; font-weight:800; color:#38bdf8;">Sipariş #{sip_no}</span>
+            <span class="badge" style="background-color:{op_bg};">{op_val}</span>
+        </div>
+        <div style="font-size:0.8rem; color:#cbd5e1; margin-top:4px;">Sipariş Durumu: <b>{durum_val}</b></div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Sipariş Tarihi</div><div class="detail-val">{row.get('tarih') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Sevk Tarihi</div><div class="detail-val">{row.get('sevk_tarihi') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Firma</div><div class="detail-val">{row.get('firma') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Müşteri</div><div class="detail-val">{row.get('musteri') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Şantiye</div><div class="detail-val">{row.get('santiye') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Şehir</div><div class="detail-val">{row.get('sehir') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Yetkili</div><div class="detail-val">{row.get('yetkili') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Telefon</div><div class="detail-val">{row.get('telefon') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Fabrika</div><div class="detail-val">{row.get('fabrika') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Nakliye</div><div class="detail-val">{row.get('nakliye') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Araç Tipi</div><div class="detail-val">{row.get('arac') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Plaka</div><div class="detail-val">{row.get('plaka') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Ted. Sip. No</div><div class="detail-val">{row.get('ted_sip_no') or '-'}</div></div>
+            <div class="detail-item"><div class="detail-label">Sipariş Veren</div><div class="detail-val">{row.get('siparis_veren') or '-'}</div></div>
+        </div>
+        {f'<div class="note-box"><b>Not:</b> {row.get("notlar")}</div>' if str(row.get("notlar") or "").strip() else ''}
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("**📦 Ürün Kalemleri**")
+    if not items:
+        st.info("Bu siparişe ait ürün kalemi girilmemiş.")
+    else:
+        for it in items:
+            birim_str = f" {it['birim']}" if it["birim"] else ""
+            st.markdown(f"""
+            <div class="product-row">
+                <span class="product-name">{it['urun']}</span>
+                <span class="product-qty">{it['miktar']}{birim_str}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+# ==========================================
+# ANA UYGULAMA AKIŞI
+# ==========================================
+def main():
+    if not check_mobile_password():
+        return
+
+    if "aktif_kpi" not in st.session_state:
+        st.session_state["aktif_kpi"] = "TUMU"
+    if "selected_order_no" not in st.session_state:
+        st.session_state["selected_order_no"] = None
+    if "onay_inceleme_no" not in st.session_state:
+        st.session_state["onay_inceleme_no"] = None
+
+    # 2 saniyelik geçici bildirim alanı
+    flash_box = st.empty()
+    flash_msg = st.session_state.pop("flash_mesaj", None)
+    if flash_msg:
+        flash_box.success(flash_msg)
+
+    try:
+        df, items_map, modified_time, drive_kuyruk = load_orders_from_drive()
+    except Exception as e:
+        st.error("Google Drive veritabanına bağlanırken hata oluştu.")
+        st.exception(e)
+        if st.button("Tekrar Dene", type="primary"):
+            st.cache_data.clear()
+            st.rerun()
+        return
+
+    # Bekleyen mobil kararları görüntülenen DataFrame üzerine uygula
+    birlesik_kararlar = {}
+    birlesik_kararlar.update(drive_kuyruk)
+    birlesik_kararlar.update(st.session_state.get("lokal_kararlar", {}))
+
+    if birlesik_kararlar and not df.empty:
+        for idx, r in df.iterrows():
+            s_no = int(r["siparis_no"])
+            if s_no in birlesik_kararlar:
+                yeni_k = birlesik_kararlar[s_no]["karar"]
+                ek_not = birlesik_kararlar[s_no]["not"]
+                df.at[idx, "operasyon"] = yeni_k
+                if ek_not:
+                    eski = str(r.get("notlar") or "").strip()
+                    df.at[idx, "notlar"] = f"{eski}\n[Mobil {yeni_k}]: {ek_not}".strip() if eski else f"[Mobil {yeni_k}]: {ek_not}"
+
+    # 1) Onay İnceleme Ekranı Açık İse
+    if st.session_state["onay_inceleme_no"] is not None:
+        hedef_no = st.session_state["onay_inceleme_no"]
+        secili_df = df[df["siparis_no"] == hedef_no]
+        if not secili_df.empty:
+            render_onay_inceleme_ekrani(secili_df.iloc[0], items_map.get(hedef_no, []))
+            if flash_msg:
+                time.sleep(2)
+                flash_box.empty()
+            return
+        else:
+            st.session_state["onay_inceleme_no"] = None
+
+    # 2) Normal Detay Ekranı Açık İse
+    if st.session_state["selected_order_no"] is not None:
+        hedef_no = st.session_state["selected_order_no"]
+        secili_df = df[df["siparis_no"] == hedef_no]
+        if not secili_df.empty:
+            render_detay_ekrani(secili_df.iloc[0], items_map.get(hedef_no, []))
+            if flash_msg:
+                time.sleep(2)
+                flash_box.empty()
+            return
+        else:
+            st.session_state["selected_order_no"] = None
+
+    # Üst Başlık ve Yenile Butonu
+    col_h1, col_h2 = st.columns([4, 1])
+    with col_h1:
+        son_guncelleme = modified_time.replace("T", " ")[:16] if modified_time else "-"
+        st.markdown(f"""
+        <div class="app-header">
+            <div class="app-title">SAYAR YAPI | SİPARİŞ İZLEME</div>
+            <div class="app-subtitle">Son Senkronizasyon (UTC): {son_guncelleme}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_h2:
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        if st.button("🔄 Yenile", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+
+    # Tıklanabilir KPI Özet Kartları
+    op_series = df["operasyon"].fillna("").astype(str).str.strip().str.upper()
+    toplam_sayi = len(df)
+    onay_bekleyen = int((op_series == "ONAY BEKLİYOR").sum())
+    onaylanan = int((op_series == "ONAYLANDI").sum())
+    tamamlanan = int((op_series == "TAMAMLANDI").sum())
+
+    aktif_kpi = st.session_state["aktif_kpi"]
+
+    def kpi_tikla(secim_kodu: str):
+        st.session_state["aktif_kpi"] = "TUMU" if st.session_state["aktif_kpi"] == secim_kodu else secim_kodu
+        st.rerun()
+
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        if st.button(f"TOPLAM\n{toplam_sayi}", key="kpi_tumu", type="primary" if aktif_kpi == "TUMU" else "secondary", use_container_width=True):
+            st.session_state["aktif_kpi"] = "TUMU"
+            st.rerun()
+    with k2:
+        if st.button(f"ONAY BEKL.\n{onay_bekleyen}", key="kpi_bekleyen", type="primary" if aktif_kpi == "ONAY BEKLİYOR" else "secondary", use_container_width=True):
+            kpi_tikla("ONAY BEKLİYOR")
+    with k3:
+        if st.button(f"ONAYLI\n{onaylanan}", key="kpi_onayli", type="primary" if aktif_kpi == "ONAYLANDI" else "secondary", use_container_width=True):
+            kpi_tikla("ONAYLANDI")
+    with k4:
+        if st.button(f"TAMAM\n{tamamlanan}", key="kpi_tamam", type="primary" if aktif_kpi == "TAMAMLANDI" else "secondary", use_container_width=True):
+            kpi_tikla("TAMAMLANDI")
+
+    # Arama ve Hızlı Filtreler
     arama = st.text_input(
         "Arama",
-        key="arama_metni",
-        placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
+        placeholder="🔍 Firma, Müşteri, Şantiye, Fabrika veya Sipariş No ara...",
         label_visibility="collapsed"
     )
 
-with col_filtre:
-    with st.popover(popover_etiket, use_container_width=True):
-        st.markdown("**Detaylı Filtreleme**")
-        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
-        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
+    f1, f2 = st.columns([3, 2])
+    with f1:
+        op_listesi = ["Tüm Operasyonlar"] + sorted([x for x in op_series.unique() if x])
+        secili_op = st.selectbox("Operasyon", op_listesi, label_visibility="collapsed")
+    with f2:
+        tamam_gizle = st.checkbox("Tamamlananları Gizle", value=True)
 
-        if yetki_tipi != "MUSTERI":
-            secili_musteri = st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
-        else:
-            secili_musteri = "[TÜMÜ]"
+    # Filtreleme Uygulama
+    filtered = df.copy()
+    f_op = filtered["operasyon"].fillna("").astype(str).str.strip().str.upper()
 
-        gizle_tamamlanan = st.checkbox("Tamamlananları Gizle", key="f_gizle_muh")
-        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
+    if aktif_kpi != "TUMU":
+        filtered = filtered[f_op == aktif_kpi]
+        f_op = filtered["operasyon"].fillna("").astype(str).str.strip().str.upper()
+    elif tamam_gizle and secili_op != "TAMAMLANDI":
+        filtered = filtered[f_op != "TAMAMLANDI"]
+        f_op = filtered["operasyon"].fillna("").astype(str).str.strip().str.upper()
 
-        if ek_filtre_aktif or arama.strip():
-            st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
+    if secili_op != "Tüm Operasyonlar":
+        filtered = filtered[f_op == secili_op]
 
-filtered = df_sip.copy()
-
-if gizle_tamamlanan:
-    filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
-if gizle_iptal:
-    filtered = filtered[
-        (filtered["operasyon"] != "İPTAL EDİLDİ") &
-        (filtered["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
-    ]
-if secili_op != "[TÜMÜ]":
-    if secili_op == "TAMAMLANDI":
-        filtered = filtered[filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
-    else:
-        filtered = filtered[filtered["operasyon"] == secili_op]
-if secili_firma != "[TÜMÜ]":
-    filtered = filtered[filtered["firma"] == secili_firma]
-if secili_musteri != "[TÜMÜ]":
-    filtered = filtered[filtered["musteri"] == secili_musteri]
-if arama.strip():
-    q = arama.strip().lower()
-    mask = (
-        filtered["siparis_no"].astype(str).str.contains(q, na=False) |
-        filtered["firma"].fillna("").str.lower().str.contains(q) |
-        filtered["musteri"].fillna("").str.lower().str.contains(q) |
-        filtered["santiye"].fillna("").str.lower().str.contains(q)
-    )
-    filtered = filtered[mask]
-
-toplam_filtrelenen = len(filtered)
-gosterilen_limit = st.session_state.sayfa_limiti
-gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
-
-if toplam_filtrelenen == 0:
-    st.markdown(
-        '<div class="empty-state-box">'
-        '<div class="empty-state-icon">🔍</div>'
-        '<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
-        '<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
-        '</div>',
-        unsafe_allow_html=True
-    )
-    col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
-    with col_e2:
-        st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
-else:
-    st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
-
-    kart_parcalari = ['<div class="sip-list-container">']
-    for _, row in filtered.head(gosterilen_limit).iterrows():
-        sip_no = row.get("siparis_no", "-")
-        op_val = str(row.get("operasyon") or "-")
-        op_upper = op_val.upper()
-        durum_ikon = OP_IKON.get(op_upper, "⚪")
-
-        firma_str = row.get("firma") or "-"
-        musteri_str = row.get("musteri") or "-"
-        santiye_str = row.get("santiye") or "-"
-        tarih_str = row.get("tarih") or "-"
-
-        f_md = md_temizle(firma_str)
-        m_md = md_temizle(musteri_str)
-        s_md = md_temizle(santiye_str)
-        t_md = md_temizle(tarih_str)
-
-        rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
-
-        if yetki_tipi == "MUSTERI":
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
-        else:
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
-        satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
-
-        onay_buton_html = ""
-        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            onay_buton_html = f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
-
-        kart_parcalari.append(
-            f'<div class="sip-row-wrap">'
-            f'<details class="custom-sip-card">'
-            f'<summary>'
-            f'<span class="custom-card-arrow">❯</span>'
-            f'<div class="custom-card-lines">'
-            f'<div class="custom-card-line1">{satir1_html}</div>'
-            f'<div class="custom-card-line2">{satir2_html}</div>'
-            f'</div>'
-            f'</summary>'
-            f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
-            f'</details>'
-            f'{onay_buton_html}'
-            f'</div>'
+    if arama.strip():
+        q = arama.strip().lower()
+        mask = (
+            filtered["siparis_no"].astype(str).str.contains(q, na=False) |
+            filtered["firma"].fillna("").astype(str).str.lower().str.contains(q, na=False) |
+            filtered["musteri"].fillna("").astype(str).str.lower().str.contains(q, na=False) |
+            filtered["santiye"].fillna("").astype(str).str.lower().str.contains(q, na=False) |
+            filtered["fabrika"].fillna("").astype(str).str.lower().str.contains(q, na=False) |
+            filtered["ted_sip_no"].fillna("").astype(str).str.lower().str.contains(q, na=False)
         )
+        filtered = filtered[mask]
 
-    kart_parcalari.append('</div>')
-    st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
+    st.caption(f"Gösterilen sipariş sayısı: **{len(filtered)}**")
 
-    yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
-    st.markdown(
-        f'<div class="pagination-box">'
-        f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi gösteriliyor</div>'
-        f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    if filtered.empty:
+        st.info("Seçilen filtrelere uygun sipariş bulunamadı.")
+    else:
+        max_gosterim = 40
+        gosterilecek_df = filtered.head(max_gosterim)
 
-    if gosterilen_adet < toplam_filtrelenen:
-        kalan = toplam_filtrelenen - gosterilen_adet
-        eklenecek = min(50, kalan)
-        if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
-            st.session_state.sayfa_limiti += 50
-            st.rerun()
+        for _, row in gosterilecek_df.iterrows():
+            sip_no = int(row["siparis_no"])
+            op_val = str(row.get("operasyon") or "-").strip().upper()
+            op_bg = OP_RENK.get(op_val, "#475569")
+
+            firma = str(row.get("firma") or "-")
+            musteri = str(row.get("musteri") or "-")
+            santiye = str(row.get("santiye") or "-")
+            tarih = str(row.get("tarih") or "-")
+
+            st.markdown(f"""
+            <div class="order-card">
+                <div class="card-top-row">
+                    <span class="badge" style="background-color:{op_bg};">{op_val}</span>
+                    <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">#{sip_no}</span>
+                </div>
+                <div class="card-company">{firma}</div>
+                <div class="card-customer">{musteri}</div>
+                <div class="card-site">📍 {santiye}</div>
+                <div class="card-date-row">📅 Sipariş Tarihi: {tarih}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if op_val == "ONAY BEKLİYOR":
+                c_btn1, c_btn2 = st.columns([2, 1])
+                with c_btn1:
+                    if st.button("🔍 Onayla / İncele", key=f"onay_btn_{sip_no}", type="primary", use_container_width=True):
+                        st.session_state["onay_inceleme_no"] = sip_no
+                        st.rerun()
+                with c_btn2:
+                    if st.button("Detay", key=f"detay_btn_{sip_no}", use_container_width=True):
+                        st.session_state["selected_order_no"] = sip_no
+                        st.rerun()
+            else:
+                if st.button("Detay", key=f"detay_btn_{sip_no}", use_container_width=True):
+                    st.session_state["selected_order_no"] = sip_no
+                    st.rerun()
+
+        if len(filtered) > max_gosterim:
+            st.info(f"İlk {max_gosterim} sipariş gösteriliyor. Diğer kayıtlar için arama veya filtre kullanabilirsiniz.")
+
+    # Geçici onay/revize/ret mesajını 2 saniye gösterip temizle
+    if flash_msg:
+        time.sleep(2)
+        flash_box.empty()
+
+
+if __name__ == "__main__":
+    main()
