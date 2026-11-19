@@ -1130,6 +1130,7 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
         }
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
+        st.cache_data.clear()
         st.rerun()
     except Exception as err:
         st.error(f"Karar Google Drive'a yazılamadı: {err}")
