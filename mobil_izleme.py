@@ -9,15 +9,14 @@ import tempfile
 import requests
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 from datetime import datetime
 from cryptography.fernet import Fernet
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-# Railway ortam değişkeninden secrets.toml dosyasını otomatik oluştur
-if os.environ.get("STREAMLIT_SECRETS"):
+# Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
+if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
@@ -26,8 +25,9 @@ NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
 QUEUE_FILE_NAME = "mobil_onaylar.json"
 
 
+@st.cache_data(show_spinner=False)
 def logo_base64_getir(dosya_yolu="logo.png"):
-    """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
+    """Logo dosyasını bir kez okuyup önbelleğe alır."""
     yol = dosya_yolu if os.path.exists(dosya_yolu) else os.path.join("static", dosya_yolu)
     if os.path.exists(yol):
         ext = os.path.splitext(yol)[1].lower()
@@ -49,39 +49,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonunu Çekirdek Dosyalara Dokunmadan <head> İçine Enjekte Et
-logo_hedef_url = ""
-try:
-    if "LOGO_URL" in st.secrets:
-        logo_hedef_url = str(st.secrets["LOGO_URL"]).strip()
-except Exception:
-    pass
-
-if not logo_hedef_url and LOGO_DATA_URI:
-    logo_hedef_url = LOGO_DATA_URI
-
-if logo_hedef_url:
-    components.html(
-        f"""
-        <script>
-        (function() {{
-            const doc = window.parent.document;
-            const head = doc.head || doc.getElementsByTagName('head')[0];
-            if (!head) return;
-            doc.querySelectorAll('link[rel*="apple-touch-icon"]').forEach(el => el.remove());
-            const l1 = doc.createElement('link');
-            l1.rel = 'apple-touch-icon';
-            l1.sizes = '180x180';
-            l1.href = {json.dumps(logo_hedef_url)};
-            head.appendChild(l1);
-        }})();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
-
-# Özel CSS: Kurumsal Çelik & Beton (Sıkılaştırılmış Kompakt Aydınlık Tema)
+# Özel CSS: Kurumsal Çelik & Beton (Hızlı SPA Görünümü)
 st.markdown("""
 <style>
 header[data-testid="stHeader"],
@@ -114,7 +82,7 @@ a[href*="streamlit.io/cloud"] {
     padding-right: 0.75rem !important;
 }
 [data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
+    gap: 0.4rem !important;
 }
 .header-banner {
     display: flex;
@@ -124,7 +92,7 @@ a[href*="streamlit.io/cloud"] {
     border-left: 5px solid #f97316;
     border-radius: 10px;
     padding: 9px 12px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     color: #f8fafc;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
     gap: 8px;
@@ -163,89 +131,110 @@ a[href*="streamlit.io/cloud"] {
     color: #cbd5e1;
     margin-top: 2px;
 }
-.header-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
+
+/* Mobil Uyumlu Yatay Bloklar (KPI, Satır İçi Buton, Aksiyon Barı) */
+div[data-testid="stHorizontalBlock"] {
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 6px !important;
 }
-.icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+
+/* Hızlı Buton Stilleri */
+div[data-testid="stButton"] > button {
+    border-radius: 9px !important;
+    font-weight: 700 !important;
+    transition: transform 0.08s ease !important;
+}
+div[data-testid="stButton"] > button:active {
+    transform: scale(0.97) !important;
+}
+
+/* KPI Butonları */
+.kpi-btn-wrap div[data-testid="stButton"] > button {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    height: 54px !important;
+    padding: 4px 6px !important;
+    line-height: 1.2 !important;
+    white-space: pre-line !important;
+    font-size: 13px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+.kpi-active-wrap div[data-testid="stButton"] > button {
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Turuncu İnceleme (✓) Butonu */
+.mini-onay-wrap {
+    flex: 0 0 42px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+}
+.mini-onay-wrap div[data-testid="stButton"] > button {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
     color: #ffffff !important;
-    text-decoration: none !important;
-    font-size: 16px;
-    cursor: pointer;
+    font-size: 19px !important;
+    font-weight: 900 !important;
 }
-.icon-btn:active {
-    background-color: #f97316;
-}
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-a.kpi-card {
-    display: block;
+
+/* Tam Ekran Onay İnceleme Kartı */
+.fullscreen-review-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 7px 8px;
-    text-align: center;
-    text-decoration: none !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
-    cursor: pointer;
+    border-top: 4px solid #f97316;
+    border-radius: 11px;
+    padding: 10px 11px 12px 11px;
+    margin-top: 2px;
+    margin-bottom: 6px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
 }
-a.kpi-card:hover {
-    background-color: #f8fafc;
+.fullscreen-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
 }
-a.kpi-card:active {
-    transform: scale(0.98);
-}
-.kpi-blue { border-top: 3px solid #0284c7 !important; }
-.kpi-orange { border-top: 3px solid #f97316 !important; }
-.kpi-green { border-top: 3px solid #16a34a !important; }
-.kpi-active {
-    background-color: #ffffff !important;
-    border: 2px solid #ef4444 !important;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-.kpi-label {
-    font-size: 11px;
-    color: #475569;
-    font-weight: 600;
-    margin-bottom: 1px;
-    white-space: nowrap;
-}
-.kpi-value {
-    font-size: 19px;
+.fullscreen-review-title {
+    font-size: 14px;
     font-weight: 800;
     color: #0f172a;
-    line-height: 1.2;
 }
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 6px !important;
-    margin-top: 12px !important;
+
+/* Aksiyon Butonları (ONAYLA / REVİZE / REDDET) */
+.aksiyon-onayla-wrap div[data-testid="stButton"] > button {
+    background-color: #16a34a !important;
+    border: 1px solid #15803d !important;
+    color: #ffffff !important;
+    height: 44px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
+.aksiyon-revize-wrap div[data-testid="stButton"] > button {
+    background-color: #facc15 !important;
+    border: 1px solid #eab308 !important;
+    color: #0f172a !important;
+    height: 44px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 54px !important;
+.aksiyon-reddet-wrap div[data-testid="stButton"] > button {
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
+    color: #ffffff !important;
+    height: 44px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
 }
+
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
     background-color: #ffffff !important;
@@ -273,34 +262,9 @@ div[data-testid="stPopover"] > button {
     height: 38px !important;
     padding: 0 10px !important;
     font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-}
-div[data-testid="stPopover"] > button:hover {
-    border-color: #f97316 !important;
-    background-color: #fff7ed !important;
-}
-.sip-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-}
-.sip-row-wrap {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: flex-start;
-    gap: 6px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
 }
 details.custom-sip-card {
-    flex: 1 1 auto;
-    min-width: 0;
+    width: 100%;
     margin: 0;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -322,9 +286,6 @@ details.custom-sip-card > summary {
 }
 details.custom-sip-card > summary::-webkit-details-marker {
     display: none;
-}
-details.custom-sip-card > summary:hover {
-    background-color: #f8fafc;
 }
 .custom-card-arrow {
     font-size: 11px;
@@ -360,116 +321,6 @@ details.custom-sip-card[open] .custom-card-arrow {
     padding: 6px 10px 10px 10px;
     border-top: 1px solid #e2e8f0;
     background-color: #ffffff;
-}
-a.mini-onay-btn {
-    flex: 0 0 42px;
-    width: 42px;
-    height: 48px;
-    box-sizing: border-box;
-    background-color: #f97316;
-    border: 1px solid #ea580c;
-    border-radius: 9px;
-    color: #ffffff !important;
-    font-size: 20px;
-    font-weight: 900;
-    text-decoration: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 2px rgba(249, 115, 22, 0.25);
-}
-a.mini-onay-btn:active {
-    background-color: #ea580c;
-    transform: scale(0.96);
-}
-/* Tam Ekran Onay İnceleme Kartı */
-.fullscreen-review-card {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-top: 4px solid #f97316;
-    border-radius: 11px;
-    padding: 10px 11px 12px 11px;
-    margin-top: 2px;
-    margin-bottom: 10px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
-}
-.fullscreen-review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 6px;
-    margin-bottom: 8px;
-    gap: 8px;
-}
-.fullscreen-review-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-a.close-review-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    font-size: 13px;
-    font-weight: 800;
-    color: #475569 !important;
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    text-decoration: none !important;
-    flex-shrink: 0;
-}
-a.close-review-link:active {
-    background-color: #e2e8f0;
-}
-.onay-aksiyon-bar {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #cbd5e1;
-    width: 100%;
-    box-sizing: border-box;
-}
-a.aksiyon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 42px;
-    border-radius: 9px;
-    font-size: 12.5px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-    text-decoration: none !important;
-    box-sizing: border-box;
-    padding: 0 6px;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
-}
-a.aksiyon-btn:active {
-    transform: scale(0.98);
-}
-a.aksiyon-onayla {
-    background-color: #16a34a !important;
-    border: 1px solid #15803d !important;
-    color: #ffffff !important;
-}
-a.aksiyon-revize {
-    background-color: #facc15 !important;
-    border: 1px solid #eab308 !important;
-    color: #0f172a !important;
-}
-a.aksiyon-reddet {
-    background-color: #dc2626 !important;
-    border: 1px solid #b91c1c !important;
-    color: #ffffff !important;
 }
 .info-grid {
     display: grid;
@@ -590,7 +441,6 @@ a.aksiyon-reddet {
     height: 100%;
     background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
     border-radius: 999px;
-    transition: width 0.25s ease;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -610,7 +460,8 @@ def durum_metni_formatla(durum_val):
     return metin
 
 
-# Google Drive API Servisi ve Onay Kuyruğu İşlemleri
+# Google Drive API İstemcisi (Oturumlar arası tek bağlantı olarak önbelleklendi)
+@st.cache_resource(show_spinner=False)
 def get_gdrive_service():
     sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
     creds = service_account.Credentials.from_service_account_info(
@@ -626,7 +477,7 @@ def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
     folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
 
     query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id, name)").execute()
+    results = service.files().list(q=query, fields="files(id)").execute()
     files = results.get("files", [])
 
     mevcut_kayitlar = []
@@ -691,7 +542,7 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
             f"https://ntfy.sh/{NTFY_TOPIC}",
             data=mesaj.encode("utf-8"),
             headers=headers,
-            timeout=5
+            timeout=2
         )
     except Exception:
         pass
@@ -729,25 +580,17 @@ def check_password():
         st.session_state.yetki_deger = None
         st.session_state.active_token = ""
 
-    if st.query_params.get("action") == "logout":
-        st.session_state.authenticated = False
-        st.session_state.yetki_tipi = None
-        st.session_state.yetki_deger = None
-        st.session_state.active_token = ""
-        st.session_state.onay_inceleme_sip_no = None
-        st.query_params.clear()
-        st.rerun()
-
-    url_token = st.query_params.get("token", "")
-    if url_token:
-        t_tip, t_deger = token_dogrula(url_token)
-        if t_tip:
-            st.session_state.authenticated = True
-            st.session_state.yetki_tipi = t_tip
-            st.session_state.yetki_deger = t_deger
-            st.session_state.active_token = url_token
-        else:
-            st.query_params.pop("token", None)
+    if not st.session_state.authenticated:
+        url_token = st.query_params.get("token", "")
+        if url_token:
+            t_tip, t_deger = token_dogrula(url_token)
+            if t_tip:
+                st.session_state.authenticated = True
+                st.session_state.yetki_tipi = t_tip
+                st.session_state.yetki_deger = t_deger
+                st.session_state.active_token = url_token
+            else:
+                st.query_params.pop("token", None)
 
     url_musteri = st.query_params.get("musteri", "")
     url_veren = st.query_params.get("veren", "")
@@ -843,59 +686,56 @@ def filtreleri_sifirla():
     st.session_state.sayfa_limiti = 50
 
 
-if st.query_params.get("action") == "refresh":
-    st.cache_data.clear()
-    st.session_state.sayfa_limiti = 50
-    st.query_params.pop("action", None)
-    st.rerun()
+def inceleme_ac(sip_no: int):
+    st.session_state.onay_inceleme_sip_no = int(sip_no)
+    st.session_state.bekleyen_revize_sip_no = None
 
-if "incele" in st.query_params:
-    incele_val = st.query_params.get("incele", "").strip()
-    if incele_val.isdigit():
-        st.session_state.onay_inceleme_sip_no = int(incele_val)
-    st.query_params.pop("incele", None)
 
-if "incele_kapat" in st.query_params:
+def inceleme_kapat():
     st.session_state.onay_inceleme_sip_no = None
     st.session_state.bekleyen_revize_sip_no = None
-    st.query_params.pop("incele_kapat", None)
-    st.query_params.pop("karar", None)
-    st.rerun()
 
-bekleyen_karar_param = st.query_params.get("karar", "").strip().upper()
-if bekleyen_karar_param:
-    st.query_params.pop("karar", None)
 
-if "kpi" in st.query_params:
-    secilen_kpi = st.query_params.get("kpi", "").upper()
-    if secilen_kpi in ("TAMAMLANDI", "ONAY", "SEVK"):
-        if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
-            st.session_state.kpi_mod = "SEVK"
-        else:
-            st.session_state.kpi_mod = secilen_kpi
+def kpi_degistir(secilen_kpi: str):
+    if st.session_state.kpi_mod == secilen_kpi and secilen_kpi != "SEVK":
+        st.session_state.kpi_mod = "SEVK"
+    else:
+        st.session_state.kpi_mod = secilen_kpi
 
-        if st.session_state.kpi_mod == "ONAY":
-            st.session_state.f_op = "ONAY BEKLİYOR"
-        elif st.session_state.kpi_mod == "TAMAMLANDI":
-            st.session_state.f_op = "TAMAMLANDI"
-        else:
-            st.session_state.f_op = "[TÜMÜ]"
+    if st.session_state.kpi_mod == "ONAY":
+        st.session_state.f_op = "ONAY BEKLİYOR"
+    elif st.session_state.kpi_mod == "TAMAMLANDI":
+        st.session_state.f_op = "TAMAMLANDI"
+    else:
+        st.session_state.f_op = "[TÜMÜ]"
 
-        st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.sayfa_limiti = 50
-        st.session_state.onay_inceleme_sip_no = None
-    st.query_params.pop("kpi", None)
-    st.rerun()
+    st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
+    st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
+    st.session_state.sayfa_limiti = 50
+    st.session_state.onay_inceleme_sip_no = None
+
+
+def cikis_yap():
+    st.session_state.authenticated = False
+    st.session_state.yetki_tipi = None
+    st.session_state.yetki_deger = None
+    st.session_state.active_token = ""
+    st.session_state.onay_inceleme_sip_no = None
+    st.query_params.clear()
+
+
+def yenile_yap():
+    st.cache_data.clear()
+    st.session_state.sayfa_limiti = 50
+
 
 yetki_tipi = st.session_state.yetki_tipi
 yetki_deger = st.session_state.yetki_deger
-aktif_token = st.session_state.get("active_token") or st.query_params.get("token", "")
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme (Doğrudan Drive API ile Önbelleksiz)
-@st.cache_data(ttl=10, show_spinner=False)
+# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme (60 sn Önbellekli — Geçişlerde Sıfır Bekleme)
+@st.cache_data(ttl=60, show_spinner=False)
 def verileri_getir():
     file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
@@ -958,9 +798,6 @@ def verileri_getir():
     return df_siparisler, df_kalemler
 
 
-token_param = f"&token={aktif_token}" if aktif_token else ""
-refresh_href = f"?action=refresh{token_param}"
-
 # İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
 if not inceleme_aktif_mi:
     if yetki_tipi == "MUSTERI":
@@ -973,15 +810,18 @@ if not inceleme_aktif_mi:
         baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Sipariş İzleme</span>'
         alt_metin = "Yönetici Canlı Takip Paneli"
 
-    st.markdown(
-        f'<div class="header-banner">'
-        f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
-        f'<div class="header-actions">'
-        f'<a href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
-        f'<a href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
+    c_head, c_ref, c_out = st.columns([6, 1, 1])
+    with c_head:
+        st.markdown(
+            f'<div class="header-banner">'
+            f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with c_ref:
+        st.button("🔄", key="btn_refresh", on_click=yenile_yap, use_container_width=True, help="Yenile")
+    with c_out:
+        st.button("🚪", key="btn_logout", on_click=cikis_yap, use_container_width=True, help="Çıkış")
 
 try:
     df_sip, df_kalem = verileri_getir()
@@ -989,8 +829,9 @@ except Exception as e:
     st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
     st.stop()
 
-# Mobil oturumda verilen kararları ana DB güncellenene kadar anlık yansıt
+# Mobil oturumda verilen kararları ana DB güncellenene kadar anlık yansıt (Drive'dan tekrar indirmeden)
 if st.session_state.yerel_kararlar and not df_sip.empty:
+    df_sip = df_sip.copy()
     for s_no, karar_bilgi in list(st.session_state.yerel_kararlar.items()):
         mask = df_sip["siparis_no"] == int(s_no)
         if mask.any():
@@ -1178,7 +1019,7 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
 
 
 def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
-    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve ntfy bildirimi gönderir."""
+    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve önbelleği silmeden anında listeye döner."""
     try:
         onay_kuyruguna_yaz(sip_no, karar, aciklama)
         onay_ntfy_gonder(
@@ -1195,7 +1036,6 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.bekleyen_revize_sip_no = None
         st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
-        st.cache_data.clear()
         st.rerun()
     except Exception as err:
         st.error(f"Karar Google Drive'a yazılamadı: {err}")
@@ -1224,7 +1064,7 @@ def revize_not_penceresi(sip_no: int, row_data):
 
 
 # ==============================================================================
-# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
+# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU (SIFIR SAYFA YENİLEME)
 # ==============================================================================
 aktif_inceleme_no = st.session_state.get("onay_inceleme_sip_no")
 if inceleme_aktif_mi and aktif_inceleme_no is not None:
@@ -1234,38 +1074,43 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
         st.rerun()
 
     inceleme_row = secili_df.iloc[0]
-
-    if bekleyen_karar_param == "ONAYLA":
-        karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
-    elif bekleyen_karar_param == "REDDET":
-        karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
-    elif bekleyen_karar_param == "REVIZE":
-        st.session_state.bekleyen_revize_sip_no = int(aktif_inceleme_no)
-
     rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(inceleme_row, aktif_inceleme_no, vurgulu_onay=True)
 
-    base_incele_href = f"?incele={aktif_inceleme_no}{token_param}"
-    onayla_href = f"{base_incele_href}&karar=ONAYLA"
-    revize_href = f"{base_incele_href}&karar=REVIZE"
-    reddet_href = f"{base_incele_href}&karar=REDDET"
+    c_title, c_close = st.columns([6, 1])
+    with c_title:
+        st.markdown(
+            f'<div style="font-size:15px; font-weight:800; color:#0f172a; padding-top:6px;">'
+            f'🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>',
+            unsafe_allow_html=True
+        )
+    with c_close:
+        st.button("✕", key="btn_close_review", on_click=inceleme_kapat, use_container_width=True)
 
     st.markdown(
         f'<div class="fullscreen-review-card">'
-        f'<div class="fullscreen-review-header">'
-        f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
-        f'<a href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
-        f'</div>'
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
-        f'<div class="onay-aksiyon-bar">'
-        f'<a href="{onayla_href}" target="_self" class="aksiyon-btn aksiyon-onayla">ONAYLA</a>'
-        f'<a href="{revize_href}" target="_self" class="aksiyon-btn aksiyon-revize">REVİZE</a>'
-        f'<a href="{reddet_href}" target="_self" class="aksiyon-btn aksiyon-reddet">REDDET</a>'
-        f'</div>'
         f'</div>',
         unsafe_allow_html=True
     )
+
+    col_a1, col_a2, col_a3 = st.columns(3)
+    with col_a1:
+        st.markdown('<div class="aksiyon-onayla-wrap">', unsafe_allow_html=True)
+        if st.button("ONAYLA", key="btn_onayla", use_container_width=True):
+            karari_uygula(aktif_inceleme_no, inceleme_row, "ONAYLANDI", "")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col_a2:
+        st.markdown('<div class="aksiyon-revize-wrap">', unsafe_allow_html=True)
+        if st.button("REVİZE", key="btn_revize", use_container_width=True):
+            st.session_state.bekleyen_revize_sip_no = int(aktif_inceleme_no)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col_a3:
+        st.markdown('<div class="aksiyon-reddet-wrap">', unsafe_allow_html=True)
+        if st.button("REDDET", key="btn_reddet", use_container_width=True):
+            karari_uygula(aktif_inceleme_no, inceleme_row, "REDDEDİLDİ", "")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.get("bekleyen_revize_sip_no") == int(aktif_inceleme_no):
         revize_not_penceresi(aktif_inceleme_no, inceleme_row)
@@ -1275,10 +1120,9 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
 # ==============================================================================
 # ANA LİSTE VE KPI GÖRÜNÜMÜ
 # ==============================================================================
-flash_box = st.empty()
 flash_msg = st.session_state.flash_mesaj
 if flash_msg:
-    flash_box.success(flash_msg)
+    st.success(flash_msg)
     st.session_state.flash_mesaj = None
 
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
@@ -1291,21 +1135,22 @@ sevk_bekleyen = len(
 )
 
 kpi_mod = st.session_state.kpi_mod
-cls_tamamlandi = "kpi-active" if kpi_mod == "TAMAMLANDI" else ""
-cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
-cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
-
-st.markdown(
-    f'<div class="kpi-grid">'
-    f'<a href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
-    f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
-    f'<a href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
-    f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
-    f'<a href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
-    f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
-    f'</div>',
-    unsafe_allow_html=True
-)
+ck1, ck2, ck3 = st.columns(3)
+with ck1:
+    aktif_cls = "kpi-active-wrap" if kpi_mod == "TAMAMLANDI" else ""
+    st.markdown(f'<div class="kpi-btn-wrap {aktif_cls}">', unsafe_allow_html=True)
+    st.button(f"Tamamlandı\n{tamamlandi_siparis}", key="kpi_tam", on_click=kpi_degistir, args=("TAMAMLANDI",), use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+with ck2:
+    aktif_cls = "kpi-active-wrap" if kpi_mod == "ONAY" else ""
+    st.markdown(f'<div class="kpi-btn-wrap {aktif_cls}">', unsafe_allow_html=True)
+    st.button(f"Onay Bekleyen\n{onay_bekleyen}", key="kpi_onay", on_click=kpi_degistir, args=("ONAY",), use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+with ck3:
+    aktif_cls = "kpi-active-wrap" if kpi_mod == "SEVK" else ""
+    st.markdown(f'<div class="kpi-btn-wrap {aktif_cls}">', unsafe_allow_html=True)
+    st.button(f"Sevk Bekleyen\n{sevk_bekleyen}", key="kpi_sevk", on_click=kpi_degistir, args=("SEVK",), use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
@@ -1411,7 +1256,6 @@ if toplam_filtrelenen == 0:
 else:
     st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
@@ -1436,12 +1280,7 @@ else:
             satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
         satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
-        onay_buton_html = ""
-        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            onay_buton_html = f'<a href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
-
-        kart_parcalari.append(
-            f'<div class="sip-row-wrap">'
+        kart_html = (
             f'<details class="custom-sip-card">'
             f'<summary>'
             f'<span class="custom-card-arrow">❯</span>'
@@ -1452,12 +1291,18 @@ else:
             f'</summary>'
             f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
             f'</details>'
-            f'{onay_buton_html}'
-            f'</div>'
         )
 
-    kart_parcalari.append('</div>')
-    st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
+        if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
+            c_card, c_btn = st.columns([9, 1])
+            with c_card:
+                st.markdown(kart_html, unsafe_allow_html=True)
+            with c_btn:
+                st.markdown('<div class="mini-onay-wrap">', unsafe_allow_html=True)
+                st.button("✓", key=f"inc_{sip_no}", on_click=inceleme_ac, args=(int(sip_no),), help="Siparişi İncele")
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(kart_html, unsafe_allow_html=True)
 
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
@@ -1474,7 +1319,3 @@ else:
         if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
             st.session_state.sayfa_limiti += 50
             st.rerun()
-
-if flash_msg:
-    time.sleep(2)
-    flash_box.empty()
