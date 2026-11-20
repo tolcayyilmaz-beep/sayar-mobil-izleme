@@ -894,18 +894,22 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme
-@st.cache_data(ttl=15)
+# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme (Doğrudan Drive API ile Önbelleksiz)
+@st.cache_data(ttl=10, show_spinner=False)
 def verileri_getir():
-    file_id = st.secrets["GDRIVE_FILE_ID"]
+    file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
     secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
 
-    download_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
-    response = requests.get(download_url, timeout=15)
-    response.raise_for_status()
+    service = get_gdrive_service()
+    request = service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
 
     fernet = Fernet(secret_key)
-    decrypted_bytes = fernet.decrypt(response.content)
+    decrypted_bytes = fernet.decrypt(fh.getvalue())
 
     tmp_path = None
     try:
@@ -923,19 +927,18 @@ def verileri_getir():
 
     # Drive'daki mobil_onaylar.json kuyruğunu da oku ve bekleyen kararları anlık yansıt
     try:
-        service = get_gdrive_service()
         folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
         q = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
         res = service.files().list(q=q, fields="files(id)").execute()
         files = res.get("files", [])
         if files:
             req = service.files().get_media(fileId=files[0]["id"])
-            fh = io.BytesIO()
-            downloader = MediaIoBaseDownload(fh, req)
-            done = False
-            while not done:
-                _, done = downloader.next_chunk()
-            kuyruk = json.loads(fh.getvalue().decode("utf-8") or "[]")
+            fh_q = io.BytesIO()
+            downloader_q = MediaIoBaseDownload(fh_q, req)
+            done_q = False
+            while not done_q:
+                _, done_q = downloader_q.next_chunk()
+            kuyruk = json.loads(fh_q.getvalue().decode("utf-8") or "[]")
             for k in kuyruk:
                 s_no = int(k.get("siparis_no", -1))
                 karar = str(k.get("karar") or "").strip()
