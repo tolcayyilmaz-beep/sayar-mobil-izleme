@@ -22,7 +22,7 @@ if os.environ.get("STREAMLIT_SECRETS"):
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
-NTFY_TOPIC = "sayar_yapi_siparis_2026"
+NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
 QUEUE_FILE_NAME = "mobil_onaylar.json"
 
 
