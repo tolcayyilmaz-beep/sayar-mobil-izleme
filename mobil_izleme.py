@@ -11,7 +11,7 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
-from cryptography.fernet import Fernet
+import hmac
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
@@ -714,23 +714,29 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
         pass
 
 
-# Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
+# Beni Hatırla jetonu: şifreleme yerine HMAC imzası kullanılır.
+# Jeton içeriği gizli değildir; imza, değiştirilmesini engeller.
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
-    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-    fernet = Fernet(secret_key)
+    secret = str(st.secrets.get("TOKEN_SIGNING_SECRET", st.secrets["APP_PASSWORD"])).encode("utf-8")
     payload = json.dumps({
         "tip": yetki_tipi,
         "deger": yetki_deger,
         "exp": int(time.time()) + (gun * 86400)
-    }).encode("utf-8")
-    return fernet.encrypt(payload).decode("utf-8")
+    }, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    payload_b64 = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+    signature = hmac.new(secret, payload_b64.encode("ascii"), "sha256").hexdigest()
+    return payload_b64 + "." + signature
 
 
 def token_dogrula(token_str):
     try:
-        secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-        fernet = Fernet(secret_key)
-        data = json.loads(fernet.decrypt(token_str.encode("utf-8")).decode("utf-8"))
+        secret = str(st.secrets.get("TOKEN_SIGNING_SECRET", st.secrets["APP_PASSWORD"])).encode("utf-8")
+        payload_b64, signature = token_str.rsplit(".", 1)
+        expected = hmac.new(secret, payload_b64.encode("ascii"), "sha256").hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            return None, None
+        padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+        data = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
         if data.get("exp", 0) > int(time.time()):
             return data.get("tip"), data.get("deger")
     except Exception:
@@ -912,11 +918,10 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan Şifreli DB İndirme ve RAM'de Çözme (60 sn Önbellekli — Anında Geçiş)
+# 2. Google Drive'dan doğrudan SQLite DB indirme (şifreleme yok, 60 sn önbellekli)
 @st.cache_data(ttl=60, show_spinner=False)
 def verileri_getir():
     file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
-    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
 
     service = get_gdrive_service()
     request = service.files().get_media(fileId=file_id)
@@ -926,13 +931,12 @@ def verileri_getir():
     while not done:
         _, done = downloader.next_chunk()
 
-    fernet = Fernet(secret_key)
-    decrypted_bytes = fernet.decrypt(fh.getvalue())
+    db_bytes = fh.getvalue()
 
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-            tmp_file.write(decrypted_bytes)
+            tmp_file.write(db_bytes)
             tmp_path = tmp_file.name
 
         conn = sqlite3.connect(tmp_path)
