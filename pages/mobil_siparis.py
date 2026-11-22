@@ -247,13 +247,49 @@ button[kind="primary"] {
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
 }
-.urun-satir-box {
+.urun-giris-box {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
     border-left: 3px solid #0284c7;
     border-radius: 8px;
-    padding: 6px 8px;
+    padding: 8px 10px;
     margin-bottom: 4px;
+}
+.eklenen-urun-satir {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #16a34a;
+    border-radius: 7px;
+    padding: 7px 10px;
+    min-height: 38px;
+}
+.eklenen-urun-ad {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.eklenen-urun-miktar {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0369a1;
+    background-color: #e0f2fe;
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+.bos-liste-kutusu {
+    background-color: #f8fafc;
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -444,24 +480,20 @@ def secim_listelerini_getir():
             vals = vals[(vals != "") & (vals != "-") & (vals.str.lower() != "none") & (vals.str.lower() != "nan")]
             return sorted(vals.unique().tolist())
 
-        # Masaüstü PYTSAYAR ile birebir uyumlu sabit tanım kategorileri
         varsayilan["firma"] = tanim_listesi("FİRMA") or siparis_gecmis_listesi("firma")
         varsayilan["arac"] = tanim_listesi("ARAÇ") or siparis_gecmis_listesi("arac")
         varsayilan["fabrika"] = tanim_listesi("FABRİKA") or siparis_gecmis_listesi("fabrika")
         varsayilan["nakliye"] = tanim_listesi("NAKLİYE") or siparis_gecmis_listesi("nakliye")
         varsayilan["siparis_veren"] = tanim_listesi("SİPARİŞ VEREN") or siparis_gecmis_listesi("siparis_veren")
 
-        # Tanımlar + Geçmiş sipariş birleşimi (Serbest alanlar)
         varsayilan["musteri"] = sorted(list(set(tanim_listesi("MÜŞTERİ") + siparis_gecmis_listesi("musteri"))))
         varsayilan["santiye"] = sorted(list(set(tanim_listesi("ŞANTİYE") + siparis_gecmis_listesi("santiye"))))
         varsayilan["sehir"] = sorted(list(set(tanim_listesi("ŞEHİR") + siparis_gecmis_listesi("sehir"))))
 
-        # Birimler
         t_birim = tanim_listesi("BİRİM")
         if t_birim:
             varsayilan["birim"] = t_birim
 
-        # Aktif Ürünler (firma bazlı filtreleme destekli)
         if not df_tanim.empty and "kategori" in df_tanim.columns:
             u_sub = df_tanim[df_tanim["kategori"] == "ÜRÜN"]
             if "aktif" in u_sub.columns:
@@ -571,8 +603,10 @@ if st.query_params.get("action") == "refresh":
     st.query_params.pop("action", None)
     st.rerun()
 
-if "urun_satir_sayisi" not in st.session_state:
-    st.session_state.urun_satir_sayisi = 1
+if "eklenen_urunler" not in st.session_state:
+    st.session_state.eklenen_urunler = []
+if "urun_input_versiyon" not in st.session_state:
+    st.session_state.urun_input_versiyon = 0
 if "form_versiyon" not in st.session_state:
     st.session_state.form_versiyon = 0
 if "flash_mesaj" not in st.session_state:
@@ -628,6 +662,7 @@ if flash_msg:
 
 listeler = secim_listelerini_getir()
 fv = st.session_state.form_versiyon
+uv = st.session_state.urun_input_versiyon
 
 # ==============================================================================
 # 1. TEMEL SİPARİŞ BİLGİLERİ
@@ -645,10 +680,8 @@ with col2:
 
 col3, col4 = st.columns(2)
 with col3:
-    # PYTSAYAR kuralı: Firma tanımlardan seçilir
     firma = hibrit_alan("Firma", f"firma_{fv}", listeler["firma"], zorunlu=True, yeni_ekle_aktif=False)
 with col4:
-    # PYTSAYAR kuralı: Müşteri listeden seçilebilir veya yeni yazılabilir
     musteri = hibrit_alan("Müşteri", f"musteri_{fv}", listeler["musteri"], zorunlu=True, yeni_ekle_aktif=True)
 
 col5, col6 = st.columns(2)
@@ -671,51 +704,69 @@ with col9:
     arac = hibrit_alan("Araç", f"arac_{fv}", listeler["arac"], zorunlu=True, yeni_ekle_aktif=False)
 
 # ==============================================================================
-# 3. ÜRÜNLER / MALZEMELER
+# 3. ÜRÜN EKLEME VE EKLENEN ÜRÜNLER LİSTESİ
 # ==============================================================================
 st.markdown('<div class="section-card-title">📦 Ürünler</div>', unsafe_allow_html=True)
 
-# Seçili firmaya ait veya genel (firması boş) aktif ürünleri filtrele
 filtrelenmis_urunler = [
     u["deger"] for u in listeler["urunler_detay"]
     if not firma or not u["firma"] or u["firma"].upper() == firma.upper()
 ]
 
-urun_kayitlari = []
-for idx in range(st.session_state.urun_satir_sayisi):
-    st.markdown('<div class="urun-satir-box">', unsafe_allow_html=True)
-    u_ad = hibrit_alan(f"Ürün / Malzeme #{idx + 1}", f"urun_{fv}_{idx}", filtrelenmis_urunler, zorunlu=(idx == 0), yeni_ekle_aktif=True)
-    uc1, uc2 = st.columns([1, 1])
-    with uc1:
-        u_miktar = st.number_input(
-            "Miktar *",
-            min_value=0.0,
-            step=1.0,
-            value=0.0,
-            format="%g",
-            key=f"miktar_{fv}_{idx}"
-        )
-    with uc2:
-        u_birim = st.selectbox("Birim *", listeler["birim"], key=f"birim_{fv}_{idx}")
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="urun-giris-box">', unsafe_allow_html=True)
+u_ad = hibrit_alan("Ürün / Malzeme", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
 
-    if u_ad or u_miktar > 0:
-        urun_kayitlari.append({
+uc1, uc2 = st.columns([1, 1])
+with uc1:
+    u_miktar = st.number_input(
+        "Miktar",
+        min_value=0.0,
+        step=1.0,
+        value=0.0,
+        format="%g",
+        key=f"miktar_giris_{fv}_{uv}"
+    )
+with uc2:
+    u_birim = st.selectbox("Birim", listeler["birim"], key=f"birim_giris_{fv}_{uv}")
+
+if st.button("➕ ÜRÜN EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}"):
+    if not u_ad:
+        st.warning("Lütfen eklenecek ürünü seçin veya yazın.")
+    elif u_miktar <= 0:
+        st.warning("Lütfen 0'dan büyük bir miktar girin.")
+    else:
+        miktar_str = str(int(u_miktar)) if float(u_miktar).is_integer() else str(float(u_miktar))
+        st.session_state.eklenen_urunler.append({
             "urun": u_ad,
-            "miktar": str(int(u_miktar)) if float(u_miktar).is_integer() else str(float(u_miktar)),
+            "miktar": miktar_str,
             "birim": u_birim
         })
-
-b_col1, b_col2 = st.columns(2)
-with b_col1:
-    if st.button("➕ Ürün Satırı Ekle", use_container_width=True):
-        st.session_state.urun_satir_sayisi += 1
+        st.session_state.urun_input_versiyon += 1
         st.rerun()
-with b_col2:
-    if st.session_state.urun_satir_sayisi > 1:
-        if st.button("➖ Son Satırı Sil", use_container_width=True):
-            st.session_state.urun_satir_sayisi -= 1
-            st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Eklenen Ürünlerin Altta Listelenmesi
+if st.session_state.eklenen_urunler:
+    st.caption(f"Eklenen Ürünler ({len(st.session_state.eklenen_urunler)} Kalem)")
+    for idx, item in enumerate(st.session_state.eklenen_urunler):
+        l_col1, l_col2 = st.columns([5, 1])
+        with l_col1:
+            st.markdown(
+                f'<div class="eklenen-urun-satir">'
+                f'<span class="eklenen-urun-ad">{idx + 1}. {html.escape(item["urun"])}</span>'
+                f'<span class="eklenen-urun-miktar">{html.escape(item["miktar"])} {html.escape(item["birim"])}</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+        with l_col2:
+            if st.button("🗑️", key=f"sil_urun_{fv}_{idx}", use_container_width=True, help="Listeden Çıkar"):
+                st.session_state.eklenen_urunler.pop(idx)
+                st.rerun()
+else:
+    st.markdown(
+        '<div class="bos-liste-kutusu">Henüz ürün eklenmedi. Yukarıdan ürün ve miktar seçip "➕ ÜRÜN EKLE" butonuna basın.</div>',
+        unsafe_allow_html=True
+    )
 
 st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
@@ -739,9 +790,18 @@ if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container
     if not siparis_veren:
         eksikler.append("Sipariş Veren")
 
-    gecerli_urunler = [u for u in urun_kayitlari if u["urun"] and float(u["miktar"]) > 0]
-    if not gecerli_urunler:
-        eksikler.append("En az 1 geçerli Ürün ve Miktar")
+    # Kullanıcı ürünü seçip "Ürün Ekle"ye basmayı unuttuysa otomatik olarak listeye dahil et
+    gonderilecek_urunler = list(st.session_state.eklenen_urunler)
+    if u_ad and u_miktar > 0:
+        miktar_str = str(int(u_miktar)) if float(u_miktar).is_integer() else str(float(u_miktar))
+        gonderilecek_urunler.append({
+            "urun": u_ad,
+            "miktar": miktar_str,
+            "birim": u_birim
+        })
+
+    if not gonderilecek_urunler:
+        eksikler.append("En az 1 eklenmiş Ürün")
 
     if eksikler:
         st.error(f"Lütfen zorunlu alanları doldurunuz: **{', '.join(eksikler)}**")
@@ -762,7 +822,7 @@ if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container
             "siparis_veren": siparis_veren,
             "durum": "Beklemede",
             "operasyon": "ONAY BEKLİYOR",
-            "urunler": gecerli_urunler
+            "urunler": gonderilecek_urunler
         }
 
         try:
@@ -770,7 +830,9 @@ if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container
                 yeni_siparis_kuyruguna_yaz(yeni_siparis_paketi)
                 yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
 
-            st.session_state.urun_satir_sayisi = 1
+            secim_listelerini_getir.clear()
+            st.session_state.eklenen_urunler = []
+            st.session_state.urun_input_versiyon = 0
             st.session_state.form_versiyon += 1
             st.session_state.flash_mesaj = f"{musteri} ({santiye}) siparişi başarıyla kaydedildi!"
             st.rerun()
