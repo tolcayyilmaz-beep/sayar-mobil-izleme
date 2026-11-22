@@ -96,6 +96,9 @@ components.html(
 
 st.markdown("""
 <style>
+*, *::before, *::after {
+    box-sizing: border-box !important;
+}
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -115,23 +118,79 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-html, body, .stApp, [data-testid="stAppViewContainer"] {
+html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
     overflow-x: hidden !important;
-    max-width: 100vw !important;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 .block-container {
     padding-top: 0.35rem !important;
-    padding-bottom: 1.2rem !important;
-    padding-left: 0.6rem !important;
-    padding-right: 0.6rem !important;
+    padding-bottom: 4.6rem !important;
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
     max-width: 540px !important;
     width: 100% !important;
-    box-sizing: border-box !important;
+    margin: 0 auto !important;
 }
 [data-testid="stVerticalBlock"] {
     gap: 0.32rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+[data-testid="element-container"] {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+/* Taşma yapmayan kompakt yatay satırlar (Miktar + Birim + Ekle ve Ürün Satırı + Sil) */
+div[data-testid="stHorizontalBlock"]:has(.kompakt-satir-isaret) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kompakt-satir-isaret) > div[data-testid="column"] {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kompakt-satir-isaret) > div[data-testid="column"]:nth-child(1) {
+    flex: 1 1 0% !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kompakt-satir-isaret) > div[data-testid="column"]:nth-child(2) {
+    flex: 1 1 0% !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.kompakt-satir-isaret) > div[data-testid="column"]:nth-child(3) {
+    flex: 0 0 74px !important;
+    width: 74px !important;
+}
+/* Eklenen ürün listesi satırı (Sol Kart + Sağ 38px Sil Butonu) */
+div[data-testid="stHorizontalBlock"]:has(.liste-satir-isaret) {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.liste-satir-isaret) > div[data-testid="column"] {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.liste-satir-isaret) > div[data-testid="column"]:nth-child(1) {
+    flex: 1 1 auto !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.liste-satir-isaret) > div[data-testid="column"]:nth-child(2) {
+    flex: 0 0 38px !important;
+    width: 38px !important;
 }
 .header-banner {
     display: flex;
@@ -145,6 +204,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     color: #f8fafc;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
     gap: 8px;
+    width: 100%;
 }
 .header-info {
     flex: 1;
@@ -163,7 +223,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     text-overflow: ellipsis;
 }
 .header-logo {
-    height: 24px;
+    height: 23px;
     width: auto;
     object-fit: contain;
     border-radius: 4px;
@@ -173,6 +233,9 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     font-size: 10.5px;
     color: #cbd5e1;
     margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .header-actions {
     display: flex;
@@ -183,18 +246,44 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 31px;
+    height: 31px;
     border-radius: 7px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
 }
 .icon-btn:active {
     background-color: #f97316;
+}
+.ozet-kart {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #0284c7;
+    border-radius: 8px;
+    padding: 7px 10px;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+.ozet-ust {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ozet-alt {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .auto-toast-banner {
     background-color: #dcfce7;
@@ -220,22 +309,48 @@ div[data-baseweb="select"] > div {
     color: #0f172a !important;
     min-height: 37px !important;
     font-size: 13px !important;
+    max-width: 100% !important;
+}
+/* NumberInput +/- butonlarını gizle ki mobilde alan daralmasın */
+div[data-testid="stNumberInput"] button {
+    display: none !important;
+}
+div[data-testid="stNumberInput"] input {
+    padding-left: 8px !important;
+    padding-right: 6px !important;
+}
+div[data-testid="stButton"] button {
+    min-height: 37px !important;
+    padding: 0 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    border-radius: 7px !important;
 }
 button[kind="primary"] {
     background-color: #f97316 !important;
     border-color: #ea580c !important;
     color: #ffffff !important;
     font-weight: 800 !important;
-    height: 42px !important;
-    border-radius: 8px !important;
+    height: 43px !important;
+    border-radius: 9px !important;
     font-size: 13.5px !important;
 }
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
 }
-.urun-ayirici {
-    border-top: 2px solid #cbd5e1;
-    margin: 6px 0 4px 0;
+/* Ekranın en altına sabitlenen gönder butonu */
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+    max-width: 540px !important;
+    padding: 7px 0.55rem 9px 0.55rem !important;
+    background: linear-gradient(180deg, rgba(241,245,249,0.85) 0%, #f1f5f9 30%) !important;
+    backdrop-filter: blur(4px);
+    z-index: 9999 !important;
+    margin: 0 !important;
 }
 .eklenen-urun-satir {
     display: flex;
@@ -245,21 +360,26 @@ button[kind="primary"]:hover {
     border: 1px solid #cbd5e1;
     border-left: 4px solid #16a34a;
     border-radius: 7px;
-    padding: 6px 9px;
-    min-height: 36px;
+    padding: 6px 8px;
+    min-height: 37px;
+    width: 100%;
+    overflow: hidden;
 }
 .eklenen-urun-ad {
     font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 .eklenen-urun-miktar {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 800;
     color: #0369a1;
     background-color: #e0f2fe;
-    padding: 2px 7px;
+    padding: 2px 6px;
     border-radius: 5px;
     white-space: nowrap;
     margin-left: 6px;
@@ -274,6 +394,7 @@ button[kind="primary"]:hover {
     font-size: 11.5px;
     color: #64748b;
     font-weight: 600;
+    width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -567,15 +688,26 @@ def yeni_siparis_ntfy_gonder(sip: dict):
         pass
 
 
-def kompakt_hibrit_alan(etiket: str, key_prefix: str, secenekler: list, zorunlu: bool = False, yeni_ekle_aktif: bool = True):
+def kompakt_hibrit_alan(etiket: str, key_prefix: str, secenekler: list, zorunlu: bool = False, yeni_ekle_aktif: bool = True, varsayilan_deger: str = ""):
     """Üst etiketi gizler; alan adını doğrudan açılır kutunun içine yerleştiren kompakt seçim kutusu."""
     YENI_SECENEK = "➕ Yeni Giriş..."
     bos_etiket = f"{etiket} *" if zorunlu else etiket
     opsiyonlar = [bos_etiket] + secenekler + ([YENI_SECENEK] if yeni_ekle_aktif else [])
+
+    sel_key = f"{key_prefix}_sel"
+    txt_key = f"{key_prefix}_txt"
+
+    if varsayilan_deger and sel_key not in st.session_state:
+        if varsayilan_deger in secenekler:
+            st.session_state[sel_key] = varsayilan_deger
+        elif yeni_ekle_aktif:
+            st.session_state[sel_key] = YENI_SECENEK
+            st.session_state[txt_key] = varsayilan_deger
+
     secim = st.selectbox(
         bos_etiket,
         opsiyonlar,
-        key=f"{key_prefix}_sel",
+        key=sel_key,
         label_visibility="collapsed"
     )
     if secim == bos_etiket:
@@ -583,7 +715,7 @@ def kompakt_hibrit_alan(etiket: str, key_prefix: str, secenekler: list, zorunlu:
     if yeni_ekle_aktif and secim == YENI_SECENEK:
         return st.text_input(
             bos_etiket,
-            key=f"{key_prefix}_txt",
+            key=txt_key,
             placeholder=f"Yeni {etiket} yazınız...",
             label_visibility="collapsed"
         ).strip()
@@ -603,6 +735,10 @@ if "form_versiyon" not in st.session_state:
     st.session_state.form_versiyon = 0
 if "flash_mesaj" not in st.session_state:
     st.session_state.flash_mesaj = None
+if "adim_urun_ekleme" not in st.session_state:
+    st.session_state.adim_urun_ekleme = False
+if "taslak_bilgi" not in st.session_state:
+    st.session_state.taslak_bilgi = {}
 
 yetki_tipi = st.session_state.yetki_tipi
 yetki_deger = st.session_state.yetki_deger
@@ -655,157 +791,208 @@ if flash_msg:
 listeler = secim_listelerini_getir()
 fv = st.session_state.form_versiyon
 uv = st.session_state.urun_input_versiyon
+taslak = st.session_state.taslak_bilgi
 
 # ==============================================================================
-# 1. TÜM SİPARİŞ & SEVKİYAT ALANLARI (ALT ALTA, ETİKETSİZ, MOBİL UYUMLU)
+# ADIM 1: KİM & NEREYE (SİPARİŞ VE SEVKİYAT BİLGİLERİ KARTI)
 # ==============================================================================
-siparis_tarihi = st.date_input("Tarih", value=date.today(), format="DD.MM.YYYY", key=f"tarih_{fv}", label_visibility="collapsed")
+if not st.session_state.adim_urun_ekleme:
+    kayitli_tarih = taslak.get("tarih_obj", date.today())
+    siparis_tarihi = st.date_input("Tarih", value=kayitli_tarih, format="DD.MM.YYYY", key=f"tarih_{fv}", label_visibility="collapsed")
 
-if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
-    siparis_veren = st.text_input("Sipariş Veren", value=str(yetki_deger), disabled=True, key=f"veren_kilit_{fv}", label_visibility="collapsed").strip()
-else:
-    siparis_veren = kompakt_hibrit_alan("Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"], zorunlu=True, yeni_ekle_aktif=False)
-
-firma = kompakt_hibrit_alan("Firma", f"firma_{fv}", listeler["firma"], zorunlu=True, yeni_ekle_aktif=False)
-musteri = kompakt_hibrit_alan("Müşteri", f"musteri_{fv}", listeler["musteri"], zorunlu=True, yeni_ekle_aktif=True)
-santiye = kompakt_hibrit_alan("Şantiye", f"santiye_{fv}", listeler["santiye"], zorunlu=True, yeni_ekle_aktif=True)
-sehir = kompakt_hibrit_alan("Şehir", f"sehir_{fv}", listeler["sehir"], zorunlu=False, yeni_ekle_aktif=True)
-fabrika = kompakt_hibrit_alan("Fabrika", f"fabrika_{fv}", listeler["fabrika"], zorunlu=True, yeni_ekle_aktif=False)
-nakliye = kompakt_hibrit_alan("Nakliye", f"nakliye_{fv}", listeler["nakliye"], zorunlu=True, yeni_ekle_aktif=False)
-arac = kompakt_hibrit_alan("Araç", f"arac_{fv}", listeler["arac"], zorunlu=True, yeni_ekle_aktif=False)
-
-st.markdown('<div class="urun-ayirici"></div>', unsafe_allow_html=True)
-
-# ==============================================================================
-# 2. ÜRÜN EKLEME VE EKLENEN ÜRÜNLER LİSTESİ (ALT ALTA)
-# ==============================================================================
-filtrelenmis_urunler = [
-    u["deger"] for u in listeler["urunler_detay"]
-    if not firma or not u["firma"] or u["firma"].upper() == firma.upper()
-]
-
-u_ad = kompakt_hibrit_alan("Ürün / Malzeme Seçin", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
-
-u_miktar = st.number_input(
-    "Miktar",
-    min_value=0.0,
-    step=1.0,
-    value=None,
-    placeholder="Miktar Giriniz",
-    format="%g",
-    key=f"miktar_giris_{fv}_{uv}",
-    label_visibility="collapsed"
-)
-
-u_birim = st.selectbox(
-    "Birim",
-    listeler["birim"],
-    key=f"birim_giris_{fv}_{uv}",
-    label_visibility="collapsed"
-)
-
-if st.button("➕ ÜRÜN EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}"):
-    girilen_miktar = float(u_miktar) if u_miktar is not None else 0.0
-    if not u_ad:
-        st.warning("Lütfen eklenecek ürünü seçin veya yazın.")
-    elif girilen_miktar <= 0:
-        st.warning("Lütfen 0'dan büyük bir miktar girin.")
+    if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
+        siparis_veren = st.text_input("Sipariş Veren", value=str(yetki_deger), disabled=True, key=f"veren_kilit_{fv}", label_visibility="collapsed").strip()
     else:
-        miktar_str = str(int(girilen_miktar)) if girilen_miktar.is_integer() else str(girilen_miktar)
-        st.session_state.eklenen_urunler.append({
-            "urun": u_ad,
-            "miktar": miktar_str,
-            "birim": u_birim
-        })
-        st.session_state.urun_input_versiyon += 1
-        st.rerun()
+        siparis_veren = kompakt_hibrit_alan("Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"], zorunlu=True, yeni_ekle_aktif=False, varsayilan_deger=taslak.get("siparis_veren", ""))
 
-# Eklenen Ürünlerin Altta Listelenmesi
-if st.session_state.eklenen_urunler:
-    for idx, item in enumerate(st.session_state.eklenen_urunler):
+    firma = kompakt_hibrit_alan("Firma", f"firma_{fv}", listeler["firma"], zorunlu=True, yeni_ekle_aktif=False, varsayilan_deger=taslak.get("firma", ""))
+    musteri = kompakt_hibrit_alan("Müşteri", f"musteri_{fv}", listeler["musteri"], zorunlu=True, yeni_ekle_aktif=True, varsayilan_deger=taslak.get("musteri", ""))
+    santiye = kompakt_hibrit_alan("Şantiye", f"santiye_{fv}", listeler["santiye"], zorunlu=True, yeni_ekle_aktif=True, varsayilan_deger=taslak.get("santiye", ""))
+    sehir = kompakt_hibrit_alan("Şehir", f"sehir_{fv}", listeler["sehir"], zorunlu=False, yeni_ekle_aktif=True, varsayilan_deger=taslak.get("sehir", ""))
+    fabrika = kompakt_hibrit_alan("Fabrika", f"fabrika_{fv}", listeler["fabrika"], zorunlu=True, yeni_ekle_aktif=False, varsayilan_deger=taslak.get("fabrika", ""))
+    nakliye = kompakt_hibrit_alan("Nakliye", f"nakliye_{fv}", listeler["nakliye"], zorunlu=True, yeni_ekle_aktif=False, varsayilan_deger=taslak.get("nakliye", ""))
+    arac = kompakt_hibrit_alan("Araç", f"arac_{fv}", listeler["arac"], zorunlu=True, yeni_ekle_aktif=False, varsayilan_deger=taslak.get("arac", ""))
+
+    if st.button("DEVAM ET • ÜRÜN EKLE ➡️", type="primary", use_container_width=True):
+        eksikler = []
+        if not siparis_veren:
+            eksikler.append("Sipariş Veren")
+        if not firma:
+            eksikler.append("Firma")
+        if not musteri:
+            eksikler.append("Müşteri")
+        if not santiye:
+            eksikler.append("Şantiye")
+        if not fabrika:
+            eksikler.append("Fabrika")
+        if not nakliye:
+            eksikler.append("Nakliye")
+        if not arac:
+            eksikler.append("Araç")
+
+        if eksikler:
+            st.error(f"Eksik alanlar: **{', '.join(eksikler)}**")
+        else:
+            st.session_state.taslak_bilgi = {
+                "tarih_obj": siparis_tarihi,
+                "tarih": siparis_tarihi.strftime("%Y-%m-%d"),
+                "tarih_tr": siparis_tarihi.strftime("%d.%m.%Y"),
+                "siparis_veren": siparis_veren,
+                "firma": firma,
+                "musteri": musteri,
+                "santiye": santiye,
+                "sehir": sehir,
+                "fabrika": fabrika,
+                "nakliye": nakliye,
+                "arac": arac
+            }
+            st.session_state.adim_urun_ekleme = True
+            st.rerun()
+
+# ==============================================================================
+# ADIM 2: ÜSTTE 2 SATIRLIK ÖZET KART + ALTTA KOMPAKT ÜRÜN EKLEME & SEPET
+# ==============================================================================
+else:
+    firma_aktif = taslak.get("firma", "")
+    sehir_metin = f" ({taslak['sehir']})" if taslak.get("sehir") else ""
+
+    o_col1, o_col2 = st.columns([5, 1])
+    with o_col1:
         st.markdown(
-            f'<div class="eklenen-urun-satir">'
-            f'<span class="eklenen-urun-ad">{idx + 1}. {html.escape(item["urun"])}</span>'
-            f'<span class="eklenen-urun-miktar">{html.escape(item["miktar"])} {html.escape(item["birim"])}</span>'
+            f'<div class="liste-satir-isaret"></div>'
+            f'<div class="ozet-kart">'
+            f'<div class="ozet-ust">{html.escape(taslak.get("musteri", ""))} • {html.escape(taslak.get("santiye", ""))}{html.escape(sehir_metin)}</div>'
+            f'<div class="ozet-alt">{html.escape(taslak.get("tarih_tr", ""))} | {html.escape(firma_aktif)} | {html.escape(taslak.get("fabrika", ""))} • {html.escape(taslak.get("nakliye", ""))} • {html.escape(taslak.get("arac", ""))}</div>'
             f'</div>',
             unsafe_allow_html=True
         )
-        if st.button(f"🗑️ {idx + 1}. Ürünü Sil", key=f"sil_urun_{fv}_{idx}", use_container_width=True):
-            st.session_state.eklenen_urunler.pop(idx)
+    with o_col2:
+        if st.button("✏️", key=f"btn_duzenle_{fv}", use_container_width=True, help="Sipariş Bilgilerini Düzenle"):
+            st.session_state.adim_urun_ekleme = False
             st.rerun()
-else:
-    st.markdown(
-        '<div class="bos-liste-kutusu">Henüz ürün eklenmedi.</div>',
-        unsafe_allow_html=True
-    )
 
-st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+    filtrelenmis_urunler = [
+        u["deger"] for u in listeler["urunler_detay"]
+        if not firma_aktif or not u["firma"] or u["firma"].upper() == firma_aktif.upper()
+    ]
 
-# ==============================================================================
-# 3. KAYDET VE GÖNDER
-# ==============================================================================
-if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container_width=True):
-    eksikler = []
-    if not firma:
-        eksikler.append("Firma")
-    if not musteri:
-        eksikler.append("Müşteri")
-    if not santiye:
-        eksikler.append("Şantiye")
-    if not fabrika:
-        eksikler.append("Fabrika")
-    if not nakliye:
-        eksikler.append("Nakliye")
-    if not arac:
-        eksikler.append("Araç")
-    if not siparis_veren:
-        eksikler.append("Sipariş Veren")
+    u_ad = kompakt_hibrit_alan("Ürün / Malzeme Seçin", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
 
-    gonderilecek_urunler = list(st.session_state.eklenen_urunler)
-    son_miktar = float(u_miktar) if u_miktar is not None else 0.0
-    if u_ad and son_miktar > 0:
-        miktar_str = str(int(son_miktar)) if son_miktar.is_integer() else str(son_miktar)
-        gonderilecek_urunler.append({
-            "urun": u_ad,
-            "miktar": miktar_str,
-            "birim": u_birim
-        })
+    # Taşma yapmayan tek satır: [ Miktar ] [ Birim ] [ + EKLE ]
+    uc1, uc2, uc3 = st.columns(3)
+    with uc1:
+        st.markdown('<div class="kompakt-satir-isaret"></div>', unsafe_allow_html=True)
+        u_miktar = st.number_input(
+            "Miktar",
+            min_value=0.0,
+            step=1.0,
+            value=None,
+            placeholder="Miktar",
+            format="%g",
+            key=f"miktar_giris_{fv}_{uv}",
+            label_visibility="collapsed"
+        )
+    with uc2:
+        u_birim = st.selectbox(
+            "Birim",
+            listeler["birim"],
+            key=f"birim_giris_{fv}_{uv}",
+            label_visibility="collapsed"
+        )
+    with uc3:
+        ekle_tiklandi = st.button("➕ EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}")
 
-    if not gonderilecek_urunler:
-        eksikler.append("En az 1 eklenmiş Ürün")
+    if ekle_tiklandi:
+        girilen_miktar = float(u_miktar) if u_miktar is not None else 0.0
+        if not u_ad:
+            st.warning("Lütfen ürün seçin veya yazın.")
+        elif girilen_miktar <= 0:
+            st.warning("0'dan büyük miktar girin.")
+        else:
+            miktar_str = str(int(girilen_miktar)) if girilen_miktar.is_integer() else str(girilen_miktar)
+            st.session_state.eklenen_urunler.append({
+                "urun": u_ad,
+                "miktar": miktar_str,
+                "birim": u_birim
+            })
+            st.session_state.urun_input_versiyon += 1
+            st.rerun()
 
-    if eksikler:
-        st.error(f"Lütfen zorunlu alanları doldurunuz: **{', '.join(eksikler)}**")
+    # Eklenen Ürünlerin Kompakt Listesi (Sağa gömülü silme butonuyla)
+    if st.session_state.eklenen_urunler:
+        for idx, item in enumerate(st.session_state.eklenen_urunler):
+            l_col1, l_col2 = st.columns([6, 1])
+            with l_col1:
+                st.markdown(
+                    f'<div class="liste-satir-isaret"></div>'
+                    f'<div class="eklenen-urun-satir">'
+                    f'<span class="eklenen-urun-ad">{idx + 1}. {html.escape(item["urun"])}</span>'
+                    f'<span class="eklenen-urun-miktar">{html.escape(item["miktar"])} {html.escape(item["birim"])}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+            with l_col2:
+                if st.button("✕", key=f"sil_urun_{fv}_{idx}", use_container_width=True, help="Listeden Çıkar"):
+                    st.session_state.eklenen_urunler.pop(idx)
+                    st.rerun()
     else:
-        tarih_iso = siparis_tarihi.strftime("%Y-%m-%d")
-        yeni_siparis_paketi = {
-            "mobil_kayit_id": f"MOB-{int(time.time() * 1000)}",
-            "kayit_zamani": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "tarih": tarih_iso,
-            "sevk_tarihi": tarih_iso,
-            "firma": firma,
-            "musteri": musteri,
-            "santiye": santiye,
-            "sehir": sehir,
-            "arac": arac,
-            "fabrika": fabrika,
-            "nakliye": nakliye,
-            "siparis_veren": siparis_veren,
-            "durum": "BEKLEMEDE",
-            "operasyon": "ONAY BEKLİYOR",
-            "urunler": gonderilecek_urunler
-        }
+        st.markdown(
+            '<div class="bos-liste-kutusu">Henüz ürün eklenmedi.</div>',
+            unsafe_allow_html=True
+        )
 
-        try:
-            with st.spinner("Sipariş iletiliyor..."):
-                yeni_siparis_kuyruguna_yaz(yeni_siparis_paketi)
-                yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
+    # Ekranın en altına sabitlenen (Sticky) Gönder Butonu
+    toplam_kalem = len(st.session_state.eklenen_urunler)
+    son_miktar_onizleme = float(u_miktar) if u_miktar is not None else 0.0
+    if u_ad and son_miktar_onizleme > 0:
+        toplam_kalem += 1
 
-            secim_listelerini_getir.clear()
-            st.session_state.eklenen_urunler = []
-            st.session_state.urun_input_versiyon = 0
-            st.session_state.form_versiyon += 1
-            st.session_state.flash_mesaj = f"{musteri} ({santiye}) siparişi başarıyla kaydedildi!"
-            st.rerun()
-        except Exception as err:
-            st.error(f"Sipariş Google Drive kuyruğuna yazılamadı: {err}")
+    buton_etiket = f"✅ SİPARİŞİ GÖNDER ({toplam_kalem} Kalem)" if toplam_kalem > 0 else "✅ SİPARİŞİ GÖNDER"
+    st.markdown('<div class="sticky-gonder-isaret"></div>', unsafe_allow_html=True)
+
+    if st.button(buton_etiket, type="primary", use_container_width=True, key=f"btn_gonder_{fv}"):
+        gonderilecek_urunler = list(st.session_state.eklenen_urunler)
+        if u_ad and son_miktar_onizleme > 0:
+            miktar_str = str(int(son_miktar_onizleme)) if son_miktar_onizleme.is_integer() else str(son_miktar_onizleme)
+            gonderilecek_urunler.append({
+                "urun": u_ad,
+                "miktar": miktar_str,
+                "birim": u_birim
+            })
+
+        if not gonderilecek_urunler:
+            st.error("Lütfen en az 1 ürün ve miktar giriniz.")
+        else:
+            yeni_siparis_paketi = {
+                "mobil_kayit_id": f"MOB-{int(time.time() * 1000)}",
+                "kayit_zamani": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "tarih": taslak["tarih"],
+                "sevk_tarihi": taslak["tarih"],
+                "firma": taslak["firma"],
+                "musteri": taslak["musteri"],
+                "santiye": taslak["santiye"],
+                "sehir": taslak["sehir"],
+                "arac": taslak["arac"],
+                "fabrika": taslak["fabrika"],
+                "nakliye": taslak["nakliye"],
+                "siparis_veren": taslak["siparis_veren"],
+                "durum": "BEKLEMEDE",
+                "operasyon": "ONAY BEKLİYOR",
+                "urunler": gonderilecek_urunler
+            }
+
+            try:
+                with st.spinner("Sipariş iletiliyor..."):
+                    yeni_siparis_kuyruguna_yaz(yeni_siparis_paketi)
+                    yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
+
+                secim_listelerini_getir.clear()
+                st.session_state.eklenen_urunler = []
+                st.session_state.urun_input_versiyon = 0
+                st.session_state.taslak_bilgi = {}
+                st.session_state.adim_urun_ekleme = False
+                st.session_state.form_versiyon += 1
+                st.session_state.flash_mesaj = f"{taslak['musteri']} ({taslak['santiye']}) siparişi kaydedildi!"
+                st.rerun()
+            except Exception as err:
+                st.error(f"Sipariş Google Drive kuyruğuna yazılamadı: {err}")
