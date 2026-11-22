@@ -120,14 +120,23 @@ a[href*="streamlit.io/cloud"] {
     color: #0f172a !important;
 }
 .block-container {
-    padding-top: 0.45rem !important;
-    padding-bottom: 1.5rem !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 1.2rem !important;
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
     max-width: 720px !important;
 }
 [data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
+    gap: 0.32rem !important;
+}
+/* Mobilde sütunların alt alta kırılmasını önleyerek kompakt ızgara görünümü sağlar */
+[data-testid="stHorizontalBlock"] {
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+}
+[data-testid="stHorizontalBlock"] > [data-testid="column"] {
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
 }
 .header-banner {
     display: flex;
@@ -135,11 +144,11 @@ a[href*="streamlit.io/cloud"] {
     align-items: center;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-left: 5px solid #f97316;
-    border-radius: 10px;
-    padding: 9px 12px;
-    margin-bottom: 6px;
+    border-radius: 9px;
+    padding: 7px 10px;
+    margin-bottom: 4px;
     color: #f8fafc;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
     gap: 8px;
 }
 .header-info {
@@ -149,8 +158,8 @@ a[href*="streamlit.io/cloud"] {
 .header-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 15px;
+    gap: 7px;
+    font-size: 14px;
     font-weight: 700;
     margin: 0;
     color: #ffffff;
@@ -159,62 +168,62 @@ a[href*="streamlit.io/cloud"] {
     text-overflow: ellipsis;
 }
 .header-logo {
-    height: 26px;
+    height: 24px;
     width: auto;
     object-fit: contain;
     border-radius: 4px;
     flex-shrink: 0;
 }
 .header-sub {
-    font-size: 11px;
+    font-size: 10.5px;
     color: #cbd5e1;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 .header-actions {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
 }
 .icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
 }
 .icon-btn:active {
     background-color: #f97316;
 }
 .section-card-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: #1e293b;
     background-color: #e2e8f0;
     border-left: 4px solid #f97316;
-    padding: 5px 9px;
-    border-radius: 6px;
-    margin-top: 6px;
-    margin-bottom: 4px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    margin-top: 4px;
+    margin-bottom: 2px;
 }
 .auto-toast-banner {
     background-color: #dcfce7;
     border: 1px solid #86efac;
     border-left: 4px solid #16a34a;
     color: #14532d;
-    border-radius: 9px;
-    padding: 9px 12px;
-    font-size: 13px;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     opacity: 1;
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
@@ -225,24 +234,19 @@ div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
+    border-radius: 7px !important;
     color: #0f172a !important;
-    min-height: 38px !important;
-}
-div[data-testid="stWidgetLabel"] label {
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    color: #334155 !important;
-    margin-bottom: 1px !important;
+    min-height: 36px !important;
+    font-size: 13px !important;
 }
 button[kind="primary"] {
     background-color: #f97316 !important;
     border-color: #ea580c !important;
     color: #ffffff !important;
     font-weight: 800 !important;
-    height: 44px !important;
-    border-radius: 9px !important;
-    font-size: 14px !important;
+    height: 42px !important;
+    border-radius: 8px !important;
+    font-size: 13.5px !important;
 }
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
@@ -252,8 +256,8 @@ button[kind="primary"]:hover {
     border: 1px solid #cbd5e1;
     border-left: 3px solid #0284c7;
     border-radius: 8px;
-    padding: 8px 10px;
-    margin-bottom: 4px;
+    padding: 7px 8px;
+    margin-bottom: 2px;
 }
 .eklenen-urun-satir {
     display: flex;
@@ -263,31 +267,33 @@ button[kind="primary"]:hover {
     border: 1px solid #cbd5e1;
     border-left: 4px solid #16a34a;
     border-radius: 7px;
-    padding: 7px 10px;
-    min-height: 38px;
+    padding: 6px 9px;
+    min-height: 36px;
 }
 .eklenen-urun-ad {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .eklenen-urun-miktar {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 800;
     color: #0369a1;
     background-color: #e0f2fe;
-    padding: 2px 8px;
-    border-radius: 6px;
+    padding: 2px 7px;
+    border-radius: 5px;
     white-space: nowrap;
-    margin-left: 8px;
+    margin-left: 6px;
 }
 .bos-liste-kutusu {
     background-color: #f8fafc;
     border: 1px dashed #94a3b8;
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 7px;
+    padding: 8px;
     text-align: center;
-    font-size: 12px;
+    font-size: 11.5px;
     color: #64748b;
     font-weight: 600;
 }
@@ -375,7 +381,7 @@ def check_password():
             st.caption(f"Personel Girişi: **{url_veren}**")
 
         with st.form("login_form", clear_on_submit=False):
-            pin = st.text_input("Erişim Şifresi:", type="password")
+            pin = st.text_input("Erişim Şifresi", placeholder="Erişim Şifresi...", type="password", label_visibility="collapsed")
             beni_hatirla = st.checkbox("Beni Hatırla", value=True)
             giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
 
@@ -583,17 +589,25 @@ def yeni_siparis_ntfy_gonder(sip: dict):
         pass
 
 
-def hibrit_alan(etiket: str, key_prefix: str, secenekler: list, zorunlu: bool = False, yeni_ekle_aktif: bool = True):
-    """Listeden seçim sunar; yeni_ekle_aktif=True ise listede olmayan değer elle yazılabilir."""
+def kompakt_hibrit_alan(etiket: str, key_prefix: str, secenekler: list, zorunlu: bool = False, yeni_ekle_aktif: bool = True):
+    """Üst etiketi gizler; alan adını doğrudan açılır kutunun içine yerleştiren kompakt seçim kutusu."""
     YENI_SECENEK = "➕ Yeni Giriş..."
-    tam_etiket = f"{etiket} *" if zorunlu else etiket
-    opsiyonlar = [""] + secenekler + ([YENI_SECENEK] if yeni_ekle_aktif else [])
-    secim = st.selectbox(tam_etiket, opsiyonlar, key=f"{key_prefix}_sel")
+    bos_etiket = f"{etiket} *" if zorunlu else etiket
+    opsiyonlar = [bos_etiket] + secenekler + ([YENI_SECENEK] if yeni_ekle_aktif else [])
+    secim = st.selectbox(
+        bos_etiket,
+        opsiyonlar,
+        key=f"{key_prefix}_sel",
+        label_visibility="collapsed"
+    )
+    if secim == bos_etiket:
+        return ""
     if yeni_ekle_aktif and secim == YENI_SECENEK:
         return st.text_input(
-            f"{etiket} (Yeni Yazın)",
+            bos_etiket,
             key=f"{key_prefix}_txt",
-            placeholder=f"{etiket} adını yazınız..."
+            placeholder=f"Yeni {etiket} yazınız...",
+            label_visibility="collapsed"
         ).strip()
     return secim.strip()
 
@@ -665,30 +679,30 @@ fv = st.session_state.form_versiyon
 uv = st.session_state.urun_input_versiyon
 
 # ==============================================================================
-# 1. TEMEL SİPARİŞ BİLGİLERİ
+# 1. TEMEL SİPARİŞ BİLGİLERİ (ETİKETSİZ KOMPAKT KUTULAR)
 # ==============================================================================
 st.markdown('<div class="section-card-title">📋 Sipariş Bilgileri</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
-    siparis_tarihi = st.date_input("Tarih *", value=date.today(), format="DD.MM.YYYY", key=f"tarih_{fv}")
+    siparis_tarihi = st.date_input("Tarih", value=date.today(), format="DD.MM.YYYY", key=f"tarih_{fv}", label_visibility="collapsed")
 with col2:
     if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
-        siparis_veren = st.text_input("Sipariş Veren *", value=str(yetki_deger), disabled=True, key=f"veren_kilit_{fv}").strip()
+        siparis_veren = st.text_input("Sipariş Veren", value=str(yetki_deger), disabled=True, key=f"veren_kilit_{fv}", label_visibility="collapsed").strip()
     else:
-        siparis_veren = hibrit_alan("Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"], zorunlu=True, yeni_ekle_aktif=False)
+        siparis_veren = kompakt_hibrit_alan("Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"], zorunlu=True, yeni_ekle_aktif=False)
 
 col3, col4 = st.columns(2)
 with col3:
-    firma = hibrit_alan("Firma", f"firma_{fv}", listeler["firma"], zorunlu=True, yeni_ekle_aktif=False)
+    firma = kompakt_hibrit_alan("Firma", f"firma_{fv}", listeler["firma"], zorunlu=True, yeni_ekle_aktif=False)
 with col4:
-    musteri = hibrit_alan("Müşteri", f"musteri_{fv}", listeler["musteri"], zorunlu=True, yeni_ekle_aktif=True)
+    musteri = kompakt_hibrit_alan("Müşteri", f"musteri_{fv}", listeler["musteri"], zorunlu=True, yeni_ekle_aktif=True)
 
 col5, col6 = st.columns(2)
 with col5:
-    santiye = hibrit_alan("Şantiye", f"santiye_{fv}", listeler["santiye"], zorunlu=True, yeni_ekle_aktif=True)
+    santiye = kompakt_hibrit_alan("Şantiye", f"santiye_{fv}", listeler["santiye"], zorunlu=True, yeni_ekle_aktif=True)
 with col6:
-    sehir = hibrit_alan("Şehir", f"sehir_{fv}", listeler["sehir"], zorunlu=False, yeni_ekle_aktif=True)
+    sehir = kompakt_hibrit_alan("Şehir", f"sehir_{fv}", listeler["sehir"], zorunlu=False, yeni_ekle_aktif=True)
 
 # ==============================================================================
 # 2. SEVKİYAT VE LOJİSTİK BİLGİLERİ
@@ -697,11 +711,11 @@ st.markdown('<div class="section-card-title">🚚 Sevkiyat & Lojistik</div>', un
 
 col7, col8, col9 = st.columns(3)
 with col7:
-    fabrika = hibrit_alan("Fabrika", f"fabrika_{fv}", listeler["fabrika"], zorunlu=True, yeni_ekle_aktif=False)
+    fabrika = kompakt_hibrit_alan("Fabrika", f"fabrika_{fv}", listeler["fabrika"], zorunlu=True, yeni_ekle_aktif=False)
 with col8:
-    nakliye = hibrit_alan("Nakliye", f"nakliye_{fv}", listeler["nakliye"], zorunlu=True, yeni_ekle_aktif=False)
+    nakliye = kompakt_hibrit_alan("Nakliye", f"nakliye_{fv}", listeler["nakliye"], zorunlu=True, yeni_ekle_aktif=False)
 with col9:
-    arac = hibrit_alan("Araç", f"arac_{fv}", listeler["arac"], zorunlu=True, yeni_ekle_aktif=False)
+    arac = kompakt_hibrit_alan("Araç", f"arac_{fv}", listeler["arac"], zorunlu=True, yeni_ekle_aktif=False)
 
 # ==============================================================================
 # 3. ÜRÜN EKLEME VE EKLENEN ÜRÜNLER LİSTESİ
@@ -714,28 +728,38 @@ filtrelenmis_urunler = [
 ]
 
 st.markdown('<div class="urun-giris-box">', unsafe_allow_html=True)
-u_ad = hibrit_alan("Ürün / Malzeme", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
+u_ad = kompakt_hibrit_alan("Ürün / Malzeme Seçin", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
 
-uc1, uc2 = st.columns([1, 1])
+uc1, uc2, uc3 = st.columns([2, 2, 2])
 with uc1:
     u_miktar = st.number_input(
         "Miktar",
         min_value=0.0,
         step=1.0,
-        value=0.0,
+        value=None,
+        placeholder="Miktar",
         format="%g",
-        key=f"miktar_giris_{fv}_{uv}"
+        key=f"miktar_giris_{fv}_{uv}",
+        label_visibility="collapsed"
     )
 with uc2:
-    u_birim = st.selectbox("Birim", listeler["birim"], key=f"birim_giris_{fv}_{uv}")
+    u_birim = st.selectbox(
+        "Birim",
+        listeler["birim"],
+        key=f"birim_giris_{fv}_{uv}",
+        label_visibility="collapsed"
+    )
+with uc3:
+    urun_ekle_tiklandi = st.button("➕ EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}")
 
-if st.button("➕ ÜRÜN EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}"):
+if urun_ekle_tiklandi:
+    girilen_miktar = float(u_miktar) if u_miktar is not None else 0.0
     if not u_ad:
         st.warning("Lütfen eklenecek ürünü seçin veya yazın.")
-    elif u_miktar <= 0:
+    elif girilen_miktar <= 0:
         st.warning("Lütfen 0'dan büyük bir miktar girin.")
     else:
-        miktar_str = str(int(u_miktar)) if float(u_miktar).is_integer() else str(float(u_miktar))
+        miktar_str = str(int(girilen_miktar)) if girilen_miktar.is_integer() else str(girilen_miktar)
         st.session_state.eklenen_urunler.append({
             "urun": u_ad,
             "miktar": miktar_str,
@@ -747,9 +771,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Eklenen Ürünlerin Altta Listelenmesi
 if st.session_state.eklenen_urunler:
-    st.caption(f"Eklenen Ürünler ({len(st.session_state.eklenen_urunler)} Kalem)")
     for idx, item in enumerate(st.session_state.eklenen_urunler):
-        l_col1, l_col2 = st.columns([5, 1])
+        l_col1, l_col2 = st.columns([6, 1])
         with l_col1:
             st.markdown(
                 f'<div class="eklenen-urun-satir">'
@@ -764,11 +787,11 @@ if st.session_state.eklenen_urunler:
                 st.rerun()
 else:
     st.markdown(
-        '<div class="bos-liste-kutusu">Henüz ürün eklenmedi. Yukarıdan ürün ve miktar seçip "➕ ÜRÜN EKLE" butonuna basın.</div>',
+        '<div class="bos-liste-kutusu">Henüz ürün eklenmedi. Ürün ve miktar girip "➕ EKLE" butonuna basın.</div>',
         unsafe_allow_html=True
     )
 
-st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # 4. KAYDET VE GÖNDER
@@ -790,10 +813,10 @@ if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container
     if not siparis_veren:
         eksikler.append("Sipariş Veren")
 
-    # Kullanıcı ürünü seçip "Ürün Ekle"ye basmayı unuttuysa otomatik olarak listeye dahil et
     gonderilecek_urunler = list(st.session_state.eklenen_urunler)
-    if u_ad and u_miktar > 0:
-        miktar_str = str(int(u_miktar)) if float(u_miktar).is_integer() else str(float(u_miktar))
+    son_miktar = float(u_miktar) if u_miktar is not None else 0.0
+    if u_ad and son_miktar > 0:
+        miktar_str = str(int(son_miktar)) if son_miktar.is_integer() else str(son_miktar)
         gonderilecek_urunler.append({
             "urun": u_ad,
             "miktar": miktar_str,
