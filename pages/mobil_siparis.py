@@ -791,7 +791,7 @@ if st.button("✅ SİPARİŞİ KAYDET VE GÖNDER", type="primary", use_container
             "fabrika": fabrika,
             "nakliye": nakliye,
             "siparis_veren": siparis_veren,
-            "durum": "Beklemede",
+            "durum": "BEKLEMEDE",
             "operasyon": "ONAY BEKLİYOR",
             "urunler": gonderilecek_urunler
         }
