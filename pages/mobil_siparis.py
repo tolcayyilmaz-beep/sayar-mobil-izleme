@@ -126,18 +126,18 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     width: 100% !important;
 }
 .block-container {
-    padding-top: 0.55rem !important;
+    padding-top: 0.45rem !important;
     padding-bottom: 5.2rem !important;
-    padding-left: 0.55rem !important;
-    padding-right: 0.55rem !important;
+    padding-left: 0.70rem !important;
+    padding-right: 0.70rem !important;
     max-width: 540px !important;
     width: 100% !important;
     margin: 0 auto !important;
     background: #ffffff !important;
-    border: 1px solid #d5dde8 !important;
-    border-top: 5px solid #f97316 !important;
-    border-radius: 15px !important;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-top: 4px solid #f97316 !important;
+    border-radius: 11px !important;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07) !important;
 }
 [data-testid="stVerticalBlock"] {
     gap: 0.32rem !important;
@@ -192,12 +192,13 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: transparent;
+    background: #ffffff;
     border: 0;
+    border-bottom: 1px solid #e2e8f0;
     border-radius: 0;
-    padding: 5px 5px 10px;
+    padding: 1px 0 8px;
     margin: 0 0 8px;
-    color: #172033;
+    color: #0f172a;
     box-shadow: none;
     gap: 8px;
     width: 100%;
@@ -214,7 +215,9 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     font-weight: 700;
     margin: 0;
     color: #172033;
-    font-size: 17px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -248,7 +251,7 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     border-radius: 7px;
     background-color: #f1f5f9;
     border: 1px solid #cbd5e1;
-    color: #334155 !important;
+    color: #475569 !important;
     text-decoration: none !important;
     font-size: 14px;
     cursor: pointer;
@@ -297,6 +300,17 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
 }
+/* mobil_izleme.py: fullscreen-review-card / info-grid renkleri */
+div[data-testid="stHorizontalBlock"] {
+    gap: 8px !important;
+}
+div[data-testid="stDateInput"] label,
+div[data-testid="stTextInput"] label,
+div[data-testid="stSelectbox"] label {
+    color: #64748b !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stDateInput"] input,
@@ -319,10 +333,10 @@ div[data-testid="stNumberInput"] input {
 }
 div[data-testid="stButton"] button {
     min-height: 42px !important;
-    padding: 0 8px !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    border-radius: 7px !important;
+    padding: 0 6px !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
     width: 100% !important;
     max-width: 100% !important;
 }
@@ -331,9 +345,9 @@ button[kind="primary"] {
     border-color: #ea580c !important;
     color: #ffffff !important;
     font-weight: 800 !important;
-    height: 43px !important;
+    height: 42px !important;
     border-radius: 9px !important;
-    font-size: 13.5px !important;
+    font-size: 12.5px !important;
 }
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
@@ -358,7 +372,7 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     align-items: center;
     background-color: #f8fafc;
     border: 1px solid #dbe2ea;
-    border-left: 4px solid #f97316;
+    border-left: 3px solid #0284c7;
     border-radius: 8px;
     padding: 7px 10px;
     min-height: 37px;
@@ -377,8 +391,8 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
 .eklenen-urun-miktar {
     font-size: 11.5px;
     font-weight: 800;
-    color: #0369a1;
-    background-color: #e0f2fe;
+    color: #1e3a8a;
+    background-color: #eff6ff;
     padding: 2px 7px;
     border-radius: 5px;
     white-space: nowrap;
