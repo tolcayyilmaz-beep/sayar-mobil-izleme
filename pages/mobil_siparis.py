@@ -1,21 +1,17 @@
 import os
-import io
+import re
 import json
 import time
 import hmac
 import html
 import base64
 import hashlib
-import sqlite3
-import tempfile
 import requests
-import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime, date
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+
+from firebase_db import FirebaseRealtimeStore, DEFAULT_DATABASE_URL, DEFAULT_SERVICE_ACCOUNT_FILE
 
 # Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
 if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
@@ -24,7 +20,6 @@ if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secret
         f.write(os.environ["STREAMLIT_SECRETS"])
 
 NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
-NEW_ORDER_QUEUE_FILE = "mobil_yeni_siparisler.json"
 
 
 @st.cache_data(show_spinner=False)
@@ -147,7 +142,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     width: 100% !important;
     max-width: 100% !important;
 }
-/* 2'li Miktar + Birim satırı mobilde taşmadan yan yana durur */
 div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) {
     display: flex !important;
     flex-direction: row !important;
@@ -164,7 +158,6 @@ div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) > div[data-testid="c
     max-width: 50% !important;
     padding: 0 !important;
 }
-/* Üst Özet Kart + Düzenle Butonu satırı */
 div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) {
     display: flex !important;
     flex-direction: row !important;
@@ -211,11 +204,9 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     align-items: center;
     gap: 7px;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
     color: #172033;
-    font-size: 14px;
-    font-weight: 800;
     letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;
@@ -258,33 +249,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
 .icon-btn:active {
     background-color: #f97316;
 }
-.ozet-kart {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-left: 4px solid #0284c7;
-    border-radius: 8px;
-    padding: 7px 10px;
-    width: 100%;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-}
-.ozet-ust {
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ozet-alt {
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 .auto-toast-banner {
     background-color: #dcfce7;
     border: 1px solid #86efac;
@@ -299,7 +263,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
 }
-/* Gerçek sipariş kartı: mobil_izleme.py .fullscreen-review-card ölçüleri */
 .st-key-siparis-form-card {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -312,30 +275,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
 }
 .st-key-siparis-form-card > div {
     gap: 0.42rem !important;
-}
-.st-key-siparis-form-card .header-banner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 0 0 8px;
-    margin: 0 0 8px;
-}
-.st-key-siparis-form-card .header-title {
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
-}
-.st-key-siparis-form-card .header-sub {
-    font-size: 10px !important;
-    color: #64748b !important;
-}
-.st-key-siparis-form-card .urun-giris-karti {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    padding: 8px !important;
-    margin-top: 7px !important;
 }
 .st-key-siparis-form-card .siparis-kalem-baslik {
     display: grid;
@@ -359,14 +298,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     color: #475569;
     flex-shrink: 0;
 }
-.eklenen-urun-satir {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-left: 3px solid #f97316 !important;
-    border-radius: 6px !important;
-    min-height: 40px !important;
-}
-/* mobil_izleme.py: fullscreen-review-card / info-grid renkleri */
 div[data-testid="stHorizontalBlock"] {
     gap: 8px !important;
 }
@@ -418,7 +349,6 @@ button[kind="primary"] {
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
 }
-/* Ekranın en altına sabitlenen gönder butonu */
 div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
@@ -458,17 +388,12 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
 .eklenen-urun-miktar {
     font-size: 11.5px;
     font-weight: 800;
-    color: #1e3a8a;
-    background-color: #eff6ff;
-    padding: 2px 7px;
-    border-radius: 5px;
-    white-space: nowrap;
-    margin-left: 0;
-    flex-shrink: 0;
-    text-align: center;
-    background: transparent;
     color: #0f172a;
     padding: 2px 0;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-align: center;
 }
 .bos-liste-kutusu {
     background-color: #f8fafc;
@@ -481,40 +406,39 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     font-weight: 600;
     width: 100%;
 }
-
-.urun-giris-karti {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 7px;
-    margin-top: 5px;
-}
-div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 100% !important;
-    max-width: 540px !important;
-    padding: 7px 0.55rem 9px 0.55rem !important;
-    background: linear-gradient(180deg, rgba(241,245,249,0.88) 0%, #f1f5f9 30%) !important;
-    backdrop-filter: blur(4px);
-    z-index: 9999 !important;
-    margin: 0 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 
 @st.cache_resource(show_spinner=False)
-def get_gdrive_service():
-    sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
-    creds = service_account.Credentials.from_service_account_info(
-        sa_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
+def get_firebase_store() -> FirebaseRealtimeStore:
+    db_url = DEFAULT_DATABASE_URL
+    sa_info = None
+    sa_file = None
+
+    try:
+        if "FIREBASE_DATABASE_URL" in st.secrets and str(st.secrets["FIREBASE_DATABASE_URL"]).strip():
+            db_url = str(st.secrets["FIREBASE_DATABASE_URL"]).strip()
+    except Exception:
+        pass
+
+    try:
+        if "FIREBASE_SERVICE_ACCOUNT" in st.secrets and st.secrets["FIREBASE_SERVICE_ACCOUNT"]:
+            sa_info = dict(st.secrets["FIREBASE_SERVICE_ACCOUNT"])
+        elif "GDRIVE_SERVICE_ACCOUNT" in st.secrets and st.secrets["GDRIVE_SERVICE_ACCOUNT"]:
+            sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
+    except Exception:
+        sa_info = None
+
+    if sa_info is None and os.path.exists(DEFAULT_SERVICE_ACCOUNT_FILE):
+        sa_file = DEFAULT_SERVICE_ACCOUNT_FILE
+
+    return FirebaseRealtimeStore(
+        service_account_info=sa_info,
+        service_account_file=sa_file,
+        database_url=db_url,
+        app_name="mobil_siparis_rtdb"
     )
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
 def _imza_anahtari():
@@ -627,7 +551,6 @@ def check_password():
 check_password()
 
 
-# PYTSAYAR.PY tanimlar ve siparisler tablolarından seçim listelerini çek (60 sn önbellekli)
 @st.cache_data(ttl=60, show_spinner=False)
 def secim_listelerini_getir():
     varsayilan = {
@@ -643,54 +566,26 @@ def secim_listelerini_getir():
         "birim": ["ADET", "TON", "KG", "M2", "M3", "MT", "TORBA", "PALET", "PAKET"]
     }
     try:
-        file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
-        if not file_id:
-            return varsayilan
-
-        service = get_gdrive_service()
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-
-        db_bytes = fh.getvalue()
-        if not db_bytes:
-            return varsayilan
-
-        tmp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-                tmp_file.write(db_bytes)
-                tmp_path = tmp_file.name
-
-            conn = sqlite3.connect(tmp_path, check_same_thread=False)
-            try:
-                df_tanim = pd.read_sql_query("SELECT * FROM tanimlar", conn)
-                df_sip = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC LIMIT 1000", conn)
-            finally:
-                conn.close()
-        finally:
-            if tmp_path and os.path.exists(tmp_path):
-                os.remove(tmp_path)
+        store = get_firebase_store()
+        tanim_rows = store.tum_tanimlari_getir()
+        sip_rows = store.tum_siparisleri_getir()[:1000]
 
         def tanim_listesi(kat):
-            if df_tanim.empty or "kategori" not in df_tanim.columns:
-                return []
-            sub = df_tanim[df_tanim["kategori"] == kat]
-            if "aktif" in sub.columns:
-                sub = sub[sub["aktif"].fillna(1) == 1]
-            vals = sub["deger"].dropna().astype(str).str.strip()
-            vals = vals[(vals != "") & (vals != "-")]
-            return sorted(vals.unique().tolist())
+            vals = []
+            for r in tanim_rows:
+                if r.get("kategori") == kat and int(r.get("aktif", 1)) == 1:
+                    d = str(r.get("deger") or "").strip()
+                    if d and d != "-":
+                        vals.append(d)
+            return sorted(list(set(vals)))
 
         def siparis_gecmis_listesi(col):
-            if df_sip.empty or col not in df_sip.columns:
-                return []
-            vals = df_sip[col].dropna().astype(str).str.strip()
-            vals = vals[(vals != "") & (vals != "-") & (vals.str.lower() != "none") & (vals.str.lower() != "nan")]
-            return sorted(vals.unique().tolist())
+            vals = []
+            for r in sip_rows:
+                v = str(r.get(col) or "").strip()
+                if v and v != "-" and v.lower() not in ("none", "nan"):
+                    vals.append(v)
+            return sorted(list(set(vals)))
 
         varsayilan["firma"] = tanim_listesi("FİRMA") or siparis_gecmis_listesi("firma")
         varsayilan["arac"] = tanim_listesi("ARAÇ") or siparis_gecmis_listesi("arac")
@@ -706,17 +601,14 @@ def secim_listelerini_getir():
         if t_birim:
             varsayilan["birim"] = t_birim
 
-        if not df_tanim.empty and "kategori" in df_tanim.columns:
-            u_sub = df_tanim[df_tanim["kategori"] == "ÜRÜN"]
-            if "aktif" in u_sub.columns:
-                u_sub = u_sub[u_sub["aktif"].fillna(1) == 1]
-            urun_list = []
-            for _, r in u_sub.iterrows():
+        urun_list = []
+        for r in tanim_rows:
+            if r.get("kategori") == "ÜRÜN" and int(r.get("aktif", 1)) == 1:
                 ad = str(r.get("deger") or "").strip()
-                frm = str(r.get("firma") or "").strip() if "firma" in u_sub.columns else ""
+                frm = str(r.get("firma") or "").strip()
                 if ad:
                     urun_list.append({"deger": ad, "firma": frm})
-            varsayilan["urunler_detay"] = sorted(urun_list, key=lambda x: x["deger"])
+        varsayilan["urunler_detay"] = sorted(urun_list, key=lambda x: x["deger"])
 
     except Exception:
         pass
@@ -724,46 +616,55 @@ def secim_listelerini_getir():
     return varsayilan
 
 
-def yeni_siparis_kuyruguna_yaz(siparis_verisi: dict):
-    """Yeni siparişi Google Drive'daki mobil_yeni_siparisler.json kuyruğuna ekler."""
-    service = get_gdrive_service()
-    folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
+def yeni_siparisi_firebase_kaydet(siparis_paketi: dict) -> int:
+    store = get_firebase_store()
 
-    query = f"name='{NEW_ORDER_QUEUE_FILE}' and '{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id)").execute()
-    files = results.get("files", [])
+    # Serbest yazılmış yeni müşteri / şantiye / şehir / ürün varsa tanımlara ekle
+    for kat, val in (
+        ("MÜŞTERİ", siparis_paketi.get("musteri")),
+        ("ŞANTİYE", siparis_paketi.get("santiye")),
+        ("ŞEHİR", siparis_paketi.get("sehir")),
+    ):
+        v = str(val or "").strip()
+        if v:
+            try:
+                store.tanim_ekle_veya_guncelle(kat, v, aktif=1)
+            except Exception:
+                pass
 
-    mevcut_kayitlar = []
-    file_id = None
+    for k in siparis_paketi.get("urunler", []):
+        u_ad = str(k.get("urun") or "").strip()
+        if u_ad:
+            try:
+                store.tanim_ekle_veya_guncelle("ÜRÜN", u_ad, aktif=1)
+            except Exception:
+                pass
 
-    if files:
-        file_id = files[0]["id"]
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        try:
-            icerik = fh.getvalue().decode("utf-8").strip()
-            if icerik:
-                mevcut_kayitlar = json.loads(icerik)
-        except Exception:
-            mevcut_kayitlar = []
+    kayit_dict = {
+        "tarih": siparis_paketi.get("tarih", ""),
+        "firma": siparis_paketi.get("firma", ""),
+        "musteri": siparis_paketi.get("musteri", ""),
+        "santiye": siparis_paketi.get("santiye", ""),
+        "sehir": siparis_paketi.get("sehir", "İSTANBUL"),
+        "telefon": "",
+        "yetkili": "",
+        "arac": siparis_paketi.get("arac", ""),
+        "fabrika": siparis_paketi.get("fabrika", ""),
+        "nakliye": siparis_paketi.get("nakliye", ""),
+        "notlar": f"[Mobil Kayıt: {siparis_paketi.get('mobil_kayit_id', '')} - {siparis_paketi.get('kayit_zamani', '')}]",
+        "sevk_tarihi": siparis_paketi.get("sevk_tarihi", ""),
+        "ted_sip_no": "",
+        "plaka": "",
+        "nakliye_fatura": "",
+        "siparis_veren": siparis_paketi.get("siparis_veren", ""),
+        "firma_yetkili": "",
+        "siparis_gecen": "",
+        "durum": siparis_paketi.get("durum", "BEKLEMEDE"),
+        "operasyon": siparis_paketi.get("operasyon", "ONAY BEKLİYOR"),
+        "kalemler": siparis_paketi.get("urunler", [])
+    }
 
-    mevcut_kayitlar.append(siparis_verisi)
-
-    json_bytes = json.dumps(mevcut_kayitlar, ensure_ascii=False, indent=2).encode("utf-8")
-    media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
-
-    if file_id:
-        service.files().update(fileId=file_id, media_body=media).execute()
-    else:
-        file_metadata = {
-            "name": NEW_ORDER_QUEUE_FILE,
-            "parents": [folder_id]
-        }
-        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+    return store.siparis_kaydet(kayit_dict)
 
 
 def yeni_siparis_ntfy_gonder(sip: dict):
@@ -795,9 +696,7 @@ def yeni_siparis_ntfy_gonder(sip: dict):
         pass
 
 
-
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Başlıksız açılır kutu; alan adı kutunun içinde görünür."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -813,7 +712,6 @@ def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
 
 
 def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Tıklanınca kayıtlı değerleri buton olarak açılan hızlı seçim alanı."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -849,14 +747,12 @@ def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str =
 
 
 def miktar_metni_gecerli_mi(deger: str) -> bool:
-    """Miktar alanı adet yanında 2,5 ton / 12.5 gibi manuel değerleri kabul eder."""
     metin = str(deger or "").strip().replace(",", ".")
     if not metin:
         return False
     try:
         return float(metin) > 0
     except ValueError:
-        # "2,5 TON", "1200 KG" gibi tonaj/metinli girişlere izin ver.
         return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", str(deger).strip()))
 
 
@@ -865,7 +761,6 @@ if st.query_params.get("action") == "refresh":
     st.query_params.pop("action", None)
     st.rerun()
 
-# Oturum alanları
 for alan, varsayilan in {
     "eklenen_urunler": [],
     "urun_input_versiyon": 0,
@@ -920,7 +815,6 @@ with st.container(key="siparis-form-card"):
     taslak = st.session_state.taslak_bilgi
     bugun = date.today()
 
-    # Tarihler varsayılan bugün; takvimden değiştirilebilir.
     tarih_default = taslak.get("tarih_obj", bugun)
     sevk_default = taslak.get("sevk_tarihi_obj", bugun)
     tarih_col, sevk_col = st.columns(2)
@@ -935,7 +829,6 @@ with st.container(key="siparis-form-card"):
             key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
         )
 
-    # Sipariş bilgileri: örnek ekrandaki gibi ikili satırlar.
     alan_sol, alan_sag = st.columns(2)
     with alan_sol:
         firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
@@ -964,7 +857,6 @@ with st.container(key="siparis-form-card"):
             "Araç", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )"
         )
     with alan_sag:
-        # Giriş yapan sipariş veren yalnızca kendi adına sipariş oluşturabilir.
         if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
             siparis_veren = st.text_input(
                 "Sipariş Veren", value=str(yetki_deger), disabled=True,
@@ -977,7 +869,6 @@ with st.container(key="siparis-form-card"):
                 taslak.get("siparis_veren", "")
             )
 
-    # Ürün / Birim / miktar girişi ve alt kalem listesi
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
         u["deger"] for u in listeler["urunler_detay"]
@@ -986,7 +877,6 @@ with st.container(key="siparis-form-card"):
     urun_secimi = secim_alani("Ürün", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
     urun_col, birim_col, miktar_col, ekle_col = st.columns([4, 2, 3, 1])
     with urun_col:
-        # Serbest yazım seçimi varsa önceliklidir; aksi halde listeden seçilen ürün kullanılır.
         urun_serbest = st.text_input(
             "Ürün", key=f"urun_serbest_{fv}_{uv}",
             placeholder="Ürün", label_visibility="collapsed"
@@ -1046,7 +936,6 @@ with st.container(key="siparis-form-card"):
             unsafe_allow_html=True
         )
 
-# Sabit alt işlem çubuğu
 st.markdown('<div class="sticky-gonder-isaret"></div>', unsafe_allow_html=True)
 alt_kaydet, alt_temizle, alt_kapat = st.columns(3)
 with alt_kaydet:
@@ -1101,14 +990,14 @@ if kaydet_tiklandi:
         }
         try:
             with st.spinner("Sipariş kaydediliyor..."):
-                yeni_siparis_kuyruguna_yaz(yeni_siparis_paketi)
+                yeni_no = yeni_siparisi_firebase_kaydet(yeni_siparis_paketi)
                 yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
             secim_listelerini_getir.clear()
             st.session_state.eklenen_urunler = []
             st.session_state.urun_input_versiyon = 0
             st.session_state.taslak_bilgi = {}
             st.session_state.form_versiyon += 1
-            st.session_state.flash_mesaj = f"{musteri} ({santiye}) siparişi kaydedildi!"
+            st.session_state.flash_mesaj = f"#{yeni_no} - {musteri} ({santiye}) siparişi kaydedildi!"
             st.rerun()
         except Exception as err:
-            st.error(f"Sipariş Google Drive kuyruğuna yazılamadı: {err}")
+            st.error(f"Sipariş Firebase veritabanına yazılamadı: {err}")
