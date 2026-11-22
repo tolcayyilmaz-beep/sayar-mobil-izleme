@@ -95,7 +95,7 @@ components.html(
     width=0
 )
 
-# mobil_izleme_3.py sipariş onay inceleme ekranı iskeleti + giriş/alt bar stilleri[cite: 6]
+# Ekran görüntüsündeki kart, gri grid, tablo ve alt bar stili
 st.markdown("""
 <style>
 *, *::before, *::after {
@@ -120,20 +120,30 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-.stApp, [data-testid="stAppViewContainer"] {
+html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 .block-container {
     padding-top: 0.45rem !important;
-    padding-bottom: 4.8rem !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
+    padding-bottom: 5.2rem !important;
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
     max-width: 540px !important;
+    width: 100% !important;
     margin: 0 auto !important;
 }
 [data-testid="stVerticalBlock"] {
     gap: 0.35rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+[data-testid="element-container"] {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 .auto-toast-banner {
     background-color: #dcfce7;
@@ -144,84 +154,13 @@ a[href*="streamlit.io/cloud"] {
     padding: 8px 12px;
     font-size: 12.5px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     opacity: 1;
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
 }
-.header-banner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-left: 5px solid #f97316;
-    border-radius: 10px;
-    padding: 9px 12px;
-    margin-bottom: 4px;
-    color: #f8fafc;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
-    gap: 8px;
-}
-.header-info {
-    flex: 1;
-    min-width: 0;
-}
-.header-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 15px;
-    font-weight: 700;
-    margin: 0;
-    color: #ffffff;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.header-logo {
-    height: 26px;
-    width: auto;
-    object-fit: contain;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-.header-sub {
-    font-size: 11px;
-    color: #cbd5e1;
-    margin-top: 2px;
-}
-.header-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff !important;
-    text-decoration: none !important;
-    font-size: 16px;
-    cursor: pointer;
-}
-.icon-btn:active {
-    background-color: #f97316;
-}
-div[data-testid="stForm"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
-    padding: 14px !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-}
 
-/* mobil_izleme_3.py Tam Ekran İnceleme Kartı İskeleti[cite: 6] */
+/* Ana Kart: Üstte turuncu çizgi, beyaz zemin */
 .fullscreen-review-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -237,17 +176,28 @@ div[data-testid="stForm"] {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 6px;
+    padding-bottom: 7px;
     margin-bottom: 8px;
     gap: 8px;
 }
 .fullscreen-review-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 14px;
     font-weight: 800;
     color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.orange-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background-color: #f97316;
+    display: inline-block;
+    flex-shrink: 0;
 }
 a.close-review-link {
     display: inline-flex;
@@ -268,16 +218,23 @@ a.close-review-link:active {
     background-color: #e2e8f0;
 }
 
-/* Grid içindeki sütunları mobilde 2'li yan yana koru */
-div[data-testid="stHorizontalBlock"]:has(.grid-satir-isaret) {
+/* Gri iki sütunlu bilgi alanı (.info-grid) */
+.gray-fields-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 5px 8px !important;
+    gap: 6px 8px !important;
     width: 100% !important;
-    margin: 0 0 4px 0 !important;
+    margin: 0 0 6px 0 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.grid-satir-isaret) > div[data-testid="column"] {
+div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) > div[data-testid="column"] {
     flex: 1 1 50% !important;
     width: 50% !important;
     min-width: 0 !important;
@@ -324,14 +281,14 @@ div[data-testid="stHorizontalBlock"]:has(.urun-satir-isaret) > div[data-testid="
 div[data-testid="stTextInput"] input,
 div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
-    background-color: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 7px !important;
     color: #0f172a !important;
-    min-height: 34px !important;
-    height: 34px !important;
+    min-height: 35px !important;
+    height: 35px !important;
     font-size: 12px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     width: 100% !important;
     max-width: 100% !important;
 }
@@ -342,8 +299,8 @@ div[data-testid="stTextInput"] input:disabled {
     opacity: 1 !important;
 }
 div[data-testid="stButton"] button {
-    min-height: 34px !important;
-    height: 34px !important;
+    min-height: 35px !important;
+    height: 35px !important;
     padding: 0 7px !important;
     font-size: 12px !important;
     font-weight: 700 !important;
@@ -351,8 +308,9 @@ div[data-testid="stButton"] button {
     width: 100% !important;
     max-width: 100% !important;
 }
-.secim-buton-kutu {
-    background-color: #f8fafc;
+
+.buton-secim-panel {
+    background-color: #ffffff;
     border: 1px solid #cbd5e1;
     border-left: 3px solid #f97316;
     border-radius: 8px;
@@ -360,7 +318,7 @@ div[data-testid="stButton"] button {
     margin: 2px 0 6px 0;
 }
 
-/* Eklenen ürün tablosu (mobil_izleme_3.py .urun-table ile aynı)[cite: 6] */
+/* Koyu lacivert başlıklı Malzeme / Ürün | Birim | Miktar tablosu */
 .urun-table {
     width: 100%;
     border-collapse: collapse;
@@ -374,14 +332,15 @@ div[data-testid="stButton"] button {
     background-color: #1e293b;
     color: #f8fafc;
     text-align: left;
-    padding: 5px 7px;
+    padding: 6px 7px;
     font-weight: 600;
     font-size: 11px;
 }
 .urun-table td {
-    padding: 5px 7px;
+    padding: 6px 7px;
     color: #0f172a;
     border-bottom: 1px solid #e2e8f0;
+    background-color: #ffffff;
 }
 .urun-table tr:nth-child(even) td {
     background-color: #f8fafc;
@@ -402,7 +361,7 @@ div[data-testid="stButton"] button {
     margin-top: 6px;
 }
 
-/* mobil_izleme_3.py .onay-aksiyon-bar karşılığı sabit alt bar[cite: 6] */
+/* En altta sabit 3'lü buton barı: KAYDET (yeşil) | TEMİZLE (sarı) | KAPAT (kırmızı) */
 .onay-aksiyon-bar {
     position: fixed !important;
     bottom: 0 !important;
@@ -410,7 +369,7 @@ div[data-testid="stButton"] button {
     transform: translateX(-50%) !important;
     width: 100% !important;
     max-width: 540px !important;
-    padding: 8px 0.75rem 10px 0.75rem !important;
+    padding: 8px 0.65rem 10px 0.65rem !important;
     background-color: #ffffff !important;
     border-top: 1px solid #cbd5e1 !important;
     z-index: 9999 !important;
@@ -438,10 +397,27 @@ div[data-testid="stHorizontalBlock"]:has(.alt-bar-isaret) > div[data-testid="col
     font-weight: 800 !important;
     letter-spacing: 0.3px !important;
 }
-.onay-aksiyon-bar button[kind="primary"] {
+.alt-bar-isaret + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) button {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
     color: #ffffff !important;
+}
+.alt-bar-isaret + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) button {
+    background-color: #facc15 !important;
+    border: 1px solid #eab308 !important;
+    color: #0f172a !important;
+}
+.alt-bar-isaret + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) button {
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
+    color: #ffffff !important;
+}
+
+div[data-testid="stForm"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 14px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -517,14 +493,14 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div class="header-banner"><div class="header-info">'
-            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
-            f'<div class="header-sub">Yeni Sipariş Giriş Sistemi</div>'
-            f'</div></div>',
+            '<div class="fullscreen-review-card">'
+            '<div class="fullscreen-review-header">'
+            '<div class="fullscreen-review-title"><span class="orange-dot"></span>YENİ SİPARİŞ GİRİŞİ</div>'
+            '</div>',
             unsafe_allow_html=True
         )
         if url_veren:
-            st.caption(f"Personel Girişi: **{url_veren}**")
+            st.caption(f"Personel: **{url_veren}**")
 
         with st.form("login_form", clear_on_submit=False):
             pin = st.text_input("Erişim Şifresi", placeholder="Erişim Şifresi...", type="password", label_visibility="collapsed")
@@ -561,6 +537,7 @@ def check_password():
                 st.rerun()
             else:
                 st.error("Hatalı erişim şifresi!")
+        st.markdown('</div>', unsafe_allow_html=True)
         st.stop()
 
 
@@ -792,12 +769,6 @@ def formu_sifirla():
     st.session_state.form_data = varsayilan_form_verisi()
 
 
-if st.query_params.get("action") == "refresh":
-    st.cache_data.clear()
-    st.session_state.ekran_kapali = False
-    st.query_params.pop("action", None)
-    st.rerun()
-
 if st.query_params.get("kapat") == "1":
     st.session_state.ekran_kapali = True
     st.query_params.pop("kapat", None)
@@ -805,19 +776,6 @@ if st.query_params.get("kapat") == "1":
 
 aktif_token = st.session_state.get("active_token") or st.query_params.get("token", "")
 token_param = f"&token={aktif_token}" if aktif_token else ""
-refresh_href = f"?action=refresh{token_param}"
-
-if not st.session_state.ekran_kapali:
-    alt_baslik = f"Personel: {kilitli_veren}" if kilitli_veren else "Yönetici Canlı Sipariş Girişi"
-    st.markdown(
-        f'<div class="header-banner">'
-        f'<div class="header-info"><div class="header-title">{LOGO_HTML}<span>SAYAR YAPI | Yeni Sipariş</span></div><div class="header-sub">{html.escape(alt_baslik)}</div></div>'
-        f'<div class="header-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
 
 flash_msg = st.session_state.flash_mesaj
 if flash_msg:
@@ -851,7 +809,7 @@ if st.session_state.ekran_kapali:
     st.markdown(
         '<div class="fullscreen-review-card" style="text-align:center; padding:24px 14px;">'
         '<div style="font-size:14.5px; font-weight:800; color:#0f172a; margin-bottom:6px;">YENİ SİPARİŞ EKRANI KAPATILDI</div>'
-        '<div style="font-size:12px; color:#64748b;">Yeni sipariş girmek için aşağıdaki butona basın.</div>'
+        '<div style="font-size:12px; color:#64748b;">Yeni sipariş oluşturmak için aşağıdaki butona tıklayın.</div>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -867,10 +825,10 @@ uv = st.session_state.urun_input_versiyon
 fd = st.session_state.form_data
 
 
-def acilir_kutu_ic_baslikli(kutu_ici_ad: str, key_name: str, secenekler: list, mevcut_deger: str = "", yeni_ekle: bool = True):
-    """Üstte etiket olmadan, kutu içinde alan adını gösteren açılır kutu."""
-    BOS = f"{kutu_ici_ad}..."
-    YENI = f"➕ Yeni {kutu_ici_ad}..."
+def acilir_kutu_alan(kutu_ici_etiket: str, key_name: str, secenekler: list, mevcut_deger: str = "", yeni_ekle: bool = True):
+    """Üstte başlık olmadan kutu içinde görünür."""
+    BOS = f"{kutu_ici_etiket}..."
+    YENI = f"➕ Yeni {kutu_ici_etiket}..."
     temiz = [x for x in secenekler if x]
     opts = [BOS] + temiz + ([YENI] if yeni_ekle else [])
     sel_key = f"sel_{key_name}_{fv}"
@@ -885,35 +843,35 @@ def acilir_kutu_ic_baslikli(kutu_ici_ad: str, key_name: str, secenekler: list, m
         else:
             st.session_state[sel_key] = BOS
 
-    secim = st.selectbox(kutu_ici_ad, opts, key=sel_key, label_visibility="collapsed")
+    secim = st.selectbox(kutu_ici_etiket, opts, key=sel_key, label_visibility="collapsed")
     if secim == BOS:
         return ""
     if yeni_ekle and secim == YENI:
-        return st.text_input(kutu_ici_ad, key=txt_key, placeholder=f"{kutu_ici_ad} yazınız...", label_visibility="collapsed").strip()
+        return st.text_input(kutu_ici_etiket, key=txt_key, placeholder=f"{kutu_ici_etiket} yazınız...", label_visibility="collapsed").strip()
     return secim.strip()
 
 
-def buton_secim_kutu(kutu_ici_ad: str, alan_key: str, secenekler: list):
-    """Üstte etiket olmadan kutu içinde görünür; tıklayınca seçenekleri buton olarak açar, seçilince kapatıp değeri yazar."""
+def buton_secim_alan(kutu_ici_etiket: str, alan_key: str, secenekler: list):
+    """Tıklayınca seçenekleri buton olarak açar; seçilince kapatıp değeri ilgili alana yazar."""
     mevcut = fd.get(alan_key, "")
     acik = (st.session_state.aktif_buton_alan == alan_key)
-    buton_yazi = mevcut if mevcut else f"{kutu_ici_ad}..."
+    buton_yazi = mevcut if mevcut else f"{kutu_ici_etiket}..."
 
     if st.button(buton_yazi, key=f"btn_alan_{alan_key}_{fv}", use_container_width=True):
         st.session_state.aktif_buton_alan = None if acik else alan_key
         st.rerun()
 
     if acik:
-        st.markdown('<div class="secim-buton-kutu">', unsafe_allow_html=True)
+        st.markdown('<div class="buton-secim-panel">', unsafe_allow_html=True)
         for i, sec in enumerate(secenekler):
             if st.button(sec, key=f"sec_{alan_key}_{fv}_{i}", use_container_width=True):
                 fd[alan_key] = sec
                 st.session_state.aktif_buton_alan = None
                 st.rerun()
         yeni_giris = st.text_input(
-            kutu_ici_ad,
+            kutu_ici_etiket,
             key=f"yeni_{alan_key}_{fv}",
-            placeholder=f"{kutu_ici_ad} yaz...",
+            placeholder=f"{kutu_ici_etiket} yaz...",
             label_visibility="collapsed"
         ).strip()
         if yeni_giris and st.button(f"✓ {yeni_giris}", key=f"onay_{alan_key}_{fv}", use_container_width=True):
@@ -926,21 +884,22 @@ def buton_secim_kutu(kutu_ici_ad: str, alan_key: str, secenekler: list):
 
 
 # ==============================================================================
-# YENİ SİPARİŞ EKRANI (mobil_izleme_3.py ONAY İNCELEME KARTI İSKELETİ)[cite: 6]
+# ANA KART: YENİ SİPARİŞ (EKRAN GÖRÜNTÜSÜ DÜZENİ)
 # ==============================================================================
 st.markdown(
     f'<div class="fullscreen-review-card">'
     f'<div class="fullscreen-review-header">'
-    f'<div class="fullscreen-review-title">🟠 YENİ SİPARİŞ</div>'
+    f'<div class="fullscreen-review-title"><span class="orange-dot"></span>YENİ SİPARİŞ</div>'
     f'<a data-spa="1" href="?kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
-    f'</div>',
+    f'</div>'
+    f'<div class="gray-fields-box">',
     unsafe_allow_html=True
 )
 
 # 1. Satır: Sipariş Tarihi | Sevk Tarihi (Varsayılan Bugün, Tıklanınca Takvim)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
     fd["siparis_tarihi"] = st.date_input(
         "Sipariş Tarihi",
         value=fd.get("siparis_tarihi", date.today()),
@@ -960,39 +919,39 @@ with c2:
 # 2. Satır: Tedarikçi Firma | Müşteri (Açılır kutu)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
-    fd["firma"] = acilir_kutu_ic_baslikli("Tedarikçi Firma", "firma", listeler["firma"], fd.get("firma", ""), yeni_ekle=False)
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
+    fd["firma"] = acilir_kutu_alan("Tedarikçi Firma", "firma", listeler["firma"], fd.get("firma", ""), yeni_ekle=False)
 with c2:
-    fd["musteri"] = acilir_kutu_ic_baslikli("Müşteri", "musteri", listeler["musteri"], fd.get("musteri", ""), yeni_ekle=True)
+    fd["musteri"] = acilir_kutu_alan("Müşteri", "musteri", listeler["musteri"], fd.get("musteri", ""), yeni_ekle=True)
 
 # 3. Satır: Şantiye | Şehir (Şehir varsayılan İSTANBUL)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
-    fd["santiye"] = acilir_kutu_ic_baslikli("Şantiye", "santiye", listeler["santiye"], fd.get("santiye", ""), yeni_ekle=True)
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
+    fd["santiye"] = acilir_kutu_alan("Şantiye", "santiye", listeler["santiye"], fd.get("santiye", ""), yeni_ekle=True)
 with c2:
-    fd["sehir"] = acilir_kutu_ic_baslikli("Şehir", "sehir", listeler["sehir"], fd.get("sehir", "İSTANBUL"), yeni_ekle=True)
+    fd["sehir"] = acilir_kutu_alan("Şehir", "sehir", listeler["sehir"], fd.get("sehir", "İSTANBUL"), yeni_ekle=True)
 
 # 4. Satır: Fabrika | Nakliye (Buton seçimli)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
-    buton_secim_kutu("Fabrika", "fabrika", listeler["fabrika"])
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
+    buton_secim_alan("Fabrika", "fabrika", listeler["fabrika"])
 with c2:
-    buton_secim_kutu("Nakliye", "nakliye", listeler["nakliye"])
+    buton_secim_alan("Nakliye", "nakliye", listeler["nakliye"])
 
 # 5. Satır: Araç (Varsayılan TIR ( 27 TON )) | Sipariş Geçen (Buton seçimli)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
-    buton_secim_kutu("Araç", "arac", listeler["arac"])
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
+    buton_secim_alan("Araç", "arac", listeler["arac"])
 with c2:
-    buton_secim_kutu("Sipariş Geçen", "siparis_gecen", listeler["siparis_gecen"])
+    buton_secim_alan("Sipariş Geçen", "siparis_gecen", listeler["siparis_gecen"])
 
 # 6. Satır: Sipariş Veren (Giriş yaptıysa kendi adına ve kilitli)
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown('<div class="grid-satir-isaret"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
     if kilitli_veren:
         st.text_input(
             "Sipariş Veren",
@@ -1003,9 +962,11 @@ with c1:
         )
         fd["siparis_veren"] = kilitli_veren
     else:
-        fd["siparis_veren"] = acilir_kutu_ic_baslikli("Sipariş Veren", "siparis_veren", listeler["siparis_veren"], fd.get("siparis_veren", ""), yeni_ekle=True)
+        fd["siparis_veren"] = acilir_kutu_alan("Sipariş Veren", "siparis_veren", listeler["siparis_veren"], fd.get("siparis_veren", ""), yeni_ekle=True)
 with c2:
     st.write("")
+
+st.markdown('</div>', unsafe_allow_html=True)  # .gray-fields-box sonu
 
 # Ürün - Birim - Adet/Tonaj (manuel sayı veya tonaj, +/- yok) + Ekle (+)
 firma_aktif = fd.get("firma", "")
@@ -1046,7 +1007,7 @@ if ekle_tiklandi:
         st.session_state.urun_input_versiyon += 1
         st.rerun()
 
-# Eklenen Ürünler Alt Tablosu (mobil_izleme_3.py .urun-table ile aynı)[cite: 6]
+# Eklenen Ürünler Alt Tablosu
 if st.session_state.eklenen_urunler:
     satirlar_html = ""
     for kalem in st.session_state.eklenen_urunler:
@@ -1074,7 +1035,7 @@ if st.session_state.eklenen_urunler:
 else:
     st.markdown('<div class="bos-liste-kutusu">Henüz ürün eklenmedi.</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)  # .fullscreen-review-card sonu
 
 # ==============================================================================
 # SABİT ALT BAR: KAYDET | TEMİZLE | KAPAT
