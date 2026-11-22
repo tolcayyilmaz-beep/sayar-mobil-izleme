@@ -1,20 +1,14 @@
 import os
-import io
 import json
 import time
 import html
 import base64
-import sqlite3
-import tempfile
 import requests
+import psycopg2
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
-from datetime import datetime
 from cryptography.fernet import Fernet
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 # Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
 if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
@@ -23,7 +17,6 @@ if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secret
         f.write(os.environ["STREAMLIT_SECRETS"])
 
 NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
-QUEUE_FILE_NAME = "mobil_onaylar.json"
 
 
 @st.cache_data(show_spinner=False)
@@ -626,63 +619,18 @@ def durum_metni_formatla(durum_val):
     return metin
 
 
-# Google Drive API Servisi (Tek bağlantı olarak önbelleklendi)
-@st.cache_resource(show_spinner=False)
-def get_gdrive_service():
-    sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
-    creds = service_account.Credentials.from_service_account_info(
-        sa_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
-
-
-def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
-    """Kararı Google Drive'daki mobil_onaylar.json dosyasına çakışmasız şekilde ekler."""
-    service = get_gdrive_service()
-    folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
-
-    query = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id)").execute()
-    files = results.get("files", [])
-
-    mevcut_kayitlar = []
-    file_id = None
-
-    if files:
-        file_id = files[0]["id"]
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        try:
-            icerik = fh.getvalue().decode("utf-8").strip()
-            if icerik:
-                mevcut_kayitlar = json.loads(icerik)
-        except Exception:
-            mevcut_kayitlar = []
-
-    mevcut_kayitlar = [k for k in mevcut_kayitlar if int(k.get("siparis_no", -1)) != int(siparis_no)]
-    mevcut_kayitlar.append({
-        "siparis_no": int(siparis_no),
-        "karar": karar,
-        "not": aciklama.strip(),
-        "zaman": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-
-    json_bytes = json.dumps(mevcut_kayitlar, ensure_ascii=False, indent=2).encode("utf-8")
-    media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
-
-    if file_id:
-        service.files().update(fileId=file_id, media_body=media).execute()
-    else:
-        file_metadata = {
-            "name": QUEUE_FILE_NAME,
-            "parents": [folder_id]
-        }
-        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+def _pg_baglanti_al():
+    db_url = ""
+    try:
+        if "DATABASE_URL" in st.secrets and str(st.secrets["DATABASE_URL"]).strip():
+            db_url = str(st.secrets["DATABASE_URL"]).strip()
+    except Exception:
+        pass
+    if not db_url:
+        db_url = os.environ.get("DATABASE_URL", "").strip()
+    if not db_url:
+        raise RuntimeError("DATABASE_URL tanımlı değil.")
+    return psycopg2.connect(db_url)
 
 
 def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, aciklama: str = ""):
@@ -912,78 +860,19 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan DÜZ SQLite DB indirme (15 sn önbellekli)
-# Drive'daki siparis_takip.db şifresiz SQLite dosyasıdır.
+# 2. Railway PostgreSQL Veritabanından Okuma (15 sn önbellekli)
 @st.cache_data(ttl=15, show_spinner=False)
 def verileri_getir():
-    file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
-    if not file_id:
-        raise RuntimeError("GDRIVE_FILE_ID Railway secrets içinde tanımlı değil.")
-
-    service = get_gdrive_service()
-    request = service.files().get_media(fileId=file_id)
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while not done:
-        _, done = downloader.next_chunk()
-
-    # Dosya şifresiz SQLite olduğundan Fernet.decrypt uygulanmaz.
-    db_bytes = fh.getvalue()
-    if not db_bytes:
-        raise RuntimeError("Google Drive'dan boş veritabanı indirildi.")
-
-    tmp_path = None
+    conn = _pg_baglanti_al()
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-            tmp_file.write(db_bytes)
-            tmp_path = tmp_file.name
-
-        # Verinin gerçekten SQLite veritabanı olduğunu doğrula.
-        conn = sqlite3.connect(tmp_path)
-        try:
-            integrity = conn.execute("PRAGMA quick_check").fetchone()
-            if not integrity or integrity[0] != "ok":
-                raise RuntimeError(f"İndirilen veritabanı doğrulanamadı: {integrity}")
-            df_siparisler = pd.read_sql_query(
-                "SELECT * FROM siparisler ORDER BY siparis_no DESC", conn
-            )
-            df_kalemler = pd.read_sql_query("SELECT * FROM siparis_kalemleri", conn)
-        finally:
-            conn.close()
+        df_siparisler = pd.read_sql_query(
+            "SELECT * FROM siparisler ORDER BY siparis_no DESC", conn
+        )
+        df_kalemler = pd.read_sql_query(
+            "SELECT * FROM siparis_kalemleri", conn
+        )
     finally:
-        if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
-
-    # Drive'daki mobil_onaylar.json kuyruğunu da oku ve bekleyen kararları anlık yansıt
-    try:
-        folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
-        q = f"name='{QUEUE_FILE_NAME}' and '{folder_id}' in parents and trashed=false"
-        res = service.files().list(q=q, fields="files(id)").execute()
-        files = res.get("files", [])
-        if files:
-            req = service.files().get_media(fileId=files[0]["id"])
-            fh_q = io.BytesIO()
-            downloader_q = MediaIoBaseDownload(fh_q, req)
-            done_q = False
-            while not done_q:
-                _, done_q = downloader_q.next_chunk()
-            kuyruk = json.loads(fh_q.getvalue().decode("utf-8") or "[]")
-            for k in kuyruk:
-                s_no = int(k.get("siparis_no", -1))
-                karar = str(k.get("karar") or "").strip()
-                k_not = str(k.get("not") or "").strip()
-                mask = df_siparisler["siparis_no"] == s_no
-                if mask.any() and karar:
-                    db_op = str(df_siparisler.loc[mask, "operasyon"].iloc[0] or "").upper()
-                    if db_op == "ONAY BEKLİYOR":
-                        df_siparisler.loc[mask, "operasyon"] = karar
-                        if k_not:
-                            mevcut_not = str(df_siparisler.loc[mask, "notlar"].iloc[0] or "").strip()
-                            ek_not = f"[Yönetici Notu - {karar}]: {k_not}"
-                            df_siparisler.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
-    except Exception:
-        pass
+        conn.close()
 
     return df_siparisler, df_kalemler
 
@@ -1016,7 +905,7 @@ if not inceleme_aktif_mi:
 try:
     df_sip, df_kalem = verileri_getir()
 except Exception as e:
-    st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
+    st.error(f"Veritabanı okunamadı. Bağlantıyı ve DATABASE_URL ayarını kontrol edin.\nDetay: {e}")
     st.stop()
 
 # Mobil oturumda verilen kararları ana DB güncellenene kadar önbelleği silmeden anlık yansıt
@@ -1209,9 +1098,36 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
 
 
 def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
-    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve önbelleği silmeden anında listeye döner."""
+    """Kararı doğrudan Railway PostgreSQL'deki siparisler tablosuna yazar."""
     try:
-        onay_kuyruguna_yaz(sip_no, karar, aciklama)
+        conn = _pg_baglanti_al()
+        try:
+            with conn.cursor() as cur:
+                not_metni = aciklama.strip()
+                if not_metni:
+                    ek_not = f"[Yönetici Notu - {karar}]: {not_metni}"
+                    cur.execute(
+                        """
+                        UPDATE siparisler
+                        SET operasyon = %s,
+                            notlar = CASE
+                                WHEN COALESCE(notlar, '') = '' THEN %s
+                                ELSE notlar || E'\n' || %s
+                            END
+                        WHERE siparis_no = %s
+                        """,
+                        (karar, ek_not, ek_not, int(sip_no))
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE siparisler SET operasyon = %s WHERE siparis_no = %s",
+                        (karar, int(sip_no))
+                    )
+            conn.commit()
+        finally:
+            conn.close()
+
+        st.cache_data.clear()
         onay_ntfy_gonder(
             siparis_no=sip_no,
             firma=str(row_data.get("firma") or "-"),
@@ -1219,16 +1135,13 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
             karar=karar,
             aciklama=aciklama
         )
-        st.session_state.yerel_kararlar[int(sip_no)] = {
-            "karar": karar,
-            "not": aciklama.strip()
-        }
+        st.session_state.yerel_kararlar.pop(int(sip_no), None)
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.bekleyen_revize_sip_no = None
-        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
+        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı kaydedildi."
         st.rerun()
     except Exception as err:
-        st.error(f"Karar Google Drive'a yazılamadı: {err}")
+        st.error(f"Karar veritabanına yazılamadı: {err}")
 
 
 @st.dialog("Revize Notu")
