@@ -11,6 +11,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime, date
 
+import sys
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
 from firebase_db import FirebaseRealtimeStore, DEFAULT_DATABASE_URL, DEFAULT_SERVICE_ACCOUNT_FILE
 
 # Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
