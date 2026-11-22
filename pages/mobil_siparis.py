@@ -126,55 +126,43 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     width: 100% !important;
 }
 .block-container {
-    padding-top: 0.35rem !important;
-    padding-bottom: 4.6rem !important;
-    padding-left: 0.55rem !important;
-    padding-right: 0.55rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 4.8rem !important;
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
     max-width: 540px !important;
     width: 100% !important;
     margin: 0 auto !important;
 }
 [data-testid="stVerticalBlock"] {
-    gap: 0.32rem !important;
+    gap: 0.42rem !important;
     width: 100% !important;
     max-width: 100% !important;
 }
 [data-testid="element-container"] {
     width: 100% !important;
     max-width: 100% !important;
-}
-/* 2'li Miktar + Birim satırı mobilde taşmadan yan yana durur */
-div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    gap: 6px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) > div[data-testid="column"] {
-    flex: 1 1 50% !important;
-    width: 50% !important;
-    min-width: 0 !important;
-    max-width: 50% !important;
-    padding: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
 }
 /* Üst Özet Kart + Düzenle Butonu satırı */
 div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    align-items: stretch !important;
-    gap: 6px !important;
+    align-items: center !important;
+    gap: 8px !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
+    margin: 0 0 2px 0 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="column"]:nth-child(1) {
     flex: 1 1 auto !important;
+    width: auto !important;
     min-width: 0 !important;
+    max-width: calc(100% - 50px) !important;
     padding: 0 !important;
+    overflow: hidden !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="column"]:nth-child(2) {
     flex: 0 0 42px !important;
@@ -184,18 +172,22 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     padding: 0 !important;
 }
 .header-banner {
+    position: relative !important;
+    z-index: 5 !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-left: 5px solid #f97316;
     border-radius: 9px;
-    padding: 7px 10px;
-    margin-bottom: 4px;
+    padding: 8px 10px;
+    margin-top: 2px !important;
+    margin-bottom: 10px !important;
     color: #f8fafc;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
     gap: 8px;
     width: 100%;
+    max-width: 100%;
 }
 .header-info {
     flex: 1;
@@ -251,12 +243,15 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     background-color: #f97316;
 }
 .ozet-kart {
+    position: relative !important;
+    z-index: 1 !important;
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
     border-left: 4px solid #0284c7;
     border-radius: 8px;
     padding: 7px 10px;
     width: 100%;
+    max-width: 100%;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
@@ -286,7 +281,7 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     padding: 7px 10px;
     font-size: 12.5px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     opacity: 1;
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
@@ -299,8 +294,15 @@ div[data-baseweb="select"] > div {
     border: 1px solid #cbd5e1 !important;
     border-radius: 7px !important;
     color: #0f172a !important;
-    min-height: 37px !important;
+    min-height: 38px !important;
     font-size: 13px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+div[data-testid="stDateInput"],
+div[data-testid="stDateInput"] > div {
+    position: relative !important;
+    z-index: 2 !important;
     width: 100% !important;
     max-width: 100% !important;
 }
@@ -312,7 +314,7 @@ div[data-testid="stNumberInput"] input {
     padding-right: 8px !important;
 }
 div[data-testid="stButton"] button {
-    min-height: 37px !important;
+    min-height: 38px !important;
     padding: 0 8px !important;
     font-size: 12.5px !important;
     font-weight: 700 !important;
@@ -340,7 +342,7 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     transform: translateX(-50%) !important;
     width: 100% !important;
     max-width: 540px !important;
-    padding: 7px 0.55rem 9px 0.55rem !important;
+    padding: 7px 0.6rem 9px 0.6rem !important;
     background: linear-gradient(180deg, rgba(241,245,249,0.88) 0%, #f1f5f9 30%) !important;
     backdrop-filter: blur(4px);
     z-index: 9999 !important;
@@ -357,6 +359,7 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     padding: 7px 10px;
     min-height: 37px;
     width: 100%;
+    max-width: 100%;
     overflow: hidden;
 }
 .eklenen-urun-ad {
@@ -389,6 +392,7 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     color: #64748b;
     font-weight: 600;
     width: 100%;
+    max-width: 100%;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -844,7 +848,7 @@ if not st.session_state.adim_urun_ekleme:
             st.rerun()
 
 # ==============================================================================
-# ADIM 2: ÜSTTE 2 SATIRLIK ÖZET KART + ALTTA TAŞMASIZ ÜRÜN EKLEME & SEPET
+# ADIM 2: ÜSTTE 2 SATIRLIK ÖZET KART + ALTTA ALT ALTA ÜRÜN / MİKTAR / BİRİM
 # ==============================================================================
 else:
     firma_aktif = taslak.get("firma", "")
@@ -870,32 +874,30 @@ else:
         if not firma_aktif or not u["firma"] or u["firma"].upper() == firma_aktif.upper()
     ]
 
-    # 1. Satır: Ürün / Malzeme (Tam Genişlik)
+    # 1. Ürün / Malzeme
     u_ad = kompakt_hibrit_alan("Ürün / Malzeme Seçin", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler, zorunlu=False, yeni_ekle_aktif=True)
 
-    # 2. Satır: Miktar ve Birim (2 Eşit Sütun - Taşma Yapmaz)
-    uc1, uc2 = st.columns(2)
-    with uc1:
-        st.markdown('<div class="iki-sutun-isaret"></div>', unsafe_allow_html=True)
-        u_miktar = st.number_input(
-            "Miktar",
-            min_value=0.0,
-            step=1.0,
-            value=None,
-            placeholder="Miktar",
-            format="%g",
-            key=f"miktar_giris_{fv}_{uv}",
-            label_visibility="collapsed"
-        )
-    with uc2:
-        u_birim = st.selectbox(
-            "Birim",
-            listeler["birim"],
-            key=f"birim_giris_{fv}_{uv}",
-            label_visibility="collapsed"
-        )
+    # 2. Miktar (Alt alta)
+    u_miktar = st.number_input(
+        "Miktar",
+        min_value=0.0,
+        step=1.0,
+        value=None,
+        placeholder="Miktar",
+        format="%g",
+        key=f"miktar_giris_{fv}_{uv}",
+        label_visibility="collapsed"
+    )
 
-    # 3. Satır: Tam Genişlik Ekle Butonu
+    # 3. Birim (Alt alta)
+    u_birim = st.selectbox(
+        "Birim",
+        listeler["birim"],
+        key=f"birim_giris_{fv}_{uv}",
+        label_visibility="collapsed"
+    )
+
+    # 4. Ekle Butonu
     if st.button("➕ ÜRÜN EKLE", use_container_width=True, key=f"btn_urun_ekle_{fv}_{uv}"):
         girilen_miktar = float(u_miktar) if u_miktar is not None else 0.0
         if not u_ad:
@@ -912,7 +914,7 @@ else:
             st.session_state.urun_input_versiyon += 1
             st.rerun()
 
-    # Eklenen Ürünlerin Listesi (Tek sütun kart + altında kompakt sil butonu, sıfır taşma)
+    # Eklenen Ürünlerin Listesi
     if st.session_state.eklenen_urunler:
         for idx, item in enumerate(st.session_state.eklenen_urunler):
             st.markdown(
