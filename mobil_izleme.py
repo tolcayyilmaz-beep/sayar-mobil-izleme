@@ -133,6 +133,20 @@ a[href*="streamlit.io/cloud"] {
 [data-testid="stVerticalBlock"] {
     gap: 0.45rem !important;
 }
+.auto-toast-banner {
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+    border-left: 4px solid #16a34a;
+    color: #14532d;
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+}
 .header-banner {
     display: flex;
     justify-content: space-between;
@@ -1312,7 +1326,30 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
 # ==============================================================================
 flash_msg = st.session_state.flash_mesaj
 if flash_msg:
-    st.success(flash_msg)
+    toast_id = f"toast_{int(time.time() * 1000)}"
+    st.markdown(
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
+        unsafe_allow_html=True
+    )
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const el = doc.getElementById({json.dumps(toast_id)});
+            if (!el) return;
+            setTimeout(function() {{
+                el.style.opacity = '0';
+                setTimeout(function() {{
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
+                }}, 350);
+            }}, 2500);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
     st.session_state.flash_mesaj = None
 
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
