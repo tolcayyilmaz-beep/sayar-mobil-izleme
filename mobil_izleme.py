@@ -2,8 +2,10 @@ import os
 import io
 import json
 import time
+import hmac
 import html
 import base64
+import hashlib
 import sqlite3
 import tempfile
 import requests
@@ -11,7 +13,6 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
-from cryptography.fernet import Fernet
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
@@ -637,6 +638,12 @@ def get_gdrive_service():
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
+def _imza_anahtari():
+    if "DB_SECRET_KEY" in st.secrets and str(st.secrets["DB_SECRET_KEY"]).strip():
+        return str(st.secrets["DB_SECRET_KEY"]).encode("utf-8")
+    return str(st.secrets["APP_PASSWORD"]).encode("utf-8")
+
+
 def onay_kuyruguna_yaz(siparis_no: int, karar: str, aciklama: str = ""):
     """Kararı Google Drive'daki mobil_onaylar.json dosyasına çakışmasız şekilde ekler."""
     service = get_gdrive_service()
@@ -714,24 +721,24 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
         pass
 
 
-# Şifreli Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
+# Şifrelemesiz Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
-    secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-    fernet = Fernet(secret_key)
-    payload = json.dumps({
-        "tip": yetki_tipi,
-        "deger": yetki_deger,
-        "exp": int(time.time()) + (gun * 86400)
-    }).encode("utf-8")
-    return fernet.encrypt(payload).decode("utf-8")
+    exp = int(time.time()) + (gun * 86400)
+    payload_json = json.dumps({"tip": yetki_tipi, "deger": yetki_deger, "exp": exp}, separators=(",", ":")).encode("utf-8")
+    payload_b64 = base64.urlsafe_b64encode(payload_json).decode("utf-8").rstrip("=")
+    sig = hmac.new(_imza_anahtari(), payload_b64.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{sig}"
 
 
 def token_dogrula(token_str):
     try:
-        secret_key = st.secrets["DB_SECRET_KEY"].encode("utf-8")
-        fernet = Fernet(secret_key)
-        data = json.loads(fernet.decrypt(token_str.encode("utf-8")).decode("utf-8"))
-        if data.get("exp", 0) > int(time.time()):
+        payload_b64, sig = token_str.split(".", 1)
+        expected_sig = hmac.new(_imza_anahtari(), payload_b64.encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None, None
+        padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+        data = json.loads(base64.urlsafe_b64decode(padded.encode("utf-8")).decode("utf-8"))
+        if int(data.get("exp", 0)) > int(time.time()):
             return data.get("tip"), data.get("deger")
     except Exception:
         pass
@@ -912,8 +919,7 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan DÜZ SQLite DB indirme (15 sn önbellekli)
-# Drive'daki siparis_takip.db şifresiz SQLite dosyasıdır.
+# 2. Google Drive'dan şifresiz SQLite DB indirme (15 sn önbellekli)
 @st.cache_data(ttl=15, show_spinner=False)
 def verileri_getir():
     file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
@@ -928,7 +934,6 @@ def verileri_getir():
     while not done:
         _, done = downloader.next_chunk()
 
-    # Dosya şifresiz SQLite olduğundan Fernet.decrypt uygulanmaz.
     db_bytes = fh.getvalue()
     if not db_bytes:
         raise RuntimeError("Google Drive'dan boş veritabanı indirildi.")
@@ -939,9 +944,9 @@ def verileri_getir():
             tmp_file.write(db_bytes)
             tmp_path = tmp_file.name
 
-        # Verinin gerçekten SQLite veritabanı olduğunu doğrula.
-        conn = sqlite3.connect(tmp_path)
+        conn = sqlite3.connect(tmp_path, check_same_thread=False)
         try:
+            conn.execute("PRAGMA temp_store = MEMORY;")
             integrity = conn.execute("PRAGMA quick_check").fetchone()
             if not integrity or integrity[0] != "ok":
                 raise RuntimeError(f"İndirilen veritabanı doğrulanamadı: {integrity}")
@@ -1016,7 +1021,7 @@ if not inceleme_aktif_mi:
 try:
     df_sip, df_kalem = verileri_getir()
 except Exception as e:
-    st.error(f"Veritabanı okunamadı. Bağlantıyı ve anahtarı kontrol edin.\nDetay: {e}")
+    st.error(f"Veritabanı okunamadı. Bağlantıyı kontrol edin.\nDetay: {e}")
     st.stop()
 
 # Mobil oturumda verilen kararları ana DB güncellenene kadar önbelleği silmeden anlık yansıt
@@ -1393,7 +1398,7 @@ with col_filtre:
         if ek_filtre_aktif or arama.strip():
             st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
-filtered = df_sip.copy()
+filtered = df_sip
 
 if gizle_tamamlanan:
     filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
