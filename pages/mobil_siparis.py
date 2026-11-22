@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import json
 import time
@@ -11,31 +12,43 @@ import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime, date
 
-import sys
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
-
-from firebase_db import FirebaseRealtimeStore, DEFAULT_DATABASE_URL, DEFAULT_SERVICE_ACCOUNT_FILE
-
 # Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
 if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+for _yol in (CURRENT_DIR, ROOT_DIR):
+    if _yol not in sys.path:
+        sys.path.insert(0, _yol)
+
+from firebase_db import FirebaseRealtimeStore, DEFAULT_DATABASE_URL, DEFAULT_SERVICE_ACCOUNT_FILE
+
 NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
 
 
 @st.cache_data(show_spinner=False)
 def logo_base64_getir(dosya_yolu="logo.png"):
-    yol = dosya_yolu if os.path.exists(dosya_yolu) else os.path.join("static", dosya_yolu)
-    if os.path.exists(yol):
-        ext = os.path.splitext(yol)[1].lower()
-        mime = "image/svg+xml" if ext == ".svg" else ("image/jpeg" if ext in (".jpg", ".jpeg") else "image/png")
-        with open(yol, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode("utf-8")
-        return f"data:{mime};base64,{encoded}"
+    adaylar = [
+        dosya_yolu,
+        os.path.join(CURRENT_DIR, dosya_yolu),
+        os.path.join(ROOT_DIR, dosya_yolu),
+        os.path.join("static", dosya_yolu),
+        os.path.join(ROOT_DIR, "static", dosya_yolu),
+    ]
+    for yol in adaylar:
+        if yol and os.path.exists(yol):
+            ext = os.path.splitext(yol)[1].lower()
+            mime = (
+                "image/svg+xml"
+                if ext == ".svg"
+                else ("image/jpeg" if ext in (".jpg", ".jpeg") else "image/png")
+            )
+            with open(yol, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode("utf-8")
+            return f"data:{mime};base64,{encoded}"
     return None
 
 
@@ -435,8 +448,15 @@ def get_firebase_store() -> FirebaseRealtimeStore:
     except Exception:
         sa_info = None
 
-    if sa_info is None and os.path.exists(DEFAULT_SERVICE_ACCOUNT_FILE):
-        sa_file = DEFAULT_SERVICE_ACCOUNT_FILE
+    if sa_info is None:
+        for aday in (
+            DEFAULT_SERVICE_ACCOUNT_FILE,
+            os.path.join(CURRENT_DIR, DEFAULT_SERVICE_ACCOUNT_FILE),
+            os.path.join(ROOT_DIR, DEFAULT_SERVICE_ACCOUNT_FILE),
+        ):
+            if aday and os.path.exists(aday):
+                sa_file = aday
+                break
 
     return FirebaseRealtimeStore(
         service_account_info=sa_info,
@@ -568,7 +588,8 @@ def secim_listelerini_getir():
         "nakliye": [],
         "siparis_veren": [],
         "urunler_detay": [],
-        "birim": ["ADET", "TON", "KG", "M2", "M3", "MT", "TORBA", "PALET", "PAKET"]
+        "birim": ["ADET", "TON", "KG", "M2", "M3", "MT", "TORBA", "PALET", "PAKET"],
+        "hata": ""
     }
     try:
         store = get_firebase_store()
@@ -615,8 +636,8 @@ def secim_listelerini_getir():
                     urun_list.append({"deger": ad, "firma": frm})
         varsayilan["urunler_detay"] = sorted(urun_list, key=lambda x: x["deger"])
 
-    except Exception:
-        pass
+    except Exception as err:
+        varsayilan["hata"] = str(err)
 
     return varsayilan
 
@@ -624,7 +645,6 @@ def secim_listelerini_getir():
 def yeni_siparisi_firebase_kaydet(siparis_paketi: dict) -> int:
     store = get_firebase_store()
 
-    # Serbest yazılmış yeni müşteri / şantiye / şehir / ürün varsa tanımlara ekle
     for kat, val in (
         ("MÜŞTERİ", siparis_paketi.get("musteri")),
         ("ŞANTİYE", siparis_paketi.get("santiye")),
@@ -815,6 +835,9 @@ with st.container(key="siparis-form-card"):
         st.stop()
 
     listeler = secim_listelerini_getir()
+    if listeler.get("hata"):
+        st.error(f"Firebase veri okuma hatası: {listeler['hata']}")
+
     fv = st.session_state.form_versiyon
     uv = st.session_state.urun_input_versiyon
     taslak = st.session_state.taslak_bilgi
