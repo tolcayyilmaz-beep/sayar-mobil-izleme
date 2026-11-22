@@ -126,13 +126,18 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     width: 100% !important;
 }
 .block-container {
-    padding-top: 0.35rem !important;
-    padding-bottom: 4.6rem !important;
+    padding-top: 0.55rem !important;
+    padding-bottom: 5.2rem !important;
     padding-left: 0.55rem !important;
     padding-right: 0.55rem !important;
     max-width: 540px !important;
     width: 100% !important;
     margin: 0 auto !important;
+    background: #ffffff !important;
+    border: 1px solid #d5dde8 !important;
+    border-top: 5px solid #f97316 !important;
+    border-radius: 15px !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07) !important;
 }
 [data-testid="stVerticalBlock"] {
     gap: 0.32rem !important;
@@ -187,13 +192,13 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-left: 5px solid #f97316;
-    border-radius: 9px;
-    padding: 7px 10px;
-    margin-bottom: 4px;
-    color: #f8fafc;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 5px 5px 10px;
+    margin: 0 0 8px;
+    color: #172033;
+    box-shadow: none;
     gap: 8px;
     width: 100%;
 }
@@ -208,7 +213,8 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     font-size: 14px;
     font-weight: 700;
     margin: 0;
-    color: #ffffff;
+    color: #172033;
+    font-size: 17px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -222,8 +228,8 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
 }
 .header-sub {
     font-size: 10.5px;
-    color: #cbd5e1;
-    margin-top: 1px;
+    color: #64748b;
+    margin-top: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -240,9 +246,9 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     width: 31px;
     height: 31px;
     border-radius: 7px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff !important;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155 !important;
     text-decoration: none !important;
     font-size: 14px;
     cursor: pointer;
@@ -297,10 +303,10 @@ div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 7px !important;
+    border-radius: 9px !important;
     color: #0f172a !important;
-    min-height: 37px !important;
-    font-size: 13px !important;
+    min-height: 43px !important;
+    font-size: 14px !important;
     width: 100% !important;
     max-width: 100% !important;
 }
@@ -312,9 +318,9 @@ div[data-testid="stNumberInput"] input {
     padding-right: 8px !important;
 }
 div[data-testid="stButton"] button {
-    min-height: 37px !important;
+    min-height: 42px !important;
     padding: 0 8px !important;
-    font-size: 12.5px !important;
+    font-size: 13px !important;
     font-weight: 700 !important;
     border-radius: 7px !important;
     width: 100% !important;
@@ -350,10 +356,10 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-left: 4px solid #16a34a;
-    border-radius: 7px;
+    background-color: #f8fafc;
+    border: 1px solid #dbe2ea;
+    border-left: 4px solid #f97316;
+    border-radius: 8px;
     padding: 7px 10px;
     min-height: 37px;
     width: 100%;
@@ -797,7 +803,7 @@ alt_baslik = f"Personel: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Y
 st.markdown(
     f'<div class="header-banner">'
     f'<div class="header-info">'
-    f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI | Yeni Sipariş</span></div>'
+    f'<div class="header-title">{LOGO_HTML}<span>YENİ SİPARİŞ</span></div>'
     f'<div class="header-sub">{html.escape(str(alt_baslik))}</div>'
     f'</div>'
     f'<div class="header-actions">'
@@ -843,33 +849,47 @@ with sevk_col:
         key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
     )
 
-# Giriş yapan sipariş veren yalnızca kendi adına sipariş oluşturabilir.
-if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
-    siparis_veren = st.text_input(
-        "Sipariş Veren", value=str(yetki_deger), disabled=True,
-        key=f"veren_kilit_{fv}", label_visibility="collapsed"
-    ).strip()
-else:
-    siparis_veren = hizli_secim_alani(
-        "Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"],
-        taslak.get("siparis_veren", "")
+# Sipariş bilgileri: örnek ekrandaki gibi ikili satırlar.
+alan_sol, alan_sag = st.columns(2)
+with alan_sol:
+    firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
+with alan_sag:
+    musteri = secim_alani("Müşteri", f"musteri_{fv}", listeler["musteri"], taslak.get("musteri", ""))
+
+alan_sol, alan_sag = st.columns(2)
+with alan_sol:
+    santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
+with alan_sag:
+    sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
+
+alan_sol, alan_sag = st.columns(2)
+with alan_sol:
+    fabrika = hizli_secim_alani(
+        "Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", "")
+    )
+with alan_sag:
+    nakliye = hizli_secim_alani(
+        "Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", "")
     )
 
-# Sık kullanılan seçimler: değerler tıklanınca buton listesi olarak açılır.
-firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
-musteri = secim_alani("Müşteri", f"musteri_{fv}", listeler["musteri"], taslak.get("musteri", ""))
-santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
-sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
-
-fabrika = hizli_secim_alani(
-    "Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", "")
-)
-nakliye = hizli_secim_alani(
-    "Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", "")
-)
-arac = hizli_secim_alani(
-    "Araç", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )"
-)
+alan_sol, alan_sag = st.columns(2)
+with alan_sol:
+    arac = hizli_secim_alani(
+        "Araç", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )"
+    )
+with alan_sag:
+    # Giriş yapan sipariş veren yalnızca kendi adına sipariş oluşturabilir.
+    if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
+        siparis_veren = st.text_input(
+            "Sipariş Veren", value=str(yetki_deger), disabled=True,
+            key=f"veren_kilit_{fv}", placeholder="Sipariş Veren",
+            label_visibility="collapsed"
+        ).strip()
+    else:
+        siparis_veren = hizli_secim_alani(
+            "Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"],
+            taslak.get("siparis_veren", "")
+        )
 
 # Ürün / Birim / miktar girişi ve alt kalem listesi
 st.markdown('<div class="urun-giris-karti">', unsafe_allow_html=True)
