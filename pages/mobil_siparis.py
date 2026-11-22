@@ -95,7 +95,7 @@ components.html(
     width=0
 )
 
-# mobil_izleme_3.py sipariş onay inceleme ekranı düzenine uyarlanmış CSS[cite: 6]
+# mobil_izleme_3.py sipariş onay inceleme ekranı iskeleti + giriş/alt bar stilleri[cite: 6]
 st.markdown("""
 <style>
 *, *::before, *::after {
@@ -120,30 +120,20 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
+.stApp, [data-testid="stAppViewContainer"] {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
-    overflow-x: hidden !important;
-    max-width: 100% !important;
-    width: 100% !important;
 }
 .block-container {
     padding-top: 0.45rem !important;
     padding-bottom: 4.8rem !important;
-    padding-left: 0.65rem !important;
-    padding-right: 0.65rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
     max-width: 540px !important;
-    width: 100% !important;
     margin: 0 auto !important;
 }
 [data-testid="stVerticalBlock"] {
     gap: 0.35rem !important;
-    width: 100% !important;
-    max-width: 100% !important;
-}
-[data-testid="element-container"] {
-    width: 100% !important;
-    max-width: 100% !important;
 }
 .auto-toast-banner {
     background-color: #dcfce7;
@@ -166,7 +156,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-left: 5px solid #f97316;
     border-radius: 10px;
-    padding: 8px 12px;
+    padding: 9px 12px;
     margin-bottom: 4px;
     color: #f8fafc;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
@@ -180,16 +170,17 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14.5px;
+    font-size: 15px;
     font-weight: 700;
     margin: 0;
     color: #ffffff;
+    letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .header-logo {
-    height: 24px;
+    height: 26px;
     width: auto;
     object-fit: contain;
     border-radius: 4px;
@@ -209,14 +200,14 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 8px;
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
 }
 .icon-btn:active {
@@ -230,7 +221,7 @@ div[data-testid="stForm"] {
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
 
-/* İnceleme kartı yapısı (mobil_izleme_3.py ile uyumlu)[cite: 6] */
+/* mobil_izleme_3.py Tam Ekran İnceleme Kartı İskeleti[cite: 6] */
 .fullscreen-review-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -277,14 +268,14 @@ a.close-review-link:active {
     background-color: #e2e8f0;
 }
 
-/* 2 sütunlu alan satırları taşmadan yan yana durur */
+/* Grid içindeki sütunları mobilde 2'li yan yana koru */
 div[data-testid="stHorizontalBlock"]:has(.grid-satir-isaret) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 6px 8px !important;
+    gap: 5px 8px !important;
     width: 100% !important;
-    margin: 0 !important;
+    margin: 0 0 4px 0 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.grid-satir-isaret) > div[data-testid="column"] {
     flex: 1 1 50% !important;
@@ -294,7 +285,7 @@ div[data-testid="stHorizontalBlock"]:has(.grid-satir-isaret) > div[data-testid="
     padding: 0 !important;
 }
 
-/* Ürün giriş satırı: Ürün | Birim | Adet/Tonaj | + */
+/* Ürün satırı: Ürün | Birim | Adet/Tonaj | + */
 div[data-testid="stHorizontalBlock"]:has(.urun-satir-isaret) {
     display: flex !important;
     flex-direction: row !important;
@@ -323,10 +314,10 @@ div[data-testid="stHorizontalBlock"]:has(.urun-satir-isaret) > div[data-testid="
     padding: 0 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.urun-satir-isaret) > div[data-testid="column"]:nth-child(4) {
-    flex: 0 0 36px !important;
-    width: 36px !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
     padding: 0 !important;
 }
 
@@ -334,11 +325,11 @@ div[data-testid="stTextInput"] input,
 div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
     background-color: #f8fafc !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 7px !important;
     color: #0f172a !important;
-    min-height: 35px !important;
-    height: 35px !important;
+    min-height: 34px !important;
+    height: 34px !important;
     font-size: 12px !important;
     font-weight: 600 !important;
     width: 100% !important;
@@ -351,8 +342,8 @@ div[data-testid="stTextInput"] input:disabled {
     opacity: 1 !important;
 }
 div[data-testid="stButton"] button {
-    min-height: 35px !important;
-    height: 35px !important;
+    min-height: 34px !important;
+    height: 34px !important;
     padding: 0 7px !important;
     font-size: 12px !important;
     font-weight: 700 !important;
@@ -360,13 +351,13 @@ div[data-testid="stButton"] button {
     width: 100% !important;
     max-width: 100% !important;
 }
-.secim-buton-panel {
+.secim-buton-kutu {
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     border-left: 3px solid #f97316;
     border-radius: 8px;
     padding: 6px;
-    margin: 4px 0 6px 0;
+    margin: 2px 0 6px 0;
 }
 
 /* Eklenen ürün tablosu (mobil_izleme_3.py .urun-table ile aynı)[cite: 6] */
@@ -411,25 +402,25 @@ div[data-testid="stButton"] button {
     margin-top: 6px;
 }
 
-/* En altta sabit alt bar: KAYDET | TEMİZLE | KAPAT */
-.sticky-bottom-bar {
+/* mobil_izleme_3.py .onay-aksiyon-bar karşılığı sabit alt bar[cite: 6] */
+.onay-aksiyon-bar {
     position: fixed !important;
     bottom: 0 !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 100% !important;
     max-width: 540px !important;
-    padding: 7px 0.65rem 9px 0.65rem !important;
-    background: linear-gradient(180deg, rgba(241,245,249,0.9) 0%, #f1f5f9 30%) !important;
-    backdrop-filter: blur(4px);
-    border-top: 1px solid #cbd5e1;
+    padding: 8px 0.75rem 10px 0.75rem !important;
+    background-color: #ffffff !important;
+    border-top: 1px solid #cbd5e1 !important;
     z-index: 9999 !important;
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.08) !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.alt-bar-isaret) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 7px !important;
+    gap: 8px !important;
     width: 100% !important;
     margin: 0 !important;
 }
@@ -439,14 +430,15 @@ div[data-testid="stHorizontalBlock"]:has(.alt-bar-isaret) > div[data-testid="col
     min-width: 0 !important;
     padding: 0 !important;
 }
-.sticky-bottom-bar button {
-    height: 40px !important;
-    min-height: 40px !important;
+.onay-aksiyon-bar button {
+    height: 42px !important;
+    min-height: 42px !important;
+    border-radius: 9px !important;
     font-size: 12.5px !important;
     font-weight: 800 !important;
-    border-radius: 9px !important;
+    letter-spacing: 0.3px !important;
 }
-.sticky-bottom-bar button[kind="primary"] {
+.onay-aksiyon-bar button[kind="primary"] {
     background-color: #16a34a !important;
     border: 1px solid #15803d !important;
     color: #ffffff !important;
@@ -527,7 +519,7 @@ def check_password():
         st.markdown(
             f'<div class="header-banner"><div class="header-info">'
             f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
-            f'<div class="header-sub">Yeni Sipariş Girişi</div>'
+            f'<div class="header-sub">Yeni Sipariş Giriş Sistemi</div>'
             f'</div></div>',
             unsafe_allow_html=True
         )
@@ -568,7 +560,7 @@ def check_password():
                     st.session_state.active_token = ""
                 st.rerun()
             else:
-                st.error("Hatalı şifre veya yetkisiz giriş!")
+                st.error("Hatalı erişim şifresi!")
         st.stop()
 
 
@@ -912,7 +904,7 @@ def buton_secim_kutu(kutu_ici_ad: str, alan_key: str, secenekler: list):
         st.rerun()
 
     if acik:
-        st.markdown('<div class="secim-buton-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="secim-buton-kutu">', unsafe_allow_html=True)
         for i, sec in enumerate(secenekler):
             if st.button(sec, key=f"sec_{alan_key}_{fv}_{i}", use_container_width=True):
                 fd[alan_key] = sec
@@ -934,7 +926,7 @@ def buton_secim_kutu(kutu_ici_ad: str, alan_key: str, secenekler: list):
 
 
 # ==============================================================================
-# YENİ SİPARİŞ EKRANI (mobil_izleme_3.py ONAY İNCELEME KARTI DÜZENİ)[cite: 6]
+# YENİ SİPARİŞ EKRANI (mobil_izleme_3.py ONAY İNCELEME KARTI İSKELETİ)[cite: 6]
 # ==============================================================================
 st.markdown(
     f'<div class="fullscreen-review-card">'
@@ -1087,7 +1079,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ==============================================================================
 # SABİT ALT BAR: KAYDET | TEMİZLE | KAPAT
 # ==============================================================================
-st.markdown('<div class="sticky-bottom-bar"><div class="alt-bar-isaret"></div>', unsafe_allow_html=True)
+st.markdown('<div class="onay-aksiyon-bar"><div class="alt-bar-isaret"></div>', unsafe_allow_html=True)
 b1, b2, b3 = st.columns(3)
 with b1:
     kaydet_tiklandi = st.button("KAYDET", type="primary", key=f"b_kaydet_{fv}", use_container_width=True)
