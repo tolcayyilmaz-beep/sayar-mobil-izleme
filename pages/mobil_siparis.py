@@ -1,5 +1,4 @@
 import os
-import io
 import re
 import json
 import time
@@ -7,16 +6,12 @@ import hmac
 import html
 import base64
 import hashlib
-import sqlite3
-import tempfile
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import requests
-import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime, date
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 # Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
 if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
@@ -25,7 +20,6 @@ if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secret
         f.write(os.environ["STREAMLIT_SECRETS"])
 
 NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
-NEW_ORDER_QUEUE_FILE = "mobil_yeni_siparisler.json"
 
 
 @st.cache_data(show_spinner=False)
@@ -300,7 +294,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
 }
-/* Gerçek sipariş kartı: mobil_izleme.py .fullscreen-review-card ölçüleri */
 .st-key-siparis-form-card {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
@@ -367,7 +360,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     border-radius: 6px !important;
     min-height: 40px !important;
 }
-/* mobil_izleme.py: fullscreen-review-card / info-grid renkleri */
 div[data-testid="stHorizontalBlock"] {
     gap: 8px !important;
 }
@@ -419,7 +411,6 @@ button[kind="primary"] {
 button[kind="primary"]:hover {
     background-color: #ea580c !important;
 }
-/* Ekranın en altına sabitlenen gönder butonu */
 div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
@@ -459,17 +450,12 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
 .eklenen-urun-miktar {
     font-size: 11.5px;
     font-weight: 800;
-    color: #1e3a8a;
-    background-color: #eff6ff;
-    padding: 2px 7px;
-    border-radius: 5px;
-    white-space: nowrap;
-    margin-left: 0;
-    flex-shrink: 0;
-    text-align: center;
-    background: transparent;
     color: #0f172a;
     padding: 2px 0;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-align: center;
 }
 .bos-liste-kutusu {
     background-color: #f8fafc;
@@ -482,7 +468,6 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     font-weight: 600;
     width: 100%;
 }
-
 .urun-giris-karti {
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -490,32 +475,75 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     padding: 7px;
     margin-top: 5px;
 }
-div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 100% !important;
-    max-width: 540px !important;
-    padding: 7px 0.55rem 9px 0.55rem !important;
-    background: linear-gradient(180deg, rgba(241,245,249,0.88) 0%, #f1f5f9 30%) !important;
-    backdrop-filter: blur(4px);
-    z-index: 9999 !important;
-    margin: 0 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 
+def get_database_url() -> str:
+    try:
+        if "DATABASE_URL" in st.secrets and str(st.secrets["DATABASE_URL"]).strip():
+            return str(st.secrets["DATABASE_URL"]).strip()
+    except Exception:
+        pass
+    env_url = os.environ.get("DATABASE_URL", "").strip()
+    if env_url:
+        return env_url
+    raise RuntimeError("DATABASE_URL tanımlı değil. Lütfen secrets.toml veya ortam değişkenini kontrol edin.")
+
+
+def get_pg_connection():
+    return psycopg2.connect(get_database_url(), cursor_factory=RealDictCursor)
+
+
 @st.cache_resource(show_spinner=False)
-def get_gdrive_service():
-    sa_info = dict(st.secrets["GDRIVE_SERVICE_ACCOUNT"])
-    creds = service_account.Credentials.from_service_account_info(
-        sa_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
-    )
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
+def postgres_tablolarini_hazirla():
+    conn = get_pg_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS tanimlar (
+                        id SERIAL PRIMARY KEY,
+                        kategori VARCHAR(100) NOT NULL,
+                        deger VARCHAR(255) NOT NULL,
+                        firma VARCHAR(255),
+                        aktif INTEGER DEFAULT 1
+                    );
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS siparisler (
+                        siparis_no SERIAL PRIMARY KEY,
+                        mobil_kayit_id VARCHAR(100),
+                        kayit_zamani TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        tarih DATE NOT NULL,
+                        sevk_tarihi DATE,
+                        firma VARCHAR(255),
+                        musteri VARCHAR(255),
+                        santiye VARCHAR(255),
+                        sehir VARCHAR(100),
+                        arac VARCHAR(100),
+                        fabrika VARCHAR(255),
+                        nakliye VARCHAR(255),
+                        siparis_veren VARCHAR(255),
+                        durum VARCHAR(50) DEFAULT 'BEKLEMEDE',
+                        operasyon VARCHAR(50) DEFAULT 'ONAY BEKLİYOR'
+                    );
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS siparis_kalemleri (
+                        id SERIAL PRIMARY KEY,
+                        siparis_no INTEGER NOT NULL REFERENCES siparisler(siparis_no) ON DELETE CASCADE,
+                        urun VARCHAR(255) NOT NULL,
+                        miktar VARCHAR(100) NOT NULL,
+                        birim VARCHAR(50) NOT NULL
+                    );
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_tanimlar_kategori ON tanimlar(kategori);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_siparisler_tarih ON siparisler(tarih DESC);")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_kalemler_siparis_no ON siparis_kalemleri(siparis_no);")
+    finally:
+        conn.close()
+    return True
 
 
 def _imza_anahtari():
@@ -627,8 +655,13 @@ def check_password():
 
 check_password()
 
+try:
+    postgres_tablolarini_hazirla()
+except Exception as db_err:
+    st.error(f"PostgreSQL bağlantı hatası: {db_err}")
+    st.stop()
 
-# PYTSAYAR.PY tanimlar ve siparisler tablolarından seçim listelerini çek (60 sn önbellekli)
+
 @st.cache_data(ttl=60, show_spinner=False)
 def secim_listelerini_getir():
     varsayilan = {
@@ -644,54 +677,38 @@ def secim_listelerini_getir():
         "birim": ["ADET", "TON", "KG", "M2", "M3", "MT", "TORBA", "PALET", "PAKET"]
     }
     try:
-        file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
-        if not file_id:
-            return varsayilan
-
-        service = get_gdrive_service()
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-
-        db_bytes = fh.getvalue()
-        if not db_bytes:
-            return varsayilan
-
-        tmp_path = None
+        conn = get_pg_connection()
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_file:
-                tmp_file.write(db_bytes)
-                tmp_path = tmp_file.name
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM tanimlar WHERE COALESCE(aktif, 1) = 1")
+                tanim_rows = cur.fetchall()
 
-            conn = sqlite3.connect(tmp_path, check_same_thread=False)
-            try:
-                df_tanim = pd.read_sql_query("SELECT * FROM tanimlar", conn)
-                df_sip = pd.read_sql_query("SELECT * FROM siparisler ORDER BY siparis_no DESC LIMIT 1000", conn)
-            finally:
-                conn.close()
+                cur.execute("""
+                    SELECT firma, musteri, santiye, sehir, arac, fabrika, nakliye, siparis_veren
+                    FROM siparisler
+                    ORDER BY siparis_no DESC
+                    LIMIT 1000
+                """)
+                sip_rows = cur.fetchall()
         finally:
-            if tmp_path and os.path.exists(tmp_path):
-                os.remove(tmp_path)
+            conn.close()
 
         def tanim_listesi(kat):
-            if df_tanim.empty or "kategori" not in df_tanim.columns:
-                return []
-            sub = df_tanim[df_tanim["kategori"] == kat]
-            if "aktif" in sub.columns:
-                sub = sub[sub["aktif"].fillna(1) == 1]
-            vals = sub["deger"].dropna().astype(str).str.strip()
-            vals = vals[(vals != "") & (vals != "-")]
-            return sorted(vals.unique().tolist())
+            vals = []
+            for r in tanim_rows:
+                if str(r.get("kategori") or "").strip() == kat:
+                    v = str(r.get("deger") or "").strip()
+                    if v and v != "-":
+                        vals.append(v)
+            return sorted(set(vals))
 
         def siparis_gecmis_listesi(col):
-            if df_sip.empty or col not in df_sip.columns:
-                return []
-            vals = df_sip[col].dropna().astype(str).str.strip()
-            vals = vals[(vals != "") & (vals != "-") & (vals.str.lower() != "none") & (vals.str.lower() != "nan")]
-            return sorted(vals.unique().tolist())
+            vals = []
+            for r in sip_rows:
+                v = str(r.get(col) or "").strip()
+                if v and v != "-" and v.lower() not in ("none", "nan"):
+                    vals.append(v)
+            return sorted(set(vals))
 
         varsayilan["firma"] = tanim_listesi("FİRMA") or siparis_gecmis_listesi("firma")
         varsayilan["arac"] = tanim_listesi("ARAÇ") or siparis_gecmis_listesi("arac")
@@ -699,25 +716,22 @@ def secim_listelerini_getir():
         varsayilan["nakliye"] = tanim_listesi("NAKLİYE") or siparis_gecmis_listesi("nakliye")
         varsayilan["siparis_veren"] = tanim_listesi("SİPARİŞ VEREN") or siparis_gecmis_listesi("siparis_veren")
 
-        varsayilan["musteri"] = sorted(list(set(tanim_listesi("MÜŞTERİ") + siparis_gecmis_listesi("musteri"))))
-        varsayilan["santiye"] = sorted(list(set(tanim_listesi("ŞANTİYE") + siparis_gecmis_listesi("santiye"))))
-        varsayilan["sehir"] = sorted(list(set(tanim_listesi("ŞEHİR") + siparis_gecmis_listesi("sehir"))))
+        varsayilan["musteri"] = sorted(set(tanim_listesi("MÜŞTERİ") + siparis_gecmis_listesi("musteri")))
+        varsayilan["santiye"] = sorted(set(tanim_listesi("ŞANTİYE") + siparis_gecmis_listesi("santiye")))
+        varsayilan["sehir"] = sorted(set(tanim_listesi("ŞEHİR") + siparis_gecmis_listesi("sehir")))
 
         t_birim = tanim_listesi("BİRİM")
         if t_birim:
             varsayilan["birim"] = t_birim
 
-        if not df_tanim.empty and "kategori" in df_tanim.columns:
-            u_sub = df_tanim[df_tanim["kategori"] == "ÜRÜN"]
-            if "aktif" in u_sub.columns:
-                u_sub = u_sub[u_sub["aktif"].fillna(1) == 1]
-            urun_list = []
-            for _, r in u_sub.iterrows():
+        urun_list = []
+        for r in tanim_rows:
+            if str(r.get("kategori") or "").strip() == "ÜRÜN":
                 ad = str(r.get("deger") or "").strip()
-                frm = str(r.get("firma") or "").strip() if "firma" in u_sub.columns else ""
+                frm = str(r.get("firma") or "").strip()
                 if ad:
                     urun_list.append({"deger": ad, "firma": frm})
-            varsayilan["urunler_detay"] = sorted(urun_list, key=lambda x: x["deger"])
+        varsayilan["urunler_detay"] = sorted(urun_list, key=lambda x: x["deger"])
 
     except Exception:
         pass
@@ -725,46 +739,62 @@ def secim_listelerini_getir():
     return varsayilan
 
 
-def yeni_siparis_kuyruguna_yaz(siparis_verisi: dict):
-    """Yeni siparişi Google Drive'daki mobil_yeni_siparisler.json kuyruğuna ekler."""
-    service = get_gdrive_service()
-    folder_id = str(st.secrets["GDRIVE_FOLDER_ID"]).strip()
+def siparisi_postgrese_kaydet(siparis_verisi: dict) -> int:
+    """Yeni siparişi ve kalemlerini doğrudan PostgreSQL'e kaydeder."""
+    conn = get_pg_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO siparisler (
+                        mobil_kayit_id, kayit_zamani, tarih, sevk_tarihi,
+                        firma, musteri, santiye, sehir, arac, fabrika, nakliye,
+                        siparis_veren, durum, operasyon
+                    )
+                    VALUES (
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s
+                    )
+                    RETURNING siparis_no;
+                    """,
+                    (
+                        siparis_verisi["mobil_kayit_id"],
+                        siparis_verisi["kayit_zamani"],
+                        siparis_verisi["tarih"],
+                        siparis_verisi["sevk_tarihi"],
+                        siparis_verisi["firma"],
+                        siparis_verisi["musteri"],
+                        siparis_verisi["santiye"],
+                        siparis_verisi["sehir"],
+                        siparis_verisi["arac"],
+                        siparis_verisi["fabrika"],
+                        siparis_verisi["nakliye"],
+                        siparis_verisi["siparis_veren"],
+                        siparis_verisi["durum"],
+                        siparis_verisi["operasyon"],
+                    )
+                )
+                row = cur.fetchone()
+                siparis_no = int(row["siparis_no"])
 
-    query = f"name='{NEW_ORDER_QUEUE_FILE}' and '{folder_id}' in parents and trashed=false"
-    results = service.files().list(q=query, fields="files(id)").execute()
-    files = results.get("files", [])
-
-    mevcut_kayitlar = []
-    file_id = None
-
-    if files:
-        file_id = files[0]["id"]
-        request = service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-        try:
-            icerik = fh.getvalue().decode("utf-8").strip()
-            if icerik:
-                mevcut_kayitlar = json.loads(icerik)
-        except Exception:
-            mevcut_kayitlar = []
-
-    mevcut_kayitlar.append(siparis_verisi)
-
-    json_bytes = json.dumps(mevcut_kayitlar, ensure_ascii=False, indent=2).encode("utf-8")
-    media = MediaIoBaseUpload(io.BytesIO(json_bytes), mimetype="application/json", resumable=False)
-
-    if file_id:
-        service.files().update(fileId=file_id, media_body=media).execute()
-    else:
-        file_metadata = {
-            "name": NEW_ORDER_QUEUE_FILE,
-            "parents": [folder_id]
-        }
-        service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+                for kalem in siparis_verisi.get("urunler", []):
+                    cur.execute(
+                        """
+                        INSERT INTO siparis_kalemleri (siparis_no, urun, miktar, birim)
+                        VALUES (%s, %s, %s, %s);
+                        """,
+                        (
+                            siparis_no,
+                            str(kalem["urun"]).strip(),
+                            str(kalem["miktar"]).strip(),
+                            str(kalem["birim"]).strip(),
+                        )
+                    )
+        return siparis_no
+    finally:
+        conn.close()
 
 
 def yeni_siparis_ntfy_gonder(sip: dict):
@@ -797,7 +827,6 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
 
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Başlıksız açılır kutu; alan adı kutunun içinde görünür."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -813,7 +842,6 @@ def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
 
 
 def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Tıklanınca kayıtlı değerleri buton olarak açılan hızlı seçim alanı."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -849,20 +877,13 @@ def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str =
 
 
 def miktar_metni_gecerli_mi(deger: str) -> bool:
-    """Pozitif sayılar, '2,5 TON' gibi sayı+birim ve sayılar dışında yalnızca TONAJ / Y.TONAJ kabul eder."""
-    ham = str(deger or "").strip()
-    if not ham:
+    metin = str(deger or "").strip().replace(",", ".")
+    if not metin:
         return False
-
-    # Sayılar dışında sadece TONAJ ve Y.TONAJ kelimelerine izin verilir
-    if ham.upper() in ("TONAJ", "Y.TONAJ"):
-        return True
-
-    metin = ham.replace(",", ".")
     try:
         return float(metin) > 0
     except ValueError:
-        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", ham))
+        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", str(deger).strip()))
 
 
 if st.query_params.get("action") == "refresh":
@@ -870,7 +891,6 @@ if st.query_params.get("action") == "refresh":
     st.query_params.pop("action", None)
     st.rerun()
 
-# Oturum alanları
 for alan, varsayilan in {
     "eklenen_urunler": [],
     "urun_input_versiyon": 0,
@@ -925,7 +945,6 @@ with st.container(key="siparis-form-card"):
     taslak = st.session_state.taslak_bilgi
     bugun = date.today()
 
-    # Tarihler varsayılan bugün; takvimden değiştirilebilir.
     tarih_default = taslak.get("tarih_obj", bugun)
     sevk_default = taslak.get("sevk_tarihi_obj", bugun)
     tarih_col, sevk_col = st.columns(2)
@@ -940,7 +959,6 @@ with st.container(key="siparis-form-card"):
             key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
         )
 
-    # Sipariş bilgileri: örnek ekrandaki gibi ikili satırlar.
     alan_sol, alan_sag = st.columns(2)
     with alan_sol:
         firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
@@ -969,7 +987,6 @@ with st.container(key="siparis-form-card"):
             "Araç", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )"
         )
     with alan_sag:
-        # Giriş yapan sipariş veren yalnızca kendi adına sipariş oluşturabilir.
         if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
             siparis_veren = st.text_input(
                 "Sipariş Veren", value=str(yetki_deger), disabled=True,
@@ -982,7 +999,6 @@ with st.container(key="siparis-form-card"):
                 taslak.get("siparis_veren", "")
             )
 
-    # Ürün / Birim / miktar girişi ve alt kalem listesi
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
         u["deger"] for u in listeler["urunler_detay"]
@@ -991,7 +1007,6 @@ with st.container(key="siparis-form-card"):
     urun_secimi = secim_alani("Ürün", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
     urun_col, birim_col, miktar_col, ekle_col = st.columns([4, 2, 3, 1])
     with urun_col:
-        # Serbest yazım seçimi varsa önceliklidir; aksi halde listeden seçilen ürün kullanılır.
         urun_serbest = st.text_input(
             "Ürün", key=f"urun_serbest_{fv}_{uv}",
             placeholder="Ürün", label_visibility="collapsed"
@@ -1015,7 +1030,7 @@ with st.container(key="siparis-form-card"):
         if not u_ad:
             st.warning("Lütfen ürün seçin veya yazın.")
         elif not miktar_metni_gecerli_mi(u_miktar):
-            st.warning("Lütfen geçerli bir adet veya tonaj (TONAJ / Y.TONAJ) giriniz.")
+            st.warning("Lütfen geçerli bir adet veya tonaj giriniz.")
         else:
             st.session_state.eklenen_urunler.append({
                 "urun": u_ad, "miktar": u_miktar, "birim": u_birim
@@ -1051,7 +1066,6 @@ with st.container(key="siparis-form-card"):
             unsafe_allow_html=True
         )
 
-# Sabit alt işlem çubuğu
 st.markdown('<div class="sticky-gonder-isaret"></div>', unsafe_allow_html=True)
 alt_kaydet, alt_temizle, alt_kapat = st.columns(3)
 with alt_kaydet:
@@ -1105,15 +1119,15 @@ if kaydet_tiklandi:
             "urunler": list(st.session_state.eklenen_urunler)
         }
         try:
-            with st.spinner("Sipariş kaydediliyor..."):
-                yeni_siparis_kuyruguna_yaz(yeni_siparis_paketi)
+            with st.spinner("PostgreSQL'e kaydediliyor..."):
+                kayit_no = siparisi_postgrese_kaydet(yeni_siparis_paketi)
                 yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
             secim_listelerini_getir.clear()
             st.session_state.eklenen_urunler = []
             st.session_state.urun_input_versiyon = 0
             st.session_state.taslak_bilgi = {}
             st.session_state.form_versiyon += 1
-            st.session_state.flash_mesaj = f"{musteri} ({santiye}) siparişi kaydedildi!"
+            st.session_state.flash_mesaj = f"#{kayit_no} | {musteri} ({santiye}) siparişi kaydedildi!"
             st.rerun()
         except Exception as err:
-            st.error(f"Sipariş Google Drive kuyruğuna yazılamadı: {err}")
+            st.error(f"Sipariş PostgreSQL'e yazılamadı: {err}")
