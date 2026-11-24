@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import json
 import time
 import hmac
@@ -795,7 +796,6 @@ def yeni_siparis_ntfy_gonder(sip: dict):
         pass
 
 
-
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
     """Başlıksız açılır kutu; alan adı kutunun içinde görünür."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
@@ -849,15 +849,20 @@ def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str =
 
 
 def miktar_metni_gecerli_mi(deger: str) -> bool:
-    """Miktar alanı adet yanında 2,5 ton / 12.5 gibi manuel değerleri kabul eder."""
-    metin = str(deger or "").strip().replace(",", ".")
-    if not metin:
+    """Pozitif sayılar, '2,5 TON' gibi sayı+birim ve sayılar dışında yalnızca TONAJ / Y.TONAJ kabul eder."""
+    ham = str(deger or "").strip()
+    if not ham:
         return False
+
+    # Sayılar dışında sadece TONAJ ve Y.TONAJ kelimelerine izin verilir
+    if ham.upper() in ("TONAJ", "Y.TONAJ"):
+        return True
+
+    metin = ham.replace(",", ".")
     try:
         return float(metin) > 0
     except ValueError:
-        # "2,5 TON", "1200 KG" gibi tonaj/metinli girişlere izin ver.
-        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", str(deger).strip()))
+        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", ham))
 
 
 if st.query_params.get("action") == "refresh":
@@ -1010,7 +1015,7 @@ with st.container(key="siparis-form-card"):
         if not u_ad:
             st.warning("Lütfen ürün seçin veya yazın.")
         elif not miktar_metni_gecerli_mi(u_miktar):
-            st.warning("Lütfen geçerli bir adet veya tonaj giriniz.")
+            st.warning("Lütfen geçerli bir adet veya tonaj (TONAJ / Y.TONAJ) giriniz.")
         else:
             st.session_state.eklenen_urunler.append({
                 "urun": u_ad, "miktar": u_miktar, "birim": u_birim
