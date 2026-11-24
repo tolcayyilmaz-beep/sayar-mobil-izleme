@@ -6,20 +6,21 @@ import hmac
 import html
 import base64
 import hashlib
+import requests
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import requests
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime, date
 
-# Railway ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
+# Ortam değişkeninden secrets.toml dosyasını sadece yoksa oluştur
 if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secrets.toml"):
     os.makedirs(".streamlit", exist_ok=True)
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
-NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
+NTFY_TOPIC = "sayar_yapi_siparis_20263"
+RAILWAY_DEFAULT_DB_URL = "postgresql://postgres:vRnqPZifPAhgHJkVconMThDtIillFNFN@trolley.proxy.rlwy.net:41607/railway"
 
 
 @st.cache_data(show_spinner=False)
@@ -142,7 +143,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     width: 100% !important;
     max-width: 100% !important;
 }
-/* 2'li Miktar + Birim satırı mobilde taşmadan yan yana durur */
 div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) {
     display: flex !important;
     flex-direction: row !important;
@@ -159,7 +159,6 @@ div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) > div[data-testid="c
     max-width: 50% !important;
     padding: 0 !important;
 }
-/* Üst Özet Kart + Düzenle Butonu satırı */
 div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) {
     display: flex !important;
     flex-direction: row !important;
@@ -206,11 +205,9 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     align-items: center;
     gap: 7px;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
     color: #172033;
-    font-size: 14px;
-    font-weight: 800;
     letter-spacing: 0.2px;
     white-space: nowrap;
     overflow: hidden;
@@ -252,33 +249,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
 }
 .icon-btn:active {
     background-color: #f97316;
-}
-.ozet-kart {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-left: 4px solid #0284c7;
-    border-radius: 8px;
-    padding: 7px 10px;
-    width: 100%;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-}
-.ozet-ust {
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ozet-alt {
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 .auto-toast-banner {
     background-color: #dcfce7;
@@ -324,13 +294,6 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     font-size: 10px !important;
     color: #64748b !important;
 }
-.st-key-siparis-form-card .urun-giris-karti {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    padding: 8px !important;
-    margin-top: 7px !important;
-}
 .st-key-siparis-form-card .siparis-kalem-baslik {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 74px 72px;
@@ -354,11 +317,18 @@ div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="
     flex-shrink: 0;
 }
 .eklenen-urun-satir {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 74px 72px;
+    gap: 6px;
+    align-items: center;
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
     border-left: 3px solid #f97316 !important;
     border-radius: 6px !important;
+    padding: 7px 10px;
     min-height: 40px !important;
+    width: 100%;
+    overflow: hidden;
 }
 div[data-testid="stHorizontalBlock"] {
     gap: 8px !important;
@@ -424,20 +394,6 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     z-index: 9999 !important;
     margin: 0 !important;
 }
-.eklenen-urun-satir {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 74px 72px;
-    gap: 6px;
-    align-items: center;
-    background-color: #f8fafc;
-    border: 1px solid #dbe2ea;
-    border-left: 3px solid #0284c7;
-    border-radius: 8px;
-    padding: 7px 10px;
-    min-height: 37px;
-    width: 100%;
-    overflow: hidden;
-}
 .eklenen-urun-ad {
     font-size: 12.5px;
     font-weight: 700;
@@ -468,82 +424,34 @@ div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testi
     font-weight: 600;
     width: 100%;
 }
-.urun-giris-karti {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 7px;
-    margin-top: 5px;
-}
 </style>
 """, unsafe_allow_html=True)
 
 
-def get_database_url() -> str:
-    try:
-        if "DATABASE_URL" in st.secrets and str(st.secrets["DATABASE_URL"]).strip():
-            return str(st.secrets["DATABASE_URL"]).strip()
-    except Exception:
-        pass
+def get_postgres_url() -> str:
+    """Railway PostgreSQL bağlantı adresini döndürür."""
     env_url = os.environ.get("DATABASE_URL", "").strip()
     if env_url:
-        return env_url
-    raise RuntimeError("DATABASE_URL tanımlı değil. Lütfen secrets.toml veya ortam değişkenini kontrol edin.")
+        return env_url.replace("postgres://", "postgresql://", 1)
+
+    try:
+        for secret_key in ("DATABASE_URL", "POSTGRES_URL", "RAILWAY_DB_URL"):
+            if secret_key in st.secrets and str(st.secrets[secret_key]).strip():
+                return str(st.secrets[secret_key]).strip().replace("postgres://", "postgresql://", 1)
+    except Exception:
+        pass
+
+    return RAILWAY_DEFAULT_DB_URL
 
 
 def get_pg_connection():
-    return psycopg2.connect(get_database_url(), cursor_factory=RealDictCursor)
-
-
-@st.cache_resource(show_spinner=False)
-def postgres_tablolarini_hazirla():
-    conn = get_pg_connection()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS tanimlar (
-                        id SERIAL PRIMARY KEY,
-                        kategori VARCHAR(100) NOT NULL,
-                        deger VARCHAR(255) NOT NULL,
-                        firma VARCHAR(255),
-                        aktif INTEGER DEFAULT 1
-                    );
-                """)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS siparisler (
-                        siparis_no SERIAL PRIMARY KEY,
-                        mobil_kayit_id VARCHAR(100),
-                        kayit_zamani TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        tarih DATE NOT NULL,
-                        sevk_tarihi DATE,
-                        firma VARCHAR(255),
-                        musteri VARCHAR(255),
-                        santiye VARCHAR(255),
-                        sehir VARCHAR(100),
-                        arac VARCHAR(100),
-                        fabrika VARCHAR(255),
-                        nakliye VARCHAR(255),
-                        siparis_veren VARCHAR(255),
-                        durum VARCHAR(50) DEFAULT 'BEKLEMEDE',
-                        operasyon VARCHAR(50) DEFAULT 'ONAY BEKLİYOR'
-                    );
-                """)
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS siparis_kalemleri (
-                        id SERIAL PRIMARY KEY,
-                        siparis_no INTEGER NOT NULL REFERENCES siparisler(siparis_no) ON DELETE CASCADE,
-                        urun VARCHAR(255) NOT NULL,
-                        miktar VARCHAR(100) NOT NULL,
-                        birim VARCHAR(50) NOT NULL
-                    );
-                """)
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_tanimlar_kategori ON tanimlar(kategori);")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_siparisler_tarih ON siparisler(tarih DESC);")
-                cur.execute("CREATE INDEX IF NOT EXISTS idx_kalemler_siparis_no ON siparis_kalemleri(siparis_no);")
-    finally:
-        conn.close()
-    return True
+    """Yeni bir PostgreSQL bağlantısı açar."""
+    url = get_postgres_url()
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    conn = psycopg2.connect(url, connect_timeout=10)
+    conn.autocommit = False
+    return conn
 
 
 def _imza_anahtari():
@@ -655,15 +563,10 @@ def check_password():
 
 check_password()
 
-try:
-    postgres_tablolarini_hazirla()
-except Exception as db_err:
-    st.error(f"PostgreSQL bağlantı hatası: {db_err}")
-    st.stop()
-
 
 @st.cache_data(ttl=60, show_spinner=False)
 def secim_listelerini_getir():
+    """PostgreSQL tanimlar ve siparisler tablolarından seçim listelerini çeker (60 sn önbellekli)."""
     varsayilan = {
         "firma": [],
         "musteri": [],
@@ -676,39 +579,47 @@ def secim_listelerini_getir():
         "urunler_detay": [],
         "birim": ["ADET", "TON", "KG", "M2", "M3", "MT", "TORBA", "PALET", "PAKET"]
     }
+    conn = None
     try:
         conn = get_pg_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM tanimlar WHERE COALESCE(aktif, 1) = 1")
-                tanim_rows = cur.fetchall()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT kategori, deger, COALESCE(aktif, 1) AS aktif, COALESCE(firma, '') AS firma FROM tanimlar")
+            tanim_rows = cur.fetchall()
 
-                cur.execute("""
-                    SELECT firma, musteri, santiye, sehir, arac, fabrika, nakliye, siparis_veren
-                    FROM siparisler
-                    ORDER BY siparis_no DESC
-                    LIMIT 1000
-                """)
-                sip_rows = cur.fetchall()
-        finally:
-            conn.close()
+            cur.execute(
+                """
+                SELECT DISTINCT
+                    TRIM(musteri) AS musteri,
+                    TRIM(santiye) AS santiye,
+                    TRIM(sehir) AS sehir,
+                    TRIM(firma) AS firma,
+                    TRIM(arac) AS arac,
+                    TRIM(fabrika) AS fabrika,
+                    TRIM(nakliye) AS nakliye,
+                    TRIM(siparis_veren) AS siparis_veren
+                FROM siparisler
+                ORDER BY musteri ASC
+                LIMIT 1000
+                """
+            )
+            sip_rows = cur.fetchall()
 
         def tanim_listesi(kat):
-            vals = []
+            vals = set()
             for r in tanim_rows:
-                if str(r.get("kategori") or "").strip() == kat:
-                    v = str(r.get("deger") or "").strip()
-                    if v and v != "-":
-                        vals.append(v)
-            return sorted(set(vals))
+                if r.get("kategori") == kat and int(r.get("aktif") if r.get("aktif") is not None else 1) == 1:
+                    d = str(r.get("deger") or "").strip()
+                    if d and d != "-":
+                        vals.add(d)
+            return sorted(vals)
 
         def siparis_gecmis_listesi(col):
-            vals = []
+            vals = set()
             for r in sip_rows:
-                v = str(r.get(col) or "").strip()
-                if v and v != "-" and v.lower() not in ("none", "nan"):
-                    vals.append(v)
-            return sorted(set(vals))
+                d = str(r.get(col) or "").strip()
+                if d and d != "-" and d.lower() not in ("none", "nan"):
+                    vals.add(d)
+            return sorted(vals)
 
         varsayilan["firma"] = tanim_listesi("FİRMA") or siparis_gecmis_listesi("firma")
         varsayilan["arac"] = tanim_listesi("ARAÇ") or siparis_gecmis_listesi("arac")
@@ -726,7 +637,7 @@ def secim_listelerini_getir():
 
         urun_list = []
         for r in tanim_rows:
-            if str(r.get("kategori") or "").strip() == "ÜRÜN":
+            if r.get("kategori") == "ÜRÜN" and int(r.get("aktif") if r.get("aktif") is not None else 1) == 1:
                 ad = str(r.get("deger") or "").strip()
                 frm = str(r.get("firma") or "").strip()
                 if ad:
@@ -735,66 +646,85 @@ def secim_listelerini_getir():
 
     except Exception:
         pass
+    finally:
+        if conn is not None and not conn.closed:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     return varsayilan
 
 
-def siparisi_postgrese_kaydet(siparis_verisi: dict) -> int:
-    """Yeni siparişi ve kalemlerini doğrudan PostgreSQL'e kaydeder."""
-    conn = get_pg_connection()
+def yeni_siparis_pg_kaydet(siparis_verisi: dict) -> int:
+    """Yeni siparişi ve ürün kalemlerini doğrudan PostgreSQL'e kaydeder; oluşan siparis_no değerini döndürür."""
+    conn = None
     try:
-        with conn:
-            with conn.cursor() as cur:
+        conn = get_pg_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO siparisler (
+                    tarih, firma, musteri, santiye, sehir, telefon, yetkili, arac, fabrika,
+                    nakliye, notlar, sevk_tarihi, ted_sip_no, plaka, nakliye_fatura,
+                    siparis_veren, firma_yetkili, siparis_gecen, durum, operasyon
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING siparis_no
+                """,
+                (
+                    siparis_verisi.get("tarih", ""),
+                    siparis_verisi.get("firma", ""),
+                    siparis_verisi.get("musteri", ""),
+                    siparis_verisi.get("santiye", ""),
+                    siparis_verisi.get("sehir", "İSTANBUL"),
+                    siparis_verisi.get("telefon", ""),
+                    siparis_verisi.get("yetkili", ""),
+                    siparis_verisi.get("arac", ""),
+                    siparis_verisi.get("fabrika", ""),
+                    siparis_verisi.get("nakliye", ""),
+                    siparis_verisi.get("notlar", ""),
+                    siparis_verisi.get("sevk_tarihi", ""),
+                    siparis_verisi.get("ted_sip_no", ""),
+                    siparis_verisi.get("plaka", ""),
+                    siparis_verisi.get("nakliye_fatura", ""),
+                    siparis_verisi.get("siparis_veren", ""),
+                    siparis_verisi.get("firma_yetkili", ""),
+                    siparis_verisi.get("siparis_gecen", ""),
+                    siparis_verisi.get("durum", "Beklemede"),
+                    siparis_verisi.get("operasyon", "ONAY BEKLİYOR"),
+                )
+            )
+            yeni_siparis_no = int(cur.fetchone()[0])
+
+            for kalem in siparis_verisi.get("urunler", []):
                 cur.execute(
                     """
-                    INSERT INTO siparisler (
-                        mobil_kayit_id, kayit_zamani, tarih, sevk_tarihi,
-                        firma, musteri, santiye, sehir, arac, fabrika, nakliye,
-                        siparis_veren, durum, operasyon
-                    )
-                    VALUES (
-                        %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s
-                    )
-                    RETURNING siparis_no;
+                    INSERT INTO siparis_kalemleri (siparis_no, urun, birim, miktar)
+                    VALUES (%s, %s, %s, %s)
                     """,
                     (
-                        siparis_verisi["mobil_kayit_id"],
-                        siparis_verisi["kayit_zamani"],
-                        siparis_verisi["tarih"],
-                        siparis_verisi["sevk_tarihi"],
-                        siparis_verisi["firma"],
-                        siparis_verisi["musteri"],
-                        siparis_verisi["santiye"],
-                        siparis_verisi["sehir"],
-                        siparis_verisi["arac"],
-                        siparis_verisi["fabrika"],
-                        siparis_verisi["nakliye"],
-                        siparis_verisi["siparis_veren"],
-                        siparis_verisi["durum"],
-                        siparis_verisi["operasyon"],
+                        yeni_siparis_no,
+                        str(kalem.get("urun") or "").strip(),
+                        str(kalem.get("birim") or "").strip(),
+                        str(kalem.get("miktar") or "").strip(),
                     )
                 )
-                row = cur.fetchone()
-                siparis_no = int(row["siparis_no"])
 
-                for kalem in siparis_verisi.get("urunler", []):
-                    cur.execute(
-                        """
-                        INSERT INTO siparis_kalemleri (siparis_no, urun, miktar, birim)
-                        VALUES (%s, %s, %s, %s);
-                        """,
-                        (
-                            siparis_no,
-                            str(kalem["urun"]).strip(),
-                            str(kalem["miktar"]).strip(),
-                            str(kalem["birim"]).strip(),
-                        )
-                    )
-        return siparis_no
+        conn.commit()
+        return yeni_siparis_no
+    except Exception:
+        if conn is not None and not conn.closed:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        raise
     finally:
-        conn.close()
+        if conn is not None and not conn.closed:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def yeni_siparis_ntfy_gonder(sip: dict):
@@ -803,7 +733,8 @@ def yeni_siparis_ntfy_gonder(sip: dict):
         if len(sip.get("urunler", [])) > 3:
             urun_ozet += f" +{len(sip['urunler']) - 3} kalem"
 
-        baslik = f"Yeni Mobil Siparis - {sip.get('musteri') or '-'}"
+        sip_no_etiket = f" #{sip['siparis_no']}" if sip.get("siparis_no") else ""
+        baslik = f"Yeni Mobil Siparis{sip_no_etiket} - {sip.get('musteri') or '-'}"
         mesaj = "\n".join([
             f"Firma: {sip.get('firma') or '-'}",
             f"Musteri: {sip.get('musteri') or '-'}",
@@ -827,6 +758,7 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
 
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
+    """Başlıksız açılır kutu; alan adı kutunun içinde görünür."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -842,6 +774,7 @@ def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
 
 
 def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
+    """Tıklanınca kayıtlı değerleri buton olarak açılan hızlı seçim alanı."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -877,13 +810,19 @@ def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str =
 
 
 def miktar_metni_gecerli_mi(deger: str) -> bool:
-    metin = str(deger or "").strip().replace(",", ".")
-    if not metin:
+    """Pozitif sayılar, '2,5 TON' gibi sayı+birim ve sayılar dışında yalnızca TONAJ / Y.TONAJ kabul eder."""
+    ham = str(deger or "").strip()
+    if not ham:
         return False
+
+    if ham.upper() in ("TONAJ", "Y.TONAJ"):
+        return True
+
+    metin = ham.replace(",", ".")
     try:
         return float(metin) > 0
     except ValueError:
-        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", str(deger).strip()))
+        return bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*[A-Za-zÇĞİÖŞÜçğıöşü]+", ham))
 
 
 if st.query_params.get("action") == "refresh":
@@ -1030,7 +969,7 @@ with st.container(key="siparis-form-card"):
         if not u_ad:
             st.warning("Lütfen ürün seçin veya yazın.")
         elif not miktar_metni_gecerli_mi(u_miktar):
-            st.warning("Lütfen geçerli bir adet veya tonaj giriniz.")
+            st.warning("Lütfen geçerli bir adet veya tonaj (TONAJ / Y.TONAJ) giriniz.")
         else:
             st.session_state.eklenen_urunler.append({
                 "urun": u_ad, "miktar": u_miktar, "birim": u_birim
@@ -1102,32 +1041,38 @@ if kaydet_tiklandi:
         st.error("Lütfen en az bir ürün kalemi ekleyiniz.")
     else:
         yeni_siparis_paketi = {
-            "mobil_kayit_id": f"MOB-{int(time.time() * 1000)}",
-            "kayit_zamani": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "tarih": siparis_tarihi.strftime("%Y-%m-%d"),
             "sevk_tarihi": sevk_tarihi.strftime("%Y-%m-%d"),
             "firma": firma,
             "musteri": musteri,
             "santiye": santiye,
             "sehir": sehir or "İSTANBUL",
+            "telefon": "",
+            "yetkili": "",
             "arac": arac,
             "fabrika": fabrika,
             "nakliye": nakliye,
+            "notlar": "",
+            "ted_sip_no": "",
+            "plaka": "",
+            "nakliye_fatura": "",
             "siparis_veren": siparis_veren,
-            "durum": "BEKLEMEDE",
+            "firma_yetkili": "",
+            "siparis_gecen": "",
+            "durum": "Beklemede",
             "operasyon": "ONAY BEKLİYOR",
             "urunler": list(st.session_state.eklenen_urunler)
         }
         try:
-            with st.spinner("PostgreSQL'e kaydediliyor..."):
-                kayit_no = siparisi_postgrese_kaydet(yeni_siparis_paketi)
-                yeni_siparis_ntfy_gonder(yeni_siparis_paketi)
+            with st.spinner("PostgreSQL veritabanına kaydediliyor..."):
+                kaydedilen_no = yeni_siparis_pg_kaydet(yeni_siparis_paketi)
+                yeni_siparis_ntfy_gonder({**yeni_siparis_paketi, "siparis_no": kaydedilen_no})
             secim_listelerini_getir.clear()
             st.session_state.eklenen_urunler = []
             st.session_state.urun_input_versiyon = 0
             st.session_state.taslak_bilgi = {}
             st.session_state.form_versiyon += 1
-            st.session_state.flash_mesaj = f"#{kayit_no} | {musteri} ({santiye}) siparişi kaydedildi!"
+            st.session_state.flash_mesaj = f"Sipariş #{kaydedilen_no} — {musteri} ({santiye}) kaydedildi!"
             st.rerun()
         except Exception as err:
-            st.error(f"Sipariş PostgreSQL'e yazılamadı: {err}")
+            st.error(f"Sipariş PostgreSQL veritabanına yazılamadı: {err}")
