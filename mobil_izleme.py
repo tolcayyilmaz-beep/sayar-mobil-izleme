@@ -10,6 +10,8 @@ import sqlite3
 import tempfile
 import requests
 import pandas as pd
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
@@ -652,6 +654,55 @@ def get_gdrive_service():
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
+RAILWAY_PG_URL_DEFAULT = "postgresql://postgres:vRnqPZifPAhgHJkVconMThDtIillFNFN@trolley.proxy.rlwy.net:41607/railway"
+
+
+def _pg_db_url_getir():
+    try:
+        if "DATABASE_URL" in st.secrets and str(st.secrets["DATABASE_URL"]).strip():
+            return str(st.secrets["DATABASE_URL"]).strip().replace("postgres://", "postgresql://", 1)
+    except Exception:
+        pass
+    env_url = os.environ.get("DATABASE_URL", "").strip()
+    if env_url:
+        return env_url.replace("postgres://", "postgresql://", 1)
+    return RAILWAY_PG_URL_DEFAULT
+
+
+def pg_karar_kaydet(siparis_no: int, karar: str, aciklama: str = ""):
+    """Yönetici onay/revize/red kararını doğrudan Railway PostgreSQL'deki siparisler tablosuna işler."""
+    url = _pg_db_url_getir()
+    conn = psycopg2.connect(url, connect_timeout=10)
+    try:
+        conn.autocommit = False
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT notlar, durum FROM siparisler WHERE siparis_no = %s", (int(siparis_no),))
+            row = cur.fetchone()
+            if not row:
+                raise RuntimeError(f"Sipariş #{siparis_no} PostgreSQL veritabanında bulunamadı.")
+
+            yeni_not = str(row.get("notlar") or "").strip()
+            if aciklama and aciklama.strip():
+                zaman_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+                etiket = f"[Mobil {karar} - {zaman_str}]: {aciklama.strip()}"
+                yeni_not = f"{yeni_not}\n{etiket}".strip() if yeni_not else etiket
+
+            yeni_durum = str(row.get("durum") or "Beklemede")
+            if karar == "REDDEDİLDİ":
+                yeni_durum = "İPTAL"
+
+            cur.execute(
+                "UPDATE siparisler SET operasyon = %s, durum = %s, notlar = %s WHERE siparis_no = %s",
+                (karar, yeni_durum, yeni_not, int(siparis_no))
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def _imza_anahtari():
     if "DB_SECRET_KEY" in st.secrets and str(st.secrets["DB_SECRET_KEY"]).strip():
         return str(st.secrets["DB_SECRET_KEY"]).encode("utf-8")
@@ -933,12 +984,29 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 inceleme_aktif_mi = (yetki_tipi == "YONETICI" and st.session_state.get("onay_inceleme_sip_no") is not None)
 
 
-# 2. Google Drive'dan şifresiz SQLite DB indirme (15 sn önbellekli)
+# 2. Railway PostgreSQL'den canlı veri okuma (Drive fallback destekli, 15 sn önbellekli)
 @st.cache_data(ttl=15, show_spinner=False)
 def verileri_getir():
-    file_id = str(st.secrets["GDRIVE_FILE_ID"]).strip()
+    pg_url = _pg_db_url_getir()
+    if pg_url:
+        try:
+            pg_conn = psycopg2.connect(pg_url, connect_timeout=8)
+            try:
+                df_siparisler = pd.read_sql_query(
+                    "SELECT * FROM siparisler ORDER BY siparis_no DESC", pg_conn
+                )
+                df_kalemler = pd.read_sql_query(
+                    "SELECT * FROM siparis_kalemleri ORDER BY id ASC", pg_conn
+                )
+                return df_siparisler, df_kalemler
+            finally:
+                pg_conn.close()
+        except Exception:
+            pass
+
+    file_id = str(st.secrets.get("GDRIVE_FILE_ID", "")).strip()
     if not file_id:
-        raise RuntimeError("GDRIVE_FILE_ID Railway secrets içinde tanımlı değil.")
+        raise RuntimeError("Railway PostgreSQL bağlantısı kurulamadı ve GDRIVE_FILE_ID tanımlı değil.")
 
     service = get_gdrive_service()
     request = service.files().get_media(fileId=file_id)
@@ -1228,9 +1296,23 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
 
 
 def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
-    """Kararı Drive kuyruğuna yazar, yerel oturuma işler ve önbelleği silmeden anında listeye döner."""
+    """Kararı doğrudan Railway PostgreSQL'e yazar, Drive kuyruğuna da işler ve anında listeye döner."""
     try:
-        onay_kuyruguna_yaz(sip_no, karar, aciklama)
+        pg_yazildi = False
+        try:
+            pg_karar_kaydet(sip_no, karar, aciklama)
+            pg_yazildi = True
+        except Exception as pg_err:
+            onay_kuyruguna_yaz(sip_no, karar, aciklama)
+            if not st.secrets.get("GDRIVE_FILE_ID") and not _pg_db_url_getir():
+                raise pg_err
+
+        if pg_yazildi:
+            try:
+                onay_kuyruguna_yaz(sip_no, karar, aciklama)
+            except Exception:
+                pass
+
         onay_ntfy_gonder(
             siparis_no=sip_no,
             firma=str(row_data.get("firma") or "-"),
@@ -1238,16 +1320,14 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
             karar=karar,
             aciklama=aciklama
         )
-        st.session_state.yerel_kararlar[int(sip_no)] = {
-            "karar": karar,
-            "not": aciklama.strip()
-        }
+        st.cache_data.clear()
+        st.session_state.yerel_kararlar.pop(int(sip_no), None)
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.bekleyen_revize_sip_no = None
-        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı iletildi."
+        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı kaydedildi."
         st.rerun()
     except Exception as err:
-        st.error(f"Karar Google Drive'a yazılamadı: {err}")
+        st.error(f"Karar kaydedilemedi: {err}")
 
 
 @st.dialog("Revize Notu")
