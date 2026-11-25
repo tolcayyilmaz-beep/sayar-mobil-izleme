@@ -19,7 +19,7 @@ if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secret
     with open(".streamlit/secrets.toml", "w", encoding="utf-8") as f:
         f.write(os.environ["STREAMLIT_SECRETS"])
 
-NTFY_TOPIC = "sayar_yapi_siparis_20263"
+NTFY_TOPIC = "sayar_yapi_siparis_2026"
 RAILWAY_DEFAULT_DB_URL = "postgresql://postgres:vRnqPZifPAhgHJkVconMThDtIillFNFN@trolley.proxy.rlwy.net:41607/railway"
 
 
