@@ -51,7 +51,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Akış Yüksekliği Hesaplayıcı
+# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Akış Yüksekliği + Tek Kart Açık (Accordion)
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -89,6 +89,21 @@ components.html(
                 if (!href) return;
                 win.history.pushState({{}}, '', href);
                 win.dispatchEvent(new PopStateEvent('popstate'));
+            }}, true);
+        }}
+
+        if (!win.__accordionHooked) {{
+            win.__accordionHooked = true;
+            doc.addEventListener('toggle', function(e) {{
+                const target = e.target;
+                if (!target || !target.matches || !target.matches('details.neo-card')) return;
+                if (target.open) {{
+                    doc.querySelectorAll('details.neo-card[open]').forEach(function(other) {{
+                        if (other !== target) {{
+                            other.open = false;
+                        }}
+                    }});
+                }}
             }}, true);
         }}
 
@@ -236,7 +251,7 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 }
 
 /* ==========================================================================
-   ÜST BAR (BÜYÜTÜLMÜŞ LOGO, YENİLE & ÇIKIŞ BUTONLARI)
+   ÜST BAR (BÜYÜTÜLMÜŞ LOGO, GENİŞLETİLMİŞ YENİLE & ÇIKIŞ BUTONLARI)
    ========================================================================== */
 @keyframes pulseRing {
     0% { transform: scale(0.85); opacity: 0.9; }
@@ -419,12 +434,17 @@ a.cmd-icon-btn {
     box-shadow: 0 2px 5px rgba(15, 23, 42, 0.07), inset 0 1px 0 #ffffff;
 }
 
+a.cmd-icon-btn.cmd-refresh-btn {
+    width: 52px;
+    padding: 0 10px;
+}
+
 a.cmd-icon-btn:active {
     transform: scale(0.93);
 }
 
 /* ==========================================================================
-   3'LÜ KOMPAKT KABARTMALI KPI KARTLARI
+   3'LÜ KOMPAKT KABARTMALI KPI KARTLARI (YANIP SÖNEN NOKTALI)
    ========================================================================== */
 .kpi-deck {
     display: grid;
@@ -470,11 +490,30 @@ a.kpi-tile:active {
     text-overflow: ellipsis;
 }
 
+.kpi-dot-wrap {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 .kpi-badge-dot {
     width: 5.5px;
     height: 5.5px;
     border-radius: 50%;
-    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.kpi-dot-ring {
+    position: absolute;
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    animation: pulseRing 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 .kpi-tile-mid {
@@ -516,15 +555,18 @@ a.kpi-tile:active {
     border-radius: 999px;
 }
 
-.kpi-t-blue .kpi-badge-dot { background: #0052ff; }
+.kpi-t-blue .kpi-badge-dot,
+.kpi-t-blue .kpi-dot-ring { background: #0052ff; }
 .kpi-t-blue .kpi-pct { background: rgba(0, 82, 255, 0.09); color: #0052ff; }
 .kpi-t-blue .kpi-mini-fill { background: linear-gradient(90deg, #0052ff, #38bdf8); }
 
-.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.18); }
+.kpi-t-amber .kpi-badge-dot,
+.kpi-t-amber .kpi-dot-ring { background: #f97316; }
 .kpi-t-amber .kpi-pct { background: rgba(249, 115, 22, 0.12); color: #c2410c; }
 .kpi-t-amber .kpi-mini-fill { background: linear-gradient(90deg, #f97316, #fbbf24); }
 
-.kpi-t-emerald .kpi-badge-dot { background: #10b981; }
+.kpi-t-emerald .kpi-badge-dot,
+.kpi-t-emerald .kpi-dot-ring { background: #10b981; }
 .kpi-t-emerald .kpi-pct { background: rgba(16, 185, 129, 0.11); color: #047857; }
 .kpi-t-emerald .kpi-mini-fill { background: linear-gradient(90deg, #10b981, #34d399); }
 
@@ -1948,7 +1990,7 @@ st.markdown(
     f'</div>'
     f'</div>'
     f'<div class="header-actions">'
-    f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn" title="Verileri Yenile">↻</a>'
+    f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn cmd-refresh-btn" title="Verileri Yenile">↻</a>'
     f'<a data-spa="1" href="?action=logout" target="_self" class="cmd-icon-btn" title="Güvenli Çıkış">⏻</a>'
     f'</div>'
     f'</div>',
@@ -1958,17 +2000,17 @@ st.markdown(
 st.markdown(
     f'<div class="kpi-deck">'
     f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-tile kpi-t-blue {cls_tamamlandi}" title="Tamamlanan siparişleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Tamamlanan</span><span class="kpi-badge-dot"></span></div>'
+    f'<div class="kpi-tile-top"><span class="kpi-tag">Tamamlanan</span><span class="kpi-dot-wrap"><span class="kpi-dot-ring"></span><span class="kpi-badge-dot"></span></span></div>'
     f'<div class="kpi-tile-mid"><span class="kpi-num">{tamamlandi_siparis}</span><span class="kpi-pct">%{pct_tamam}</span></div>'
     f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_tamam, 6)}%;"></div></div>'
     f'</a>'
     f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="kpi-tile kpi-t-amber {cls_onay}" title="Onay bekleyenleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Onay Bekleyen</span><span class="kpi-badge-dot"></span></div>'
+    f'<div class="kpi-tile-top"><span class="kpi-tag">Onay Bekleyen</span><span class="kpi-dot-wrap"><span class="kpi-dot-ring"></span><span class="kpi-badge-dot"></span></span></div>'
     f'<div class="kpi-tile-mid"><span class="kpi-num">{onay_bekleyen}</span><span class="kpi-pct">%{pct_onay}</span></div>'
     f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_onay, 6)}%;"></div></div>'
     f'</a>'
     f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="kpi-tile kpi-t-emerald {cls_sevk}" title="Sevk bekleyen aktif siparişleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Sevk Bekleyen</span><span class="kpi-badge-dot"></span></div>'
+    f'<div class="kpi-tile-top"><span class="kpi-tag">Sevk Bekleyen</span><span class="kpi-dot-wrap"><span class="kpi-dot-ring"></span><span class="kpi-badge-dot"></span></span></div>'
     f'<div class="kpi-tile-mid"><span class="kpi-num">{sevk_bekleyen}</span><span class="kpi-pct">%{pct_sevk}</span></div>'
     f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_sevk, 6)}%;"></div></div>'
     f'</a>'
