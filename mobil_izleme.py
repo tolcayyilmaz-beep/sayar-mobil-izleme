@@ -207,13 +207,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     padding: 8px 0.55rem 0.5rem 0.55rem !important;
 }
 
-/*
-   ÖNEMLİ DÜZELTME:
-   Streamlit 1.38+ sürümlerinde [data-testid="stVerticalBlock"] gap: 6px yerine
-   row-gap + column-gap olarak işlenir ve bazı konteynerlerde negatife düşen
-   marjinleri engelleyecek şekilde açık dikey boşluk (row-gap: 8px) tanımlanır.
-   Ayrıca stMarkdownContainer içindeki blokların dışarı taşması engellenir.
-*/
 [data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
@@ -243,7 +236,7 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 }
 
 /* ==========================================================================
-   ÜST BAR (KOMPAKT & CABARTMALI)
+   ÜST BAR (BÜYÜTÜLMÜŞ LOGO, YENİLE & ÇIKIŞ BUTONLARI)
    ========================================================================== */
 @keyframes pulseRing {
     0% { transform: scale(0.85); opacity: 0.9; }
@@ -261,11 +254,11 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 7px;
+    gap: 8px;
     background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
     border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    padding: 6px 9px;
+    border-radius: 13px;
+    padding: 7px 10px;
     box-shadow: var(--emboss-tile);
     overflow: hidden;
     margin: 0 0 2px 0;
@@ -286,31 +279,31 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 .brand-cluster {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 9px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .brand-logo {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     object-fit: contain;
     background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.09);
-    padding: 1.5px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    padding: 2px;
     flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.07);
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
 }
 
 .brand-monogram {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     background: linear-gradient(135deg, #0052ff 0%, #0ea5e9 100%);
     color: #ffffff;
     font-weight: 800;
-    font-size: 11px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -330,7 +323,7 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 }
 
 .brand-name {
-    font-size: 12.5px;
+    font-size: 13.5px;
     font-weight: 800;
     color: var(--ink-primary);
     letter-spacing: -0.2px;
@@ -346,7 +339,7 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.30);
     color: #047857;
-    padding: 1px 5px;
+    padding: 1.5px 5.5px;
     border-radius: 999px;
     font-size: 8px;
     font-weight: 800;
@@ -383,8 +376,8 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-top: 1px;
-    font-size: 9.5px;
+    margin-top: 2px;
+    font-size: 9.8px;
     color: var(--ink-muted);
     font-weight: 600;
     white-space: nowrap;
@@ -394,11 +387,11 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 
 .telemetry-clock {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 9.2px;
     font-weight: 700;
     color: var(--brand-cobalt);
     background: rgba(0, 82, 255, 0.08);
-    padding: 0.5px 4.5px;
+    padding: 0.5px 5px;
     border-radius: 4px;
     flex-shrink: 0;
 }
@@ -406,7 +399,7 @@ div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     flex-shrink: 0;
 }
 
@@ -414,16 +407,16 @@ a.cmd-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     background: linear-gradient(180deg, #ffffff 0%, #eef3fa 100%);
-    border: 1px solid rgba(15, 23, 42, 0.11);
+    border: 1px solid rgba(15, 23, 42, 0.12);
     color: var(--ink-primary) !important;
     text-decoration: none !important;
-    font-size: 12.5px;
+    font-size: 16px;
     font-weight: 800;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.07), inset 0 1px 0 #ffffff;
 }
 
 a.cmd-icon-btn:active {
@@ -682,8 +675,8 @@ div[data-testid="stPopover"] > button {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     padding: 2px 1px 16px 1px;
-    height: calc(100dvh - 196px);
-    max-height: calc(100dvh - 196px);
+    height: calc(100dvh - 204px);
+    max-height: calc(100dvh - 204px);
 }
 
 .sy-scroll-stream::-webkit-scrollbar {
@@ -1290,7 +1283,7 @@ div[data-testid="stForm"] {
     .kpi-num { font-size: 14.5px; }
     .kpi-tag { font-size: 8.6px; }
     .mini-op-pill { display: none; }
-    .brand-name { font-size: 12px; }
+    .brand-name { font-size: 12.5px; }
 }
 </style>
 """, unsafe_allow_html=True)
