@@ -37,7 +37,7 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 
 
 LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="sy-brand-logo" alt="Sayar Yapı">' if LOGO_DATA_URI else '<span class="sy-brand-mark">SY</span>'
 
 # Sayfa ve Mobil Görünüm Ayarları
 st.set_page_config(
@@ -94,9 +94,11 @@ components.html(
     width=0
 )
 
-# Özel CSS: Kurumsal Çelik & Beton (Orijinal Sıkılaştırılmış Kompakt Aydınlık Tema)
+# Yeni Nesil Kurumsal Endüstriyel Arayüz (Kompakt & Yüksek Kontrastlı Aydınlık Mimari)
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -116,102 +118,169 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-.stApp, [data-testid="stAppViewContainer"] {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
+
+:root {
+    --bg-canvas: #eef2f6;
+    --bg-surface: #ffffff;
+    --bg-subtle: #f8fafc;
+    --ink-primary: #0b1324;
+    --ink-secondary: #475569;
+    --ink-muted: #64748b;
+    --line-soft: #e2e8f0;
+    --line-strong: #cbd5e1;
+    --accent-amber: #ea580c;
+    --accent-amber-soft: #fff7ed;
+    --accent-blue: #0284c7;
+    --accent-green: #15803d;
+    --accent-red: #dc2626;
+    --radius-card: 12px;
+    --radius-control: 10px;
+    --shadow-sm: 0 1px 2px rgba(11, 19, 36, 0.05);
+    --shadow-md: 0 6px 18px -4px rgba(11, 19, 36, 0.08);
 }
+
+.stApp, [data-testid="stAppViewContainer"] {
+    background-color: var(--bg-canvas) !important;
+    background-image: radial-gradient(circle at top right, rgba(234, 88, 12, 0.045), transparent 42%),
+                      radial-gradient(circle at top left, rgba(2, 132, 199, 0.04), transparent 38%) !important;
+    color: var(--ink-primary) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 .block-container {
     padding-top: 0.45rem !important;
     padding-bottom: 1.5rem !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
 }
+
 [data-testid="stVerticalBlock"] {
     gap: 0.45rem !important;
 }
+
+/* Bildirim Banner */
 .auto-toast-banner {
-    background-color: #dcfce7;
+    background: linear-gradient(90deg, #ecfdf5 0%, #dcfce7 100%);
     border: 1px solid #86efac;
     border-left: 4px solid #16a34a;
     color: #14532d;
-    border-radius: 9px;
+    border-radius: var(--radius-control);
     padding: 8px 12px;
     font-size: 12.5px;
     font-weight: 700;
     margin-bottom: 4px;
     opacity: 1;
     transition: opacity 0.35s ease;
-    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+    box-shadow: var(--shadow-sm);
 }
+
+/* Üst Komuta Başlığı */
 .header-banner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-left: 5px solid #f97316;
-    border-radius: 10px;
+    background: linear-gradient(125deg, #0b1324 0%, #162238 65%, #1e293b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 3px solid var(--accent-amber);
+    border-radius: var(--radius-card);
     padding: 9px 12px;
     margin-bottom: 4px;
     color: #f8fafc;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+    box-shadow: var(--shadow-md);
     gap: 8px;
 }
+
 .header-info {
     flex: 1;
     min-width: 0;
 }
+
 .header-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 700;
     margin: 0;
     color: #ffffff;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .header-title span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.header-logo {
+
+.sy-brand-logo {
     height: 26px;
     width: auto;
     object-fit: contain;
-    border-radius: 4px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 1px 3px;
+}
+
+.sy-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    min-width: 28px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: var(--accent-amber);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     flex-shrink: 0;
 }
+
 .header-sub {
-    font-size: 11px;
+    font-size: 10.5px;
     color: #cbd5e1;
     margin-top: 2px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
 }
+
 .header-actions {
     display: flex;
     gap: 6px;
     flex-shrink: 0;
 }
+
 .icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 34px;
     height: 34px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #ffffff !important;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f8fafc !important;
     text-decoration: none !important;
-    font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(249, 115, 22, 0.65);
+}
+
 .icon-btn:active {
-    background-color: #f97316;
+    background-color: var(--accent-amber);
+    transform: scale(0.95);
 }
+
+/* KPI Özet Kartları */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -219,93 +288,136 @@ a[href*="streamlit.io/cloud"] {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
 a.kpi-card {
-    display: block;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    padding: 7px 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 7px 8px 8px 8px;
     text-align: center;
     text-decoration: none !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
     cursor: pointer;
+    overflow: hidden;
 }
+
+a.kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
 a.kpi-card:hover {
     background-color: #f8fafc;
+    box-shadow: var(--shadow-md);
 }
+
 a.kpi-card:active {
     transform: scale(0.98);
 }
-.kpi-blue { border-top: 3px solid #0284c7 !important; }
-.kpi-orange { border-top: 3px solid #f97316 !important; }
-.kpi-green { border-top: 3px solid #16a34a !important; }
+
+.kpi-blue::before { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.kpi-orange::before { background: linear-gradient(90deg, #ea580c, #fb923c); }
+.kpi-green::before { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
 .kpi-active {
-    background-color: #ffffff !important;
-    border: 2px solid #ef4444 !important;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+    background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%) !important;
+    border: 1.5px solid var(--accent-amber) !important;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.16) !important;
 }
+
 .kpi-label {
-    font-size: 11px;
-    color: #475569;
-    font-weight: 600;
+    font-size: 10.5px;
+    color: var(--ink-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
     margin-bottom: 1px;
     white-space: nowrap;
 }
+
 .kpi-value {
     font-size: 19px;
     font-weight: 800;
-    color: #0f172a;
-    line-height: 1.2;
+    color: var(--ink-primary);
+    line-height: 1.18;
+    font-variant-numeric: tabular-nums;
 }
+
+/* Arama ve Filtre Satırı */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
     margin-top: 12px !important;
 }
+
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
     min-width: 0 !important;
 }
+
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
     min-width: 54px !important;
 }
+
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    color: #0f172a !important;
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: var(--radius-control) !important;
+    color: var(--ink-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
 }
+
+div[data-testid="stTextInput"] input:focus,
+div[data-testid="stTextArea"] textarea:focus {
+    border-color: var(--accent-amber) !important;
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12) !important;
+}
+
 div[data-testid="stTextInput"] input {
     height: 38px !important;
     padding-top: 6px !important;
     padding-bottom: 6px !important;
+    font-size: 13px !important;
 }
+
 div[data-testid="stForm"] {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 10px !important;
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: var(--radius-card) !important;
     padding: 14px !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+    box-shadow: var(--shadow-md) !important;
 }
+
 div[data-testid="stPopover"] > button {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    color: #0f172a !important;
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: var(--radius-control) !important;
+    color: var(--ink-primary) !important;
     height: 38px !important;
     padding: 0 10px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    font-weight: 700 !important;
+    box-shadow: var(--shadow-sm) !important;
 }
+
 div[data-testid="stPopover"] > button:hover {
-    border-color: #f97316 !important;
-    background-color: #fff7ed !important;
+    border-color: var(--accent-amber) !important;
+    background-color: var(--accent-amber-soft) !important;
 }
+
+/* Sipariş Kart Listesi */
 .sip-list-container {
     display: flex;
     flex-direction: column;
@@ -314,6 +426,7 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
     padding: 0;
 }
+
 .sip-row-wrap {
     display: flex;
     flex-direction: row;
@@ -325,17 +438,27 @@ div[data-testid="stPopover"] > button:hover {
     padding: 0;
     box-sizing: border-box;
 }
+
 details.custom-sip-card {
     flex: 1 1 auto;
     min-width: 0;
     margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--line-strong);
+    border-left: 3.5px solid var(--card-accent, #94a3b8);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+
+details.custom-sip-card[open] {
+    border-color: #94a3b8;
+    border-left-color: var(--card-accent, var(--accent-amber));
+    box-shadow: var(--shadow-md);
+}
+
 details.custom-sip-card > summary {
     list-style: none;
     display: flex;
@@ -346,96 +469,150 @@ details.custom-sip-card > summary {
     user-select: none;
     height: 48px;
     box-sizing: border-box;
+    transition: background-color 0.12s ease;
 }
+
 details.custom-sip-card > summary::-webkit-details-marker {
     display: none;
 }
+
 details.custom-sip-card > summary:hover {
     background-color: #f8fafc;
 }
+
 .custom-card-arrow {
-    font-size: 11px;
-    color: #475569;
-    font-weight: 700;
-    transition: transform 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-muted);
+    transition: transform 0.16s ease, color 0.16s ease;
     flex-shrink: 0;
 }
+
 details.custom-sip-card[open] .custom-card-arrow {
     transform: rotate(90deg);
+    color: var(--accent-amber);
 }
+
 .custom-card-lines {
     flex: 1;
     min-width: 0;
     font-size: 13px;
     line-height: 1.3;
-    color: #0f172a;
+    color: var(--ink-primary);
 }
+
 .custom-card-line1 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.sip-no-pill {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #0f172a;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 0 5px;
+    flex-shrink: 0;
+}
+
+.sip-line1-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .custom-card-line2 {
-    font-weight: 400;
-    color: #334155;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .custom-card-body {
-    padding: 6px 10px 10px 10px;
-    border-top: 1px solid #e2e8f0;
-    background-color: #ffffff;
+    padding: 8px 10px 10px 10px;
+    border-top: 1px solid var(--line-soft);
+    background-color: #fcfcfd;
 }
+
 a.mini-onay-btn {
     flex: 0 0 42px;
     width: 42px;
     height: 48px;
     box-sizing: border-box;
-    background-color: #f97316;
-    border: 1px solid #ea580c;
-    border-radius: 9px;
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+    border: 1px solid #c2410c;
+    border-radius: 10px;
     color: #ffffff !important;
-    font-size: 20px;
-    font-weight: 900;
     text-decoration: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 2px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+    transition: transform 0.1s ease, filter 0.15s ease;
 }
+
+a.mini-onay-btn:hover {
+    filter: brightness(1.05);
+}
+
 a.mini-onay-btn:active {
-    background-color: #ea580c;
     transform: scale(0.96);
 }
+
+/* Tam Ekran Yönetici İnceleme Kartı */
 .fullscreen-review-card {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-top: 4px solid #f97316;
-    border-radius: 11px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--line-strong);
+    border-top: 4px solid var(--accent-amber);
+    border-radius: var(--radius-card);
     padding: 10px 11px 12px 11px;
     margin-top: 2px;
     margin-bottom: 10px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
+    box-shadow: var(--shadow-md);
 }
+
 .fullscreen-review-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 7px;
     margin-bottom: 8px;
     gap: 8px;
 }
+
 .fullscreen-review-title {
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--ink-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.review-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent-amber);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2);
+    flex-shrink: 0;
+}
+
 a.close-review-link {
     display: inline-flex;
     align-items: center;
@@ -444,182 +621,246 @@ a.close-review-link {
     height: 28px;
     font-size: 13px;
     font-weight: 800;
-    color: #475569 !important;
+    color: var(--ink-secondary) !important;
     background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
     text-decoration: none !important;
     flex-shrink: 0;
 }
+
 a.close-review-link:active {
     background-color: #e2e8f0;
 }
+
 .onay-aksiyon-bar {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px solid #cbd5e1;
+    border-top: 1px solid var(--line-strong);
     width: 100%;
     box-sizing: border-box;
 }
+
 a.aksiyon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 42px;
     border-radius: 9px;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.04em;
     text-decoration: none !important;
     box-sizing: border-box;
     padding: 0 6px;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.1s ease, filter 0.15s ease;
 }
+
+a.aksiyon-btn:hover {
+    filter: brightness(1.04);
+}
+
 a.aksiyon-btn:active {
     transform: scale(0.98);
 }
+
 a.aksiyon-onayla {
-    background-color: #16a34a !important;
-    border: 1px solid #15803d !important;
+    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%) !important;
+    border: 1px solid #166534 !important;
     color: #ffffff !important;
 }
+
 a.aksiyon-revize {
-    background-color: #facc15 !important;
+    background: linear-gradient(180deg, #fde047 0%, #facc15 100%) !important;
     border: 1px solid #eab308 !important;
     color: #0f172a !important;
 }
+
 a.aksiyon-reddet {
-    background-color: #dc2626 !important;
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
     border: 1px solid #b91c1c !important;
     color: #ffffff !important;
 }
+
+/* Detay Grid & Malzeme Tablosu */
 .info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 5px 8px;
+    gap: 6px 8px;
     font-size: 12px;
-    margin-top: 6px;
+    margin-top: 7px;
     margin-bottom: 8px;
-    padding: 7px 8px;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    padding: 8px;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--line-soft);
+    border-radius: 9px;
 }
+
 .info-item-label {
     font-size: 10px;
-    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-muted);
     display: block;
+    margin-bottom: 1px;
 }
+
 .info-item-val {
     font-weight: 600;
-    color: #0f172a;
+    color: var(--ink-primary);
+    word-break: break-word;
 }
+
 .info-item-val-red {
     font-weight: 800;
-    color: #dc2626;
+    color: #b91c1c;
+    word-break: break-word;
 }
+
 .info-item-val-navy {
     font-weight: 700;
     color: #1e3a8a;
+    word-break: break-word;
 }
+
 .urun-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 4px;
     font-size: 12px;
-    border-radius: 8px;
+    border-radius: 9px;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--line-strong);
+    background-color: var(--bg-surface);
 }
+
 .urun-table th {
-    background-color: #1e293b;
+    background-color: #0f172a;
     color: #f8fafc;
     text-align: left;
-    padding: 5px 7px;
-    font-weight: 600;
-    font-size: 11px;
-}
-.urun-table td {
-    padding: 5px 7px;
-    color: #0f172a;
-    border-bottom: 1px solid #e2e8f0;
-}
-.urun-table tr:nth-child(even) td {
-    background-color: #f8fafc;
-}
-.urun-miktar {
+    padding: 6px 8px;
     font-weight: 700;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.urun-table td {
+    padding: 6px 8px;
+    color: var(--ink-primary);
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.urun-table tr:last-child td {
+    border-bottom: none;
+}
+
+.urun-table tr:nth-child(even) td {
+    background-color: var(--bg-subtle);
+}
+
+.urun-miktar {
+    font-weight: 800;
     text-align: right;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
+
 .badge {
     padding: 3px 8px;
-    border-radius: 5px;
+    border-radius: 6px;
     color: white;
-    font-weight: bold;
-    font-size: 11px;
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
     display: inline-block;
 }
+
 .durum-plain {
-    color: #0f172a;
+    color: var(--ink-secondary);
     font-weight: 600;
     font-size: 11.5px;
 }
+
+/* Boş Durum & Sayfalama */
 .empty-state-box {
-    background-color: #ffffff;
-    border: 1px dashed #cbd5e1;
-    border-radius: 12px;
-    padding: 28px 16px;
+    background-color: var(--bg-surface);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-card);
+    padding: 26px 16px;
     text-align: center;
     margin-top: 8px;
     margin-bottom: 10px;
 }
+
 .empty-state-icon {
-    font-size: 32px;
-    margin-bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: var(--ink-secondary);
+    margin-bottom: 8px;
 }
+
 .empty-state-title {
-    font-size: 14.5px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink-primary);
     margin-bottom: 4px;
 }
+
 .empty-state-desc {
-    font-size: 12.5px;
-    color: #64748b;
+    font-size: 12px;
+    color: var(--ink-secondary);
 }
+
 .pagination-box {
     margin-top: 12px;
     margin-bottom: 6px;
     text-align: center;
 }
+
 .pagination-text {
-    font-size: 11.5px;
-    color: #64748b;
+    font-size: 11px;
+    color: var(--ink-secondary);
     margin-bottom: 5px;
-    font-weight: 500;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
+
 .progress-track {
     width: 100%;
     max-width: 240px;
     height: 5px;
-    background-color: #e2e8f0;
+    background-color: #dbe3ec;
     border-radius: 999px;
     margin: 0 auto 8px auto;
     overflow: hidden;
 }
+
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
+    background: linear-gradient(90deg, #0f172a 0%, #ea580c 100%);
     border-radius: 999px;
     transition: width 0.25s ease;
 }
 </style>
 """, unsafe_allow_html=True)
+
+ICON_REFRESH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>'
+ICON_LOGOUT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
+ICON_CHEVRON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+ICON_CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+ICON_SEARCH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
 
 
 def md_temizle(metin):
@@ -677,7 +918,8 @@ def onay_kararini_veritabanina_yaz(siparis_no: int, karar: str, aciklama: str = 
             if not_ek:
                 mevcut_not = str(row.get("notlar") or "").strip()
                 etiket = f"[Mobil {karar} - {zaman}]: {not_ek}"
-                yeni_not = f"{mevcut_not}\n{etiket}".strip() if mevcut_not else etiket
+                yeni_not = f"{mevcut_not}
+{etiket}".strip() if mevcut_not else etiket
                 cur.execute(
                     "UPDATE siparisler SET operasyon = %s, notlar = %s WHERE siparis_no = %s",
                     (karar, yeni_not, int(siparis_no))
@@ -708,7 +950,8 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
         if aciklama and aciklama.strip():
             mesaj_satirlar.append(f"Not: {aciklama.strip()}")
 
-        mesaj = "\n".join(mesaj_satirlar)
+        mesaj = "
+".join(mesaj_satirlar)
         headers = {
             "Title": baslik.encode("utf-8").decode("latin-1", errors="ignore"),
             "Priority": "high",
@@ -958,8 +1201,8 @@ if not inceleme_aktif_mi:
         f'<div class="header-banner">'
         f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
         f'<div class="header-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
+        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">{ICON_REFRESH}</a>'
+        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">{ICON_LOGOUT}</a>'
         f'</div></div>',
         unsafe_allow_html=True
     )
@@ -967,7 +1210,8 @@ if not inceleme_aktif_mi:
 try:
     df_sip, df_kalem = verileri_getir()
 except Exception as e:
-    st.error(f"PostgreSQL veritabanı okunamadı. Bağlantıyı kontrol edin.\nDetay: {e}")
+    st.error(f"PostgreSQL veritabanı okunamadı. Bağlantıyı kontrol edin.
+Detay: {e}")
     st.stop()
 
 # Mobil oturumda verilen kararları güncel veri gelene kadar anlık yansıt
@@ -982,7 +1226,8 @@ if st.session_state.yerel_kararlar and not df_sip.empty:
                 if karar_bilgi.get("not"):
                     mevcut_not = str(df_sip.loc[mask, "notlar"].iloc[0] or "").strip()
                     ek_not = f"[Mobil {karar_bilgi['karar']}]: {karar_bilgi['not']}"
-                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
+                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}
+{ek_not}".strip() if mevcut_not else ek_not
             else:
                 st.session_state.yerel_kararlar.pop(s_no, None)
 
@@ -994,9 +1239,9 @@ elif yetki_tipi == "SIPARIS_VEREN":
 
 OP_RENK = {
     "İŞLENDİ": "#0284c7",
-    "ONAY BEKLİYOR": "#f97316",
+    "ONAY BEKLİYOR": "#ea580c",
     "ONAYLANDI": "#16a34a",
-    "REVİZE İSTENDİ": "#f59e0b",
+    "REVİZE İSTENDİ": "#eab308",
     "REDDEDİLDİ": "#dc2626",
     "TAMAMLANDI": "#16a34a",
     "MUHASEBEYE İLETİLDİ": "#16a34a",
@@ -1234,7 +1479,7 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.markdown(
         f'<div class="fullscreen-review-card">'
         f'<div class="fullscreen-review-header">'
-        f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
+        f'<div class="fullscreen-review-title"><span class="review-dot"></span><span>SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</span></div>'
         f'<a data-spa="1" href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
         f'</div>'
         f'{rozet_html}'
@@ -1402,11 +1647,11 @@ gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
 if toplam_filtrelenen == 0:
     st.markdown(
-        '<div class="empty-state-box">'
-        '<div class="empty-state-icon">🔍</div>'
-        '<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
-        '<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
-        '</div>',
+        f'<div class="empty-state-box">'
+        f'<div class="empty-state-icon">{ICON_SEARCH}</div>'
+        f'<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
+        f'<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
+        f'</div>',
         unsafe_allow_html=True
     )
     col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
@@ -1421,6 +1666,7 @@ else:
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
         durum_ikon = OP_IKON.get(op_upper, "⚪")
+        kart_renk = OP_RENK.get(op_upper, "#94a3b8")
 
         firma_str = row.get("firma") or "-"
         musteri_str = row.get("musteri") or "-"
@@ -1435,20 +1681,21 @@ else:
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
         if yetki_tipi == "MUSTERI":
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
+            satir1_metin = f"{durum_ikon} {html.escape(f_md)}"
         else:
-            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
+            satir1_metin = f"{durum_ikon} {html.escape(f_md)} ➔ {html.escape(m_md)}"
+        satir1_html = f'<span class="sip-no-pill">#{html.escape(str(sip_no))}</span><span class="sip-line1-text">{satir1_metin}</span>'
         satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
         onay_buton_html = ""
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            onay_buton_html = f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
+            onay_buton_html = f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">{ICON_CHECK}</a>'
 
         kart_parcalari.append(
             f'<div class="sip-row-wrap">'
-            f'<details class="custom-sip-card">'
+            f'<details class="custom-sip-card" style="--card-accent:{kart_renk};">'
             f'<summary>'
-            f'<span class="custom-card-arrow">❯</span>'
+            f'<span class="custom-card-arrow">{ICON_CHEVRON}</span>'
             f'<div class="custom-card-lines">'
             f'<div class="custom-card-line1">{satir1_html}</div>'
             f'<div class="custom-card-line2">{satir2_html}</div>'
