@@ -51,7 +51,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Üst Sabit Alan Yükseklik Ölçer (Çakışma Önleyici)
+# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Sabit Üst Alan & Akış Kilitleyici
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -106,35 +106,35 @@ components.html(
             }}, 1000);
         }}
 
-        function syncStickyStack() {{
-            const root = doc.documentElement;
-            const topShell = doc.querySelector('.sy-sticky-top-shell');
-            const searchRow = doc.querySelector('div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"])');
-            const feedBar = doc.querySelector('.sy-sticky-feed-shell');
+        function layoutLockedShell() {{
+            const docEl = doc.documentElement;
+            const streamEl = doc.getElementById('sy-scroll-stream');
+            const loginForm = doc.querySelector('div[data-testid="stForm"]');
+            const reviewConsole = doc.querySelector('.review-console');
 
-            let h1 = 0;
-            if (topShell) {{
-                h1 = Math.ceil(topShell.getBoundingClientRect().height);
-                root.style.setProperty('--h-top-shell', h1 + 'px');
+            if (loginForm || reviewConsole || !streamEl) {{
+                docEl.classList.remove('sy-lock-viewport');
+                return;
             }}
-            let h2 = 0;
-            if (searchRow) {{
-                searchRow.style.top = (h1 + 4) + 'px';
-                h2 = Math.ceil(searchRow.getBoundingClientRect().height);
-                root.style.setProperty('--h-search-row', h2 + 'px');
-            }}
-            if (feedBar) {{
-                feedBar.style.top = (h1 + h2 + 8) + 'px';
-            }}
+
+            docEl.classList.add('sy-lock-viewport');
+
+            const rect = streamEl.getBoundingClientRect();
+            const vh = win.innerHeight || docEl.clientHeight;
+            const avail = Math.max(180, Math.floor(vh - rect.top - 6));
+            streamEl.style.height = avail + 'px';
+            streamEl.style.maxHeight = avail + 'px';
         }}
 
-        syncStickyStack();
-        setTimeout(syncStickyStack, 120);
-        setTimeout(syncStickyStack, 450);
-        if (!win.__stickyResizeHooked) {{
-            win.__stickyResizeHooked = true;
-            win.addEventListener('resize', syncStickyStack);
-            const obs = new MutationObserver(syncStickyStack);
+        layoutLockedShell();
+        setTimeout(layoutLockedShell, 80);
+        setTimeout(layoutLockedShell, 250);
+        setTimeout(layoutLockedShell, 600);
+        if (!win.__lockedResizeHooked) {{
+            win.__lockedResizeHooked = true;
+            win.addEventListener('resize', layoutLockedShell);
+            win.addEventListener('orientationchange', layoutLockedShell);
+            const obs = new MutationObserver(layoutLockedShell);
             obs.observe(doc.body, {{ childList: true, subtree: true }});
         }}
     }})();
@@ -145,7 +145,7 @@ components.html(
 )
 
 # ==============================================================================
-# ULTRA-KOMPAKT, KABARTMALI (EMBOSSED), SABİT ÜST KONSOLLU MOBİL-İLK TASARIM
+# ULTRA-KOMPAKT, KABARTMALI, ÜST ALAN TAM SABİT + SADECE KARTLAR KAYDIRMALI TASARIM
 # ==============================================================================
 st.markdown("""
 <style>
@@ -154,7 +154,6 @@ st.markdown("""
 :root {
     --bg-canvas: #e9eff7;
     --bg-surface: #ffffff;
-    --bg-elevated: #fcfdff;
     --ink-primary: #0b1528;
     --ink-secondary: #475569;
     --ink-muted: #64748b;
@@ -162,17 +161,13 @@ st.markdown("""
     --brand-cyan: #0ea5e9;
     --brand-amber: #f97316;
     --brand-emerald: #10b981;
-    --brand-rose: #ef4444;
-    --h-top-shell: 118px;
-    --h-search-row: 38px;
-    /* Hafif Kabartmalı (3D Tactile Emboss) Gölgeler */
     --emboss-card:
-        0 4px 10px -2px rgba(15, 23, 42, 0.08),
-        0 1px 3px rgba(15, 23, 42, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 3px 8px -2px rgba(15, 23, 42, 0.08),
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
         inset 0 -1px 0 rgba(15, 23, 42, 0.05);
     --emboss-tile:
-        0 5px 12px -3px rgba(15, 23, 42, 0.09),
+        0 4px 10px -3px rgba(15, 23, 42, 0.09),
         0 1px 2px rgba(15, 23, 42, 0.05),
         inset 0 1.5px 0 rgba(255, 255, 255, 1),
         inset 0 -1.5px 0 rgba(15, 23, 42, 0.06);
@@ -199,10 +194,10 @@ a[href*="streamlit.io/cloud"] {
     pointer-events: none !important;
 }
 
-/* Küresel Yatay Taşma Kilidi (Sticky uyumlu clip kullanımı) */
+/* Küresel Arka Plan ve Yazı Tipi */
 html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     max-width: 100vw !important;
-    overflow-x: clip !important;
+    overflow-x: hidden !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     background:
         radial-gradient(circle at 15% 0%, rgba(0, 82, 255, 0.06) 0%, transparent 40%),
@@ -212,6 +207,18 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Ana Ekran Viewport Kilidi: Sayfa kaymaz, üst blok sabit durur, sadece #sy-scroll-stream kayar */
+html.sy-lock-viewport,
+html.sy-lock-viewport body,
+html.sy-lock-viewport .stApp,
+html.sy-lock-viewport [data-testid="stAppViewContainer"],
+html.sy-lock-viewport [data-testid="stMain"],
+html.sy-lock-viewport [data-testid="stMainBlockContainer"] {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+}
+
 *, *::before, *::after {
     box-sizing: border-box !important;
 }
@@ -219,13 +226,12 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .block-container {
     max-width: 720px !important;
     margin: 0 auto !important;
-    padding: 0 0.55rem 1.4rem 0.55rem !important;
-    overflow: visible !important;
+    padding: 6px 0.55rem 0.5rem 0.55rem !important;
 }
 
-/* Streamlit dikey boşluklarını sıkılaştır */
+/* Streamlit dikey aralıklarını doğal ve çakışmasız tut (asla sticky/overlap yok) */
 [data-testid="stVerticalBlock"] {
-    gap: 0.28rem !important;
+    gap: 5px !important;
 }
 
 div[data-testid="stElementContainer"] {
@@ -233,22 +239,7 @@ div[data-testid="stElementContainer"] {
 }
 
 /* ==========================================================================
-   SABİT ÜST KONSOLLAR (ZERO OVERLAP STICKY STACK)
-   ========================================================================== */
-.sy-sticky-top-shell {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 1000 !important;
-    background: rgba(233, 239, 247, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 6px 0 4px 0;
-    margin: 0;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-/* ==========================================================================
-   KOMPAKT CABARTMALI ÜST BAR
+   ÜST BAR (NORMAL AKIŞTA, SABİT ÜST BÖLGENİN EN ÜSTÜNDE)
    ========================================================================== */
 @keyframes pulseRing {
     0% { transform: scale(0.85); opacity: 0.9; }
@@ -269,11 +260,11 @@ div[data-testid="stElementContainer"] {
     gap: 7px;
     background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
     border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 13px;
-    padding: 6px 9px;
+    border-radius: 12px;
+    padding: 5px 8px;
     box-shadow: var(--emboss-tile);
     overflow: hidden;
-    margin-bottom: 6px;
+    margin: 0;
 }
 
 .command-header::after {
@@ -291,15 +282,15 @@ div[data-testid="stElementContainer"] {
 .brand-cluster {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .brand-logo {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
     object-fit: contain;
     background: #ffffff;
     border: 1px solid rgba(15, 23, 42, 0.09);
@@ -309,18 +300,17 @@ div[data-testid="stElementContainer"] {
 }
 
 .brand-monogram {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
     background: linear-gradient(135deg, #0052ff 0%, #0ea5e9 100%);
     color: #ffffff;
     font-weight: 800;
-    font-size: 11.5px;
+    font-size: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(0, 82, 255, 0.25);
 }
 
 .brand-text-wrap {
@@ -336,7 +326,7 @@ div[data-testid="stElementContainer"] {
 }
 
 .brand-name {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 800;
     color: var(--ink-primary);
     letter-spacing: -0.2px;
@@ -352,9 +342,9 @@ div[data-testid="stElementContainer"] {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.30);
     color: #047857;
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: 999px;
-    font-size: 8.5px;
+    font-size: 8px;
     font-weight: 800;
     letter-spacing: 0.35px;
     flex-shrink: 0;
@@ -388,9 +378,9 @@ div[data-testid="stElementContainer"] {
 .brand-sub-row {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     margin-top: 1px;
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--ink-muted);
     font-weight: 600;
     white-space: nowrap;
@@ -400,11 +390,11 @@ div[data-testid="stElementContainer"] {
 
 .telemetry-clock {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     color: var(--brand-cobalt);
     background: rgba(0, 82, 255, 0.08);
-    padding: 0.5px 5px;
+    padding: 0.5px 4.5px;
     border-radius: 4px;
     flex-shrink: 0;
 }
@@ -420,17 +410,16 @@ a.cmd-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
     background: linear-gradient(180deg, #ffffff 0%, #eef3fa 100%);
     border: 1px solid rgba(15, 23, 42, 0.11);
     color: var(--ink-primary) !important;
     text-decoration: none !important;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 800;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff;
-    transition: transform 0.12s ease;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff;
 }
 
 a.cmd-icon-btn:active {
@@ -456,11 +445,10 @@ a.kpi-tile {
     min-width: 0;
     background: linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
     border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 11px;
-    padding: 6px 8px 5px 8px;
+    border-radius: 10px;
+    padding: 5px 7px 4px 7px;
     text-decoration: none !important;
     box-shadow: var(--emboss-tile);
-    transition: transform 0.14s ease, box-shadow 0.14s ease;
     overflow: hidden;
 }
 
@@ -473,11 +461,11 @@ a.kpi-tile:active {
     align-items: center;
     justify-content: space-between;
     gap: 3px;
-    margin-bottom: 2px;
+    margin-bottom: 1.5px;
 }
 
 .kpi-tag {
-    font-size: 9.5px;
+    font-size: 9.2px;
     font-weight: 700;
     color: var(--ink-secondary);
     white-space: nowrap;
@@ -486,8 +474,8 @@ a.kpi-tile:active {
 }
 
 .kpi-badge-dot {
-    width: 6px;
-    height: 6px;
+    width: 5.5px;
+    height: 5.5px;
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -501,7 +489,7 @@ a.kpi-tile:active {
 
 .kpi-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 800;
     line-height: 1.05;
     color: var(--ink-primary);
@@ -510,19 +498,19 @@ a.kpi-tile:active {
 
 .kpi-pct {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 8.8px;
+    font-size: 8.5px;
     font-weight: 700;
     padding: 0.5px 4px;
-    border-radius: 5px;
+    border-radius: 4px;
     flex-shrink: 0;
 }
 
 .kpi-mini-bar {
     width: 100%;
-    height: 3px;
+    height: 2.5px;
     background: #e5ebf3;
     border-radius: 999px;
-    margin-top: 4px;
+    margin-top: 3px;
     overflow: hidden;
 }
 
@@ -535,7 +523,7 @@ a.kpi-tile:active {
 .kpi-t-blue .kpi-pct { background: rgba(0, 82, 255, 0.09); color: #0052ff; }
 .kpi-t-blue .kpi-mini-fill { background: linear-gradient(90deg, #0052ff, #38bdf8); }
 
-.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 2.5px rgba(249, 115, 22, 0.18); }
+.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.18); }
 .kpi-t-amber .kpi-pct { background: rgba(249, 115, 22, 0.12); color: #c2410c; }
 .kpi-t-amber .kpi-mini-fill { background: linear-gradient(90deg, #f97316, #fbbf24); }
 
@@ -546,37 +534,29 @@ a.kpi-tile:active {
 a.kpi-tile.kpi-selected.kpi-t-blue {
     background: linear-gradient(180deg, #ffffff 0%, #e8f1ff 100%);
     border: 1.5px solid #0052ff;
-    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.18), inset 0 1px 0 #ffffff;
 }
 a.kpi-tile.kpi-selected.kpi-t-amber {
     background: linear-gradient(180deg, #ffffff 0%, #fff1e5 100%);
     border: 1.5px solid #f97316;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20), inset 0 1px 0 #ffffff;
 }
 a.kpi-tile.kpi-selected.kpi-t-emerald {
     background: linear-gradient(180deg, #ffffff 0%, #e6fbf2 100%);
     border: 1.5px solid #10b981;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.18), inset 0 1px 0 #ffffff;
 }
 
 /* ==========================================================================
-   SABİT ARAMA & FİLTRE SATIRI (ÜST KONSOLLA SIFIR ÇAKIŞMA)
+   ARAMA & FİLTRE SATIRI (NORMAL AKIŞTA - KARTLARIN ALTINDA KALMAZ)
    ========================================================================== */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-    position: sticky !important;
-    top: calc(var(--h-top-shell, 118px) + 4px) !important;
-    z-index: 990 !important;
-    background: rgba(233, 239, 247, 0.96) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    padding: 3px 0 4px 0 !important;
-    margin: 0 !important;
+    position: relative !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
     width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
@@ -595,58 +575,48 @@ div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%) !important;
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     color: var(--ink-primary) !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     font-size: 12.5px !important;
     font-weight: 500 !important;
-    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
 }
 
 div[data-testid="stTextInput"] input {
-    height: 36px !important;
+    height: 34px !important;
     padding: 0 10px !important;
 }
 
 div[data-testid="stTextInput"] input:focus,
 div[data-testid="stTextArea"] textarea:focus {
     border-color: #0052ff !important;
-    box-shadow: 0 0 0 2.5px rgba(0, 82, 255, 0.14) !important;
+    box-shadow: 0 0 0 2px rgba(0, 82, 255, 0.14) !important;
 }
 
 div[data-testid="stPopover"] > button {
     background: linear-gradient(180deg, #ffffff 0%, #f1f5fb 100%) !important;
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     color: var(--ink-primary) !important;
-    height: 36px !important;
+    height: 34px !important;
     min-width: 48px !important;
     padding: 0 9px !important;
     font-weight: 700 !important;
     font-size: 12.5px !important;
-    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
 }
 
 /* ==========================================================================
-   SABİT AKIŞ SAYACI ŞERİDİ
+   SABİT AKIŞ SAYACI ŞERİDİ ("Aktif Sevkiyat Akışı" YAZISININ OLDUĞU BAR)
    ========================================================================== */
-.sy-sticky-feed-shell {
-    position: sticky !important;
-    top: calc(var(--h-top-shell, 118px) + var(--h-search-row, 38px) + 8px) !important;
-    z-index: 980 !important;
-    background: rgba(233, 239, 247, 0.96);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 2px 2px 5px 2px;
-    margin-bottom: 2px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-.feed-status-bar {
+.feed-header-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 6px;
+    padding: 2px 2px 4px 2px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     font-size: 10.5px;
     color: var(--ink-muted);
     font-weight: 600;
@@ -661,7 +631,7 @@ div[data-testid="stPopover"] > button {
     padding: 1.5px 7px;
     border-radius: 999px;
     color: var(--ink-secondary);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .feed-count-pill strong {
@@ -681,17 +651,33 @@ div[data-testid="stPopover"] > button {
 }
 
 /* ==========================================================================
-   DARALTILMIŞ & KABARTMALI SİPARİŞ KARTLARI (ALTINDAN AKAN LİSTE)
+   KAYDIRILABİLİR SİPARİŞ LİSTESİ KONTEYNERİ (SADECE BURASI KAYAR)
    ========================================================================== */
+.sy-scroll-stream {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding: 2px 1px 18px 1px;
+    height: calc(100dvh - 172px);
+    max-height: calc(100dvh - 172px);
+}
+
+.sy-scroll-stream::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sy-scroll-stream::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.28);
+    border-radius: 999px;
+}
+
 .sip-stream {
-    position: relative;
-    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 5px;
     width: 100%;
     max-width: 100%;
-    padding-top: 2px;
 }
 
 .sip-row-wrap {
@@ -714,34 +700,33 @@ details.neo-card {
     border-radius: 10px;
     box-shadow: var(--emboss-card);
     overflow: hidden;
-    transition: transform 0.12s ease, box-shadow 0.15s ease;
 }
 
 details.neo-card.is-pending-approval {
     background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
     border-color: rgba(249, 115, 22, 0.36);
     box-shadow:
-        0 4px 12px -2px rgba(249, 115, 22, 0.16),
-        0 1px 3px rgba(15, 23, 42, 0.06),
+        0 3px 10px -2px rgba(249, 115, 22, 0.15),
+        0 1px 2px rgba(15, 23, 42, 0.05),
         inset 0 1px 0 #ffffff;
 }
 
 details.neo-card[open] {
     border-color: rgba(0, 82, 255, 0.30);
-    box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 #ffffff;
+    box-shadow: 0 6px 14px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 #ffffff;
 }
 
-/* Kart Yüksekliği Daraltıldı (42px kompakt satır yüksekliği) */
+/* Daraltılmış Kart Başlığı (40px kompakt yükseklik) */
 details.neo-card > summary {
     list-style: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    padding: 5px 8px;
+    padding: 4.5px 8px;
     cursor: pointer;
     user-select: none;
-    min-height: 42px;
+    min-height: 40px;
     width: 100%;
 }
 
@@ -795,7 +780,7 @@ details.neo-card > summary:hover {
 }
 
 .card-route-line {
-    font-size: 12px;
+    font-size: 11.8px;
     font-weight: 700;
     color: var(--ink-primary);
     line-height: 1.2;
@@ -815,7 +800,7 @@ details.neo-card > summary:hover {
     align-items: center;
     gap: 4px;
     margin-top: 1.5px;
-    font-size: 10px;
+    font-size: 9.8px;
     font-weight: 500;
     color: var(--ink-muted);
     line-height: 1.15;
@@ -832,7 +817,7 @@ details.neo-card > summary:hover {
 
 .card-meta-date {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9.2px;
+    font-size: 9px;
     color: var(--ink-secondary);
     flex-shrink: 0;
 }
@@ -845,7 +830,7 @@ details.neo-card > summary:hover {
 }
 
 .mini-op-pill {
-    font-size: 8.8px;
+    font-size: 8.6px;
     font-weight: 800;
     letter-spacing: 0.15px;
     padding: 2px 5px;
@@ -871,7 +856,6 @@ details.neo-card > summary:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s ease, background 0.15s ease;
     flex-shrink: 0;
 }
 
@@ -881,18 +865,17 @@ details.neo-card[open] .neo-chevron {
     color: #ffffff;
 }
 
-/* Kart Açılır İçerik Gövdesi */
 .neo-card-body {
     padding: 8px 9px 9px 9px;
     border-top: 1px dashed rgba(15, 23, 42, 0.10);
     background: #ffffff;
 }
 
-/* Yönetici Hızlı Onay İnceleme Butonu (Kart yüksekliği ile uyumlu 42px) */
+/* Yönetici Hızlı Onay İnceleme Butonu (Kart yüksekliği ile uyumlu 40px) */
 a.quick-inspect-btn {
     flex: 0 0 40px;
     width: 40px;
-    min-height: 42px;
+    min-height: 40px;
     border-radius: 10px;
     background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
     border: 1px solid #c2410c;
@@ -903,8 +886,7 @@ a.quick-inspect-btn {
     align-items: center;
     justify-content: center;
     gap: 0.5px;
-    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: transform 0.12s ease;
+    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 a.quick-inspect-btn:active {
@@ -912,16 +894,67 @@ a.quick-inspect-btn:active {
 }
 
 .qi-icon {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 900;
     line-height: 1;
 }
 
 .qi-txt {
-    font-size: 7.8px;
+    font-size: 7.6px;
     font-weight: 800;
     letter-spacing: 0.25px;
     text-transform: uppercase;
+}
+
+/* Kaydırma Alanı İçi Sayfalama ve Daha Fazla Yükle Bağlantısı */
+.pagination-box {
+    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-top: 7px;
+    text-align: center;
+    box-shadow: var(--emboss-card);
+}
+
+.pagination-text {
+    font-size: 10.5px;
+    color: var(--ink-secondary);
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.progress-track {
+    width: 100%;
+    max-width: 220px;
+    height: 4.5px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0052ff 0%, #0ea5e9 50%, #10b981 100%);
+    border-radius: 999px;
+}
+
+a.load-more-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 36px;
+    margin-top: 6px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+    border: 1px solid rgba(0, 82, 255, 0.24);
+    color: #0052ff !important;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none !important;
+    box-shadow: var(--emboss-card);
 }
 
 /* Toast Bildirim Bandı */
@@ -933,14 +966,12 @@ a.quick-inspect-btn:active {
     border: 1px solid #6ee7b7;
     border-left: 4px solid #10b981;
     color: #064e3b;
-    border-radius: 10px;
-    padding: 7px 10px;
-    font-size: 12px;
+    border-radius: 9px;
+    padding: 5px 9px;
+    font-size: 11.5px;
     font-weight: 700;
-    margin-bottom: 5px;
     opacity: 1;
     transition: opacity 0.35s ease;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.16);
 }
 
 /* ==========================================================================
@@ -965,7 +996,6 @@ a.quick-inspect-btn:active {
     font-size: 10.5px;
     font-weight: 800;
     letter-spacing: 0.2px;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
 }
 
 .sevk-status-chip {
@@ -1091,7 +1121,7 @@ a.quick-inspect-btn:active {
     border-top: 4px solid #f97316;
     border-radius: 14px;
     padding: 11px;
-    margin-top: 6px;
+    margin-top: 4px;
     box-shadow: var(--emboss-card);
 }
 
@@ -1190,7 +1220,7 @@ a.aksiyon-reddet {
 }
 
 /* ==========================================================================
-   GİRİŞ FORMU, BOŞ DURUM & SAYFALAMA
+   GİRİŞ FORMU & BOŞ DURUM
    ========================================================================== */
 div[data-testid="stForm"] {
     background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%) !important;
@@ -1205,14 +1235,14 @@ div[data-testid="stForm"] {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
     border: 1.5px dashed rgba(0, 82, 255, 0.24);
     border-radius: 14px;
-    padding: 24px 14px;
+    padding: 22px 14px;
     text-align: center;
-    margin: 6px 0;
+    margin: 4px 0;
     box-shadow: var(--emboss-card);
 }
 
 .empty-state-icon {
-    font-size: 28px;
+    font-size: 26px;
     margin-bottom: 5px;
 }
 
@@ -1228,51 +1258,16 @@ div[data-testid="stForm"] {
     color: var(--ink-muted);
 }
 
-.pagination-box {
-    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
-    border: 1px solid rgba(15, 23, 42, 0.09);
-    border-radius: 11px;
-    padding: 8px 12px;
-    margin-top: 8px;
-    margin-bottom: 5px;
-    text-align: center;
-    box-shadow: var(--emboss-card);
-}
-
-.pagination-text {
-    font-size: 11px;
-    color: var(--ink-secondary);
-    margin-bottom: 5px;
-    font-weight: 700;
-}
-
-.progress-track {
-    width: 100%;
-    max-width: 240px;
-    height: 5px;
-    background-color: #e2e8f0;
-    border-radius: 999px;
-    margin: 0 auto;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #0052ff 0%, #0ea5e9 50%, #10b981 100%);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-}
-
 /* Küçük Mobil Ekranlar (< 380px) Ek Koruma */
 @media (max-width: 380px) {
     .block-container {
         padding-left: 0.4rem !important;
         padding-right: 0.4rem !important;
     }
-    .kpi-num { font-size: 15.5px; }
-    .kpi-tag { font-size: 8.8px; }
+    .kpi-num { font-size: 14.5px; }
+    .kpi-tag { font-size: 8.6px; }
     .mini-op-pill { display: none; }
-    .brand-name { font-size: 12.2px; }
+    .brand-name { font-size: 12px; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1438,14 +1433,13 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div class="sy-sticky-top-shell">'
-            f'<div class="command-header" style="margin-bottom:0;">'
+            f'<div class="command-header">'
             f'<div class="brand-cluster">'
             f'{LOGO_HTML}'
             f'<div class="brand-text-wrap">'
             f'<div class="brand-title-row"><span class="brand-name">SAYAR YAPI</span><span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>GÜVENLİ</span></div>'
             f'<div class="brand-sub-row">Canlı Sipariş & Sevkiyat Telemetri Sistemi</div>'
-            f'</div></div></div></div>',
+            f'</div></div></div>',
             unsafe_allow_html=True
         )
 
@@ -1534,6 +1528,11 @@ def filtreleri_sifirla():
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
     st.session_state.sayfa_limiti = 50
+    st.query_params.pop("action", None)
+    st.rerun()
+
+if st.query_params.get("action") == "more":
+    st.session_state.sayfa_limiti += 50
     st.query_params.pop("action", None)
     st.rerun()
 
@@ -1889,7 +1888,7 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# SABİT ÜST KONSOLLAR (ÜST BAR + 3'LÜ KPI KARTLARI TEK SABİT BLOKTA)
+# SABİT ÜST BÖLGE: 1) ÜST BAR + 3'LÜ KPI KARTLARI
 # ==============================================================================
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
@@ -1921,7 +1920,6 @@ else:
     alt_metin = "Canlı Lojistik Radarı"
 
 st.markdown(
-    f'<div class="sy-sticky-top-shell">'
     f'<div class="command-header">'
     f'<div class="brand-cluster">'
     f'{LOGO_HTML}'
@@ -1937,7 +1935,11 @@ st.markdown(
     f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn" title="Verileri Yenile">↻</a>'
     f'<a data-spa="1" href="?action=logout" target="_self" class="cmd-icon-btn" title="Güvenli Çıkış">⏻</a>'
     f'</div>'
-    f'</div>'
+    f'</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
     f'<div class="kpi-deck">'
     f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-tile kpi-t-blue {cls_tamamlandi}" title="Tamamlanan siparişleri filtrele">'
     f'<div class="kpi-tile-top"><span class="kpi-tag">Tamamlanan</span><span class="kpi-badge-dot"></span></div>'
@@ -1954,13 +1956,12 @@ st.markdown(
     f'<div class="kpi-tile-mid"><span class="kpi-num">{sevk_bekleyen}</span><span class="kpi-pct">%{pct_sevk}</span></div>'
     f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_sevk, 6)}%;"></div></div>'
     f'</a>'
-    f'</div>'
     f'</div>',
     unsafe_allow_html=True
 )
 
 # ==============================================================================
-# SABİT ARAMA & FİLTRE ÇUBUĞU
+# SABİT ÜST BÖLGE: 2) ARAMA & FİLTRE ÇUBUĞU (KARTLARIN TAM ALTINDA, SIFIR ÇAKIŞMA)
 # ==============================================================================
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
@@ -2049,7 +2050,7 @@ if flash_msg:
     st.session_state.flash_mesaj = None
 
 # ==============================================================================
-# FİLTRELEME VE KAYDIRILABİLİR SİPARİŞ AKIŞI
+# FİLTRELEME + SABİT "AKTİF SEVKİYAT AKIŞI" ŞERİDİ + ALTINDA KAYDIRMALI LİSTE
 # ==============================================================================
 filtered = df_sip
 
@@ -2103,16 +2104,14 @@ if toplam_filtrelenen == 0:
         st.button("↻ Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
     st.markdown(
-        f'<div class="sy-sticky-feed-shell">'
-        f'<div class="feed-status-bar">'
+        f'<div class="feed-header-bar">'
         f'<span class="feed-count-pill">Akış: <strong>{gosterilen_adet}</strong> / {toplam_filtrelenen}</span>'
         f'<span class="feed-mode-badge">{MOD_ETIKET.get(kpi_mod, "Canlı Akış")}</span>'
-        f'</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    kart_parcalari = ['<div class="sip-stream">']
+    kart_parcalari = ['<div id="sy-scroll-stream" class="sy-scroll-stream"><div class="sip-stream">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
@@ -2176,20 +2175,23 @@ else:
         )
 
     kart_parcalari.append('</div>')
-    st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
 
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
-    st.markdown(
+    kart_parcalari.append(
         f'<div class="pagination-box">'
         f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi canlı akışta (%{yuzde})</div>'
         f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
-        f'</div>',
-        unsafe_allow_html=True
+        f'</div>'
     )
 
     if gosterilen_adet < toplam_filtrelenen:
         kalan = toplam_filtrelenen - gosterilen_adet
         eklenecek = min(50, kalan)
-        if st.button(f"Daha Fazla Sipariş Yükle (+{eklenecek})", use_container_width=True):
-            st.session_state.sayfa_limiti += 50
-            st.rerun()
+        kart_parcalari.append(
+            f'<a data-spa="1" href="?action=more{token_param}" target="_self" class="load-more-link">'
+            f'Daha Fazla Sipariş Yükle (+{eklenecek})'
+            f'</a>'
+        )
+
+    kart_parcalari.append('</div>')
+    st.markdown("".join(kart_parcalari), unsafe_allow_html=True)
