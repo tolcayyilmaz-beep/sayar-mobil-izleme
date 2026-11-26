@@ -918,8 +918,7 @@ def onay_kararini_veritabanina_yaz(siparis_no: int, karar: str, aciklama: str = 
             if not_ek:
                 mevcut_not = str(row.get("notlar") or "").strip()
                 etiket = f"[Mobil {karar} - {zaman}]: {not_ek}"
-                yeni_not = f"{mevcut_not}
-{etiket}".strip() if mevcut_not else etiket
+                yeni_not = f"{mevcut_not}\n{etiket}".strip() if mevcut_not else etiket
                 cur.execute(
                     "UPDATE siparisler SET operasyon = %s, notlar = %s WHERE siparis_no = %s",
                     (karar, yeni_not, int(siparis_no))
@@ -950,8 +949,7 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
         if aciklama and aciklama.strip():
             mesaj_satirlar.append(f"Not: {aciklama.strip()}")
 
-        mesaj = "
-".join(mesaj_satirlar)
+        mesaj = "\n".join(mesaj_satirlar)
         headers = {
             "Title": baslik.encode("utf-8").decode("latin-1", errors="ignore"),
             "Priority": "high",
@@ -1210,8 +1208,7 @@ if not inceleme_aktif_mi:
 try:
     df_sip, df_kalem = verileri_getir()
 except Exception as e:
-    st.error(f"PostgreSQL veritabanı okunamadı. Bağlantıyı kontrol edin.
-Detay: {e}")
+    st.error(f"PostgreSQL veritabanı okunamadı. Bağlantıyı kontrol edin.\nDetay: {e}")
     st.stop()
 
 # Mobil oturumda verilen kararları güncel veri gelene kadar anlık yansıt
@@ -1226,8 +1223,7 @@ if st.session_state.yerel_kararlar and not df_sip.empty:
                 if karar_bilgi.get("not"):
                     mevcut_not = str(df_sip.loc[mask, "notlar"].iloc[0] or "").strip()
                     ek_not = f"[Mobil {karar_bilgi['karar']}]: {karar_bilgi['not']}"
-                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}
-{ek_not}".strip() if mevcut_not else ek_not
+                    df_sip.loc[mask, "notlar"] = f"{mevcut_not}\n{ek_not}".strip() if mevcut_not else ek_not
             else:
                 st.session_state.yerel_kararlar.pop(s_no, None)
 
