@@ -21,7 +21,6 @@ if os.environ.get("STREAMLIT_SECRETS") and not os.path.exists(".streamlit/secret
 
 NTFY_TOPIC = "sayar_yapi_kamyon_2026x"
 RAILWAY_DEFAULT_DB_URL = "postgresql://postgres:vRnqPZifPAhgHJkVconMThDtIillFNFN@trolley.proxy.rlwy.net:41607/railway"
-SAYFA_ADIM = 25
 
 
 @st.cache_data(show_spinner=False)
@@ -95,7 +94,7 @@ components.html(
     width=0
 )
 
-# Özel CSS: Kurumsal Çelik & Beton (Sabit Üst Alan + Sıkılaştırılmış Kompakt Aydınlık Tema)
+# Özel CSS: Kurumsal Çelik & Beton (Orijinal Sıkılaştırılmış Kompakt Aydınlık Tema)
 st.markdown("""
 <style>
 header[data-testid="stHeader"],
@@ -122,7 +121,7 @@ a[href*="streamlit.io/cloud"] {
     color: #0f172a !important;
 }
 .block-container {
-    padding-top: 0 !important;
+    padding-top: 0.45rem !important;
     padding-bottom: 1.5rem !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
@@ -130,33 +129,6 @@ a[href*="streamlit.io/cloud"] {
 [data-testid="stVerticalBlock"] {
     gap: 0.45rem !important;
 }
-
-/* Kaydırma sırasında üst bölümü (Gösterilen sipariş sayısı dahil) sabit tutar */
-[data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] > div:has(.sticky-top-marker) {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 999 !important;
-    background-color: #f1f5f9 !important;
-    padding-top: 0.45rem !important;
-    padding-bottom: 4px !important;
-    border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
-}
-[data-testid="stMainBlockContainer"] > div > [data-testid="stVerticalBlock"] > div:has(.sticky-top-marker) [data-testid="stVerticalBlock"] {
-    gap: 0.35rem !important;
-}
-
-.sticky-count-bar {
-    font-size: 12.5px;
-    color: #475569;
-    padding: 2px 2px 1px 2px;
-    line-height: 1.3;
-}
-.sticky-count-bar strong {
-    color: #0f172a;
-    font-weight: 700;
-}
-
 .auto-toast-banner {
     background-color: #dcfce7;
     border: 1px solid #86efac;
@@ -166,7 +138,7 @@ a[href*="streamlit.io/cloud"] {
     padding: 8px 12px;
     font-size: 12.5px;
     font-weight: 700;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     opacity: 1;
     transition: opacity 0.35s ease;
     box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
@@ -179,7 +151,7 @@ a[href*="streamlit.io/cloud"] {
     border-left: 5px solid #f97316;
     border-radius: 10px;
     padding: 10px 13px;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     color: #f8fafc;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
     gap: 10px;
@@ -258,8 +230,8 @@ a[href*="streamlit.io/cloud"] {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 a.kpi-card {
     display: block;
@@ -304,7 +276,7 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
-    margin-top: 4px !important;
+    margin-top: 12px !important;
 }
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
@@ -425,10 +397,6 @@ details.custom-sip-card[open] .custom-card-arrow {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.ikon-hiza-bosluk {
-    visibility: hidden;
-    user-select: none;
-}
 .custom-card-body {
     padding: 6px 10px 10px 10px;
     border-top: 1px solid #e2e8f0;
@@ -461,7 +429,7 @@ a.mini-onay-btn:active {
     border-top: 4px solid #f97316;
     border-radius: 11px;
     padding: 10px 11px 12px 11px;
-    margin-top: 6px;
+    margin-top: 2px;
     margin-bottom: 10px;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
 }
@@ -828,13 +796,12 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div style="padding-top:0.45rem;">'
             f'<div class="header-banner"><div class="header-info">'
             f'{LOGO_HTML}'
             f'<div class="header-text-col">'
             f'<div class="header-title"><span>SAYAR YAPI</span></div>'
             f'</div>'
-            f'</div></div></div>',
+            f'</div></div>',
             unsafe_allow_html=True
         )
 
@@ -896,7 +863,7 @@ check_password()
 if "kpi_mod" not in st.session_state:
     st.session_state.kpi_mod = "SEVK"
 if "sayfa_limiti" not in st.session_state:
-    st.session_state.sayfa_limiti = SAYFA_ADIM
+    st.session_state.sayfa_limiti = 50
 if "arama_metni" not in st.session_state:
     st.session_state.arama_metni = ""
 if "onay_inceleme_sip_no" not in st.session_state:
@@ -917,12 +884,12 @@ def filtreleri_sifirla():
     st.session_state.f_musteri = "[TÜMÜ]"
     st.session_state.f_gizle_muh = True
     st.session_state.f_gizle_ipt = True
-    st.session_state.sayfa_limiti = SAYFA_ADIM
+    st.session_state.sayfa_limiti = 50
 
 
 if st.query_params.get("action") == "refresh":
     st.cache_data.clear()
-    st.session_state.sayfa_limiti = SAYFA_ADIM
+    st.session_state.sayfa_limiti = 50
     st.query_params.pop("action", None)
     st.rerun()
 
@@ -960,7 +927,7 @@ if "kpi" in st.query_params:
 
         st.session_state.f_gizle_muh = (st.session_state.kpi_mod == "SEVK")
         st.session_state.f_gizle_ipt = (st.session_state.kpi_mod == "SEVK")
-        st.session_state.sayfa_limiti = SAYFA_ADIM
+        st.session_state.sayfa_limiti = 50
         st.session_state.onay_inceleme_sip_no = None
     st.query_params.pop("kpi", None)
     st.rerun()
@@ -990,6 +957,28 @@ def verileri_getir():
 
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
+
+# İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
+if not inceleme_aktif_mi:
+    kullanici_satiri_html = ""
+    if yetki_tipi in ("MUSTERI", "SIPARIS_VEREN") and yetki_deger:
+        kullanici_satiri_html = f'<div class="header-user">{html.escape(str(yetki_deger))}</div>'
+
+    st.markdown(
+        f'<div class="header-banner">'
+        f'<div class="header-info">'
+        f'{LOGO_HTML}'
+        f'<div class="header-text-col">'
+        f'<div class="header-title"><span>SAYAR YAPI</span></div>'
+        f'{kullanici_satiri_html}'
+        f'</div>'
+        f'</div>'
+        f'<div class="header-actions">'
+        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
+        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
 
 try:
     df_sip, df_kalem = verileri_getir()
@@ -1282,8 +1271,36 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# ANA LİSTE VE KPI GÖRÜNÜMÜ (SABİT ÜST BÖLÜM + KAYAN LİSTE)
+# ANA LİSTE VE KPI GÖRÜNÜMÜ
 # ==============================================================================
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
+    toast_id = f"toast_{int(time.time() * 1000)}"
+    st.markdown(
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
+        unsafe_allow_html=True
+    )
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const el = doc.getElementById({json.dumps(toast_id)});
+            if (!el) return;
+            setTimeout(function() {{
+                el.style.opacity = '0';
+                setTimeout(function() {{
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
+                }}, 350);
+            }}, 2500);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
+    st.session_state.flash_mesaj = None
+
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -1297,6 +1314,18 @@ kpi_mod = st.session_state.kpi_mod
 cls_tamamlandi = "kpi-active" if kpi_mod == "TAMAMLANDI" else ""
 cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
 cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
+
+st.markdown(
+    f'<div class="kpi-grid">'
+    f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
+    f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
+    f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
+    f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
+    f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
+    f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
+    f'</div>',
+    unsafe_allow_html=True
+)
 
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
@@ -1329,136 +1358,64 @@ ek_filtre_aktif = (
 )
 popover_etiket = "⚙️ •" if ek_filtre_aktif else "⚙️"
 
-# Sabit Üst Alan: Üst Bar + Flash Mesaj + KPI + Arama/Filtre + Gösterilen Sipariş Sayısı
-ust_sabit_alan = st.container()
-with ust_sabit_alan:
-    st.markdown('<div class="sticky-top-marker"></div>', unsafe_allow_html=True)
-
-    kullanici_satiri_html = ""
-    if yetki_tipi in ("MUSTERI", "SIPARIS_VEREN") and yetki_deger:
-        kullanici_satiri_html = f'<div class="header-user">{html.escape(str(yetki_deger))}</div>'
-
-    st.markdown(
-        f'<div class="header-banner">'
-        f'<div class="header-info">'
-        f'{LOGO_HTML}'
-        f'<div class="header-text-col">'
-        f'<div class="header-title"><span>SAYAR YAPI</span></div>'
-        f'{kullanici_satiri_html}'
-        f'</div>'
-        f'</div>'
-        f'<div class="header-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
-        f'</div></div>',
-        unsafe_allow_html=True
+col_arama, col_filtre = st.columns([5, 1])
+with col_arama:
+    arama = st.text_input(
+        "Arama",
+        key="arama_metni",
+        placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
+        label_visibility="collapsed"
     )
 
-    flash_msg = st.session_state.flash_mesaj
-    if flash_msg:
-        toast_id = f"toast_{int(time.time() * 1000)}"
-        st.markdown(
-            f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
-            unsafe_allow_html=True
-        )
-        components.html(
-            f"""
-            <script>
-            (function() {{
-                const doc = window.parent.document;
-                const el = doc.getElementById({json.dumps(toast_id)});
-                if (!el) return;
-                setTimeout(function() {{
-                    el.style.opacity = '0';
-                    setTimeout(function() {{
-                        if (el && el.parentNode) el.parentNode.removeChild(el);
-                    }}, 350);
-                }}, 2500);
-            }})();
-            </script>
-            """,
-            height=0,
-            width=0
-        )
-        st.session_state.flash_mesaj = None
+with col_filtre:
+    with st.popover(popover_etiket, use_container_width=True):
+        st.markdown("**Detaylı Filtreleme**")
+        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
+        secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
 
-    st.markdown(
-        f'<div class="kpi-grid">'
-        f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
-        f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
-        f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
-        f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
-        f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
-        f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
-
-    col_arama, col_filtre = st.columns([5, 1])
-    with col_arama:
-        arama = st.text_input(
-            "Arama",
-            key="arama_metni",
-            placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
-            label_visibility="collapsed"
-        )
-
-    with col_filtre:
-        with st.popover(popover_etiket, use_container_width=True):
-            st.markdown("**Detaylı Filtreleme**")
-            secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
-            secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
-
-            if yetki_tipi != "MUSTERI":
-                secili_musteri = st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
-            else:
-                secili_musteri = "[TÜMÜ]"
-
-            gizle_tamamlanan = st.checkbox("Tamamlananları Gizle", key="f_gizle_muh")
-            gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
-
-            if ek_filtre_aktif or arama.strip():
-                st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
-
-    filtered = df_sip
-
-    if gizle_tamamlanan:
-        filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
-    if gizle_iptal:
-        filtered = filtered[
-            (filtered["operasyon"] != "İPTAL EDİLDİ") &
-            (filtered["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
-        ]
-    if secili_op != "[TÜMÜ]":
-        if secili_op == "TAMAMLANDI":
-            filtered = filtered[filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
+        if yetki_tipi != "MUSTERI":
+            secili_musteri = st.selectbox("Müşteri", musteri_listesi, key="f_musteri")
         else:
-            filtered = filtered[filtered["operasyon"] == secili_op]
-    if secili_firma != "[TÜMÜ]":
-        filtered = filtered[filtered["firma"] == secili_firma]
-    if secili_musteri != "[TÜMÜ]":
-        filtered = filtered[filtered["musteri"] == secili_musteri]
-    if arama.strip():
-        q = arama.strip().lower()
-        mask = (
-            filtered["siparis_no"].astype(str).str.contains(q, na=False) |
-            filtered["firma"].fillna("").str.lower().str.contains(q) |
-            filtered["musteri"].fillna("").str.lower().str.contains(q) |
-            filtered["santiye"].fillna("").str.lower().str.contains(q)
-        )
-        filtered = filtered[mask]
+            secili_musteri = "[TÜMÜ]"
 
-    toplam_filtrelenen = len(filtered)
-    gosterilen_limit = st.session_state.sayfa_limiti
-    gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
+        gizle_tamamlanan = st.checkbox("Tamamlananları Gizle", key="f_gizle_muh")
+        gizle_iptal = st.checkbox("İptal Edilenleri Gizle", key="f_gizle_ipt")
 
-    if toplam_filtrelenen > 0:
-        st.markdown(
-            f'<div class="sticky-count-bar">Gösterilen sipariş sayısı: <strong>{gosterilen_adet} / {toplam_filtrelenen}</strong></div>',
-            unsafe_allow_html=True
-        )
+        if ek_filtre_aktif or arama.strip():
+            st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
-# Kayan Sipariş Listesi
+filtered = df_sip
+
+if gizle_tamamlanan:
+    filtered = filtered[~filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
+if gizle_iptal:
+    filtered = filtered[
+        (filtered["operasyon"] != "İPTAL EDİLDİ") &
+        (filtered["durum"].fillna("").str.replace("i", "İ").str.upper() != "İPTAL")
+    ]
+if secili_op != "[TÜMÜ]":
+    if secili_op == "TAMAMLANDI":
+        filtered = filtered[filtered["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])]
+    else:
+        filtered = filtered[filtered["operasyon"] == secili_op]
+if secili_firma != "[TÜMÜ]":
+    filtered = filtered[filtered["firma"] == secili_firma]
+if secili_musteri != "[TÜMÜ]":
+    filtered = filtered[filtered["musteri"] == secili_musteri]
+if arama.strip():
+    q = arama.strip().lower()
+    mask = (
+        filtered["siparis_no"].astype(str).str.contains(q, na=False) |
+        filtered["firma"].fillna("").str.lower().str.contains(q) |
+        filtered["musteri"].fillna("").str.lower().str.contains(q) |
+        filtered["santiye"].fillna("").str.lower().str.contains(q)
+    )
+    filtered = filtered[mask]
+
+toplam_filtrelenen = len(filtered)
+gosterilen_limit = st.session_state.sayfa_limiti
+gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
+
 if toplam_filtrelenen == 0:
     st.markdown(
         '<div class="empty-state-box">'
@@ -1472,6 +1429,8 @@ if toplam_filtrelenen == 0:
     with col_e2:
         st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
+    st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
+
     kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
@@ -1495,12 +1454,7 @@ else:
             satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
         else:
             satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
-
-        # Konum simgesi kaldırıldı; üst satırdaki durum ikonu kadar boşluk bırakılarak yazı hizası korundu
-        satir2_html = (
-            f'<span class="ikon-hiza-bosluk" aria-hidden="true">{durum_ikon}</span> '
-            f'{html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}'
-        )
+        satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
         onay_buton_html = ""
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
@@ -1536,7 +1490,7 @@ else:
 
     if gosterilen_adet < toplam_filtrelenen:
         kalan = toplam_filtrelenen - gosterilen_adet
-        eklenecek = min(SAYFA_ADIM, kalan)
+        eklenecek = min(50, kalan)
         if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
-            st.session_state.sayfa_limiti += SAYFA_ADIM
+            st.session_state.sayfa_limiti += 50
             st.rerun()
