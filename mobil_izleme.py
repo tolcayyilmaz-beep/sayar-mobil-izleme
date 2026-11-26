@@ -165,33 +165,41 @@ a[href*="streamlit.io/cloud"] {
 }
 
 /* ============================================================================
-   SABİT ÜST KOMUTA ALANI (HEADER + KPI + ARAMA ÇUBUĞU STICKY)
+   SABİT ÜST KOMUTA ALANI (ÇAKIŞMASIZ TAM YÜKSEKLİK HİZALAMALI STICKY)
    ============================================================================ */
 div[data-testid="stVerticalBlock"] > div:has(.sy-cmd-header),
 div[data-testid="stVerticalBlock"] > div:has(.sy-kpi-grid),
-div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
+div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]),
+div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
     position: sticky !important;
-    z-index: 95 !important;
     background-color: var(--bg-canvas) !important;
 }
 
 div[data-testid="stVerticalBlock"] > div:has(.sy-cmd-header) {
     top: 0px !important;
     padding-top: 4px !important;
-    z-index: 98 !important;
+    padding-bottom: 4px !important;
+    z-index: 99 !important;
 }
 
 div[data-testid="stVerticalBlock"] > div:has(.sy-kpi-grid) {
-    top: 66px !important;
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-    z-index: 97 !important;
+    top: 64px !important;
+    padding-top: 3px !important;
+    padding-bottom: 4px !important;
+    z-index: 98 !important;
 }
 
 div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
     top: 138px !important;
+    padding-top: 3px !important;
+    padding-bottom: 5px !important;
+    z-index: 97 !important;
+}
+
+div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
+    top: 184px !important;
     padding-top: 2px !important;
-    padding-bottom: 6px !important;
+    padding-bottom: 5px !important;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
     box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.14) !important;
     z-index: 96 !important;
@@ -222,10 +230,12 @@ div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 56px;
+    box-sizing: border-box;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid var(--border-strong);
     border-radius: 14px;
-    padding: 9px 12px;
+    padding: 8px 12px;
     margin-bottom: 0px;
     box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff;
     overflow: hidden;
@@ -380,8 +390,10 @@ div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-top: 2px;
-    margin-bottom: 2px;
+    height: 67px;
+    box-sizing: border-box;
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 
 a.sy-kpi-card {
@@ -641,8 +653,8 @@ button[kind="secondary"]:hover {
    KAYDIRILABİLİR SEVKİYAT AKIŞI BÖLÜMÜ (ÜST YAPI SABİT, KARTLAR İÇERİDE KAYAR)
    ============================================================================ */
 .sy-scroll-viewport {
-    max-height: calc(100dvh - 215px);
-    min-height: 260px;
+    max-height: calc(100dvh - 224px);
+    min-height: 240px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 3px;
