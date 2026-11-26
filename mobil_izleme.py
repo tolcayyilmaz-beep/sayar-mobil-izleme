@@ -37,21 +37,17 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 
 
 LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = (
-    f'<img src="{LOGO_DATA_URI}" class="brand-logo" alt="Sayar Yapı">'
-    if LOGO_DATA_URI
-    else '<div class="brand-monogram">SY</div>'
-)
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
 
 # Sayfa ve Mobil Görünüm Ayarları
 st.set_page_config(
-    page_title="Sayar Yapı | Canlı Sipariş & Lojistik Radarı",
+    page_title="Sayar Yapı | Sipariş İzleme",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Üst Sabit Alan Yükseklik Ölçer (Çakışma Önleyici)
+# iOS Ana Ekran İkonu + Tam Sayfa Yenilemesiz SPA Link Yakalayıcı
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -91,52 +87,6 @@ components.html(
                 win.dispatchEvent(new PopStateEvent('popstate'));
             }}, true);
         }}
-
-        if (!win.__liveClockStarted) {{
-            win.__liveClockStarted = true;
-            setInterval(function() {{
-                const clockEl = doc.getElementById('sy-live-clock');
-                if (clockEl) {{
-                    const now = new Date();
-                    const hh = String(now.getHours()).padStart(2, '0');
-                    const mm = String(now.getMinutes()).padStart(2, '0');
-                    const ss = String(now.getSeconds()).padStart(2, '0');
-                    clockEl.textContent = hh + ':' + mm + ':' + ss;
-                }}
-            }}, 1000);
-        }}
-
-        function syncStickyStack() {{
-            const root = doc.documentElement;
-            const topShell = doc.querySelector('.sy-sticky-top-shell');
-            const searchRow = doc.querySelector('div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"])');
-            const feedBar = doc.querySelector('.sy-sticky-feed-shell');
-
-            let h1 = 0;
-            if (topShell) {{
-                h1 = Math.ceil(topShell.getBoundingClientRect().height);
-                root.style.setProperty('--h-top-shell', h1 + 'px');
-            }}
-            let h2 = 0;
-            if (searchRow) {{
-                searchRow.style.top = (h1 + 4) + 'px';
-                h2 = Math.ceil(searchRow.getBoundingClientRect().height);
-                root.style.setProperty('--h-search-row', h2 + 'px');
-            }}
-            if (feedBar) {{
-                feedBar.style.top = (h1 + h2 + 8) + 'px';
-            }}
-        }}
-
-        syncStickyStack();
-        setTimeout(syncStickyStack, 120);
-        setTimeout(syncStickyStack, 450);
-        if (!win.__stickyResizeHooked) {{
-            win.__stickyResizeHooked = true;
-            win.addEventListener('resize', syncStickyStack);
-            const obs = new MutationObserver(syncStickyStack);
-            obs.observe(doc.body, {{ childList: true, subtree: true }});
-        }}
     }})();
     </script>
     """,
@@ -144,41 +94,9 @@ components.html(
     width=0
 )
 
-# ==============================================================================
-# ULTRA-KOMPAKT, KABARTMALI (EMBOSSED), SABİT ÜST KONSOLLU MOBİL-İLK TASARIM
-# ==============================================================================
+# Özel CSS: Kurumsal Çelik & Beton (Orijinal Sıkılaştırılmış Kompakt Aydınlık Tema)
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap');
-
-:root {
-    --bg-canvas: #e9eff7;
-    --bg-surface: #ffffff;
-    --bg-elevated: #fcfdff;
-    --ink-primary: #0b1528;
-    --ink-secondary: #475569;
-    --ink-muted: #64748b;
-    --brand-cobalt: #0052ff;
-    --brand-cyan: #0ea5e9;
-    --brand-amber: #f97316;
-    --brand-emerald: #10b981;
-    --brand-rose: #ef4444;
-    --h-top-shell: 118px;
-    --h-search-row: 38px;
-    /* Hafif Kabartmalı (3D Tactile Emboss) Gölgeler */
-    --emboss-card:
-        0 4px 10px -2px rgba(15, 23, 42, 0.08),
-        0 1px 3px rgba(15, 23, 42, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -1px 0 rgba(15, 23, 42, 0.05);
-    --emboss-tile:
-        0 5px 12px -3px rgba(15, 23, 42, 0.09),
-        0 1px 2px rgba(15, 23, 42, 0.05),
-        inset 0 1.5px 0 rgba(255, 255, 255, 1),
-        inset 0 -1.5px 0 rgba(15, 23, 42, 0.06);
-}
-
-/* Streamlit Varsayılan Chrome Gizleme */
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -198,1081 +116,507 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-
-/* Küresel Yatay Taşma Kilidi (Sticky uyumlu clip kullanımı) */
-html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-    max-width: 100vw !important;
-    overflow-x: clip !important;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    background:
-        radial-gradient(circle at 15% 0%, rgba(0, 82, 255, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 88% 2%, rgba(14, 165, 233, 0.07) 0%, transparent 36%),
-        var(--bg-canvas) !important;
-    color: var(--ink-primary) !important;
-    -webkit-font-smoothing: antialiased;
+.stApp, [data-testid="stAppViewContainer"] {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
 }
-
-*, *::before, *::after {
-    box-sizing: border-box !important;
-}
-
 .block-container {
-    max-width: 720px !important;
-    margin: 0 auto !important;
-    padding: 0 0.55rem 1.4rem 0.55rem !important;
-    overflow: visible !important;
+    padding-top: 0.45rem !important;
+    padding-bottom: 1.5rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
 }
-
-/* Streamlit dikey boşluklarını sıkılaştır */
 [data-testid="stVerticalBlock"] {
-    gap: 0.28rem !important;
+    gap: 0.45rem !important;
 }
-
-div[data-testid="stElementContainer"] {
-    margin-bottom: 0 !important;
+.auto-toast-banner {
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+    border-left: 4px solid #16a34a;
+    color: #14532d;
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
 }
-
-/* ==========================================================================
-   SABİT ÜST KONSOLLAR (ZERO OVERLAP STICKY STACK)
-   ========================================================================== */
-.sy-sticky-top-shell {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 1000 !important;
-    background: rgba(233, 239, 247, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 6px 0 4px 0;
-    margin: 0;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-/* ==========================================================================
-   KOMPAKT CABARTMALI ÜST BAR
-   ========================================================================== */
-@keyframes pulseRing {
-    0% { transform: scale(0.85); opacity: 0.9; }
-    70% { transform: scale(2.1); opacity: 0; }
-    100% { transform: scale(2.1); opacity: 0; }
-}
-
-@keyframes shimmerSweep {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-.command-header {
-    position: relative;
+.header-banner {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 7px;
-    background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 13px;
-    padding: 6px 9px;
-    box-shadow: var(--emboss-tile);
-    overflow: hidden;
-    margin-bottom: 6px;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-left: 5px solid #f97316;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 4px;
+    color: #f8fafc;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+    gap: 8px;
 }
-
-.command-header::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #0052ff, #0ea5e9, #10b981, #0052ff);
-    background-size: 200% 100%;
-    animation: shimmerSweep 5s linear infinite;
+.header-info {
+    flex: 1;
+    min-width: 0;
 }
-
-.brand-cluster {
+.header-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.brand-logo {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    object-fit: contain;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.09);
-    padding: 1.5px;
-    flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.07);
-}
-
-.brand-monogram {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #0052ff 0%, #0ea5e9 100%);
-    color: #ffffff;
-    font-weight: 800;
-    font-size: 11.5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(0, 82, 255, 0.25);
-}
-
-.brand-text-wrap {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.brand-title-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    min-width: 0;
-}
-
-.brand-name {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--ink-primary);
-    letter-spacing: -0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.live-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.30);
-    color: #047857;
-    padding: 1px 6px;
-    border-radius: 999px;
-    font-size: 8.5px;
-    font-weight: 800;
-    letter-spacing: 0.35px;
-    flex-shrink: 0;
-}
-
-.live-dot-wrap {
-    position: relative;
-    width: 6px;
-    height: 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.live-dot-core {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: #10b981;
-}
-
-.live-dot-ring {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #10b981;
-    animation: pulseRing 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
-}
-
-.brand-sub-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 1px;
-    font-size: 10px;
-    color: var(--ink-muted);
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.telemetry-clock {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9.5px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--brand-cobalt);
-    background: rgba(0, 82, 255, 0.08);
-    padding: 0.5px 5px;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.header-logo {
+    height: 26px;
+    width: auto;
+    object-fit: contain;
     border-radius: 4px;
     flex-shrink: 0;
 }
-
+.header-sub {
+    font-size: 11px;
+    color: #cbd5e1;
+    margin-top: 2px;
+}
 .header-actions {
     display: flex;
-    align-items: center;
-    gap: 5px;
+    gap: 6px;
     flex-shrink: 0;
 }
-
-a.cmd-icon-btn {
+.icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 8px;
-    background: linear-gradient(180deg, #ffffff 0%, #eef3fa 100%);
-    border: 1px solid rgba(15, 23, 42, 0.11);
-    color: var(--ink-primary) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 13px;
-    font-weight: 800;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff;
-    transition: transform 0.12s ease;
+    font-size: 16px;
+    cursor: pointer;
 }
-
-a.cmd-icon-btn:active {
-    transform: scale(0.93);
+.icon-btn:active {
+    background-color: #f97316;
 }
-
-/* ==========================================================================
-   3'LÜ KOMPAKT KABARTMALI KPI KARTLARI
-   ========================================================================== */
-.kpi-deck {
+.kpi-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    width: 100%;
-    margin: 0;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
-
-a.kpi-tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-width: 0;
-    background: linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 11px;
-    padding: 6px 8px 5px 8px;
+a.kpi-card {
+    display: block;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 7px 8px;
+    text-align: center;
     text-decoration: none !important;
-    box-shadow: var(--emboss-tile);
-    transition: transform 0.14s ease, box-shadow 0.14s ease;
-    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    cursor: pointer;
 }
-
-a.kpi-tile:active {
-    transform: scale(0.97);
+a.kpi-card:hover {
+    background-color: #f8fafc;
 }
-
-.kpi-tile-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 3px;
-    margin-bottom: 2px;
+a.kpi-card:active {
+    transform: scale(0.98);
 }
-
-.kpi-tag {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: var(--ink-secondary);
+.kpi-blue { border-top: 3px solid #0284c7 !important; }
+.kpi-orange { border-top: 3px solid #f97316 !important; }
+.kpi-green { border-top: 3px solid #16a34a !important; }
+.kpi-active {
+    background-color: #ffffff !important;
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+.kpi-label {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 1px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
-
-.kpi-badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.kpi-tile-mid {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 3px;
-}
-
-.kpi-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 17px;
+.kpi-value {
+    font-size: 19px;
     font-weight: 800;
-    line-height: 1.05;
-    color: var(--ink-primary);
-    letter-spacing: -0.5px;
+    color: #0f172a;
+    line-height: 1.2;
 }
-
-.kpi-pct {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8.8px;
-    font-weight: 700;
-    padding: 0.5px 4px;
-    border-radius: 5px;
-    flex-shrink: 0;
-}
-
-.kpi-mini-bar {
-    width: 100%;
-    height: 3px;
-    background: #e5ebf3;
-    border-radius: 999px;
-    margin-top: 4px;
-    overflow: hidden;
-}
-
-.kpi-mini-fill {
-    height: 100%;
-    border-radius: 999px;
-}
-
-.kpi-t-blue .kpi-badge-dot { background: #0052ff; }
-.kpi-t-blue .kpi-pct { background: rgba(0, 82, 255, 0.09); color: #0052ff; }
-.kpi-t-blue .kpi-mini-fill { background: linear-gradient(90deg, #0052ff, #38bdf8); }
-
-.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 2.5px rgba(249, 115, 22, 0.18); }
-.kpi-t-amber .kpi-pct { background: rgba(249, 115, 22, 0.12); color: #c2410c; }
-.kpi-t-amber .kpi-mini-fill { background: linear-gradient(90deg, #f97316, #fbbf24); }
-
-.kpi-t-emerald .kpi-badge-dot { background: #10b981; }
-.kpi-t-emerald .kpi-pct { background: rgba(16, 185, 129, 0.11); color: #047857; }
-.kpi-t-emerald .kpi-mini-fill { background: linear-gradient(90deg, #10b981, #34d399); }
-
-a.kpi-tile.kpi-selected.kpi-t-blue {
-    background: linear-gradient(180deg, #ffffff 0%, #e8f1ff 100%);
-    border: 1.5px solid #0052ff;
-    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.18), inset 0 1px 0 #ffffff;
-}
-a.kpi-tile.kpi-selected.kpi-t-amber {
-    background: linear-gradient(180deg, #ffffff 0%, #fff1e5 100%);
-    border: 1.5px solid #f97316;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20), inset 0 1px 0 #ffffff;
-}
-a.kpi-tile.kpi-selected.kpi-t-emerald {
-    background: linear-gradient(180deg, #ffffff 0%, #e6fbf2 100%);
-    border: 1.5px solid #10b981;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.18), inset 0 1px 0 #ffffff;
-}
-
-/* ==========================================================================
-   SABİT ARAMA & FİLTRE SATIRI (ÜST KONSOLLA SIFIR ÇAKIŞMA)
-   ========================================================================== */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-    position: sticky !important;
-    top: calc(var(--h-top-shell, 118px) + 4px) !important;
-    z-index: 990 !important;
-    background: rgba(233, 239, 247, 0.96) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    padding: 3px 0 4px 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
-    width: 100% !important;
+    margin-top: 12px !important;
 }
-
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
     flex: 1 1 auto !important;
     min-width: 0 !important;
-    width: auto !important;
 }
-
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
-    min-width: 48px !important;
+    min-width: 54px !important;
 }
-
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%) !important;
-    border: 1px solid rgba(15, 23, 42, 0.12) !important;
-    border-radius: 10px !important;
-    color: var(--ink-primary) !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-size: 12.5px !important;
-    font-weight: 500 !important;
-    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 9px !important;
+    color: #0f172a !important;
 }
-
 div[data-testid="stTextInput"] input {
-    height: 36px !important;
-    padding: 0 10px !important;
+    height: 38px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
 }
-
-div[data-testid="stTextInput"] input:focus,
-div[data-testid="stTextArea"] textarea:focus {
-    border-color: #0052ff !important;
-    box-shadow: 0 0 0 2.5px rgba(0, 82, 255, 0.14) !important;
-}
-
-div[data-testid="stPopover"] > button {
-    background: linear-gradient(180deg, #ffffff 0%, #f1f5fb 100%) !important;
-    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+div[data-testid="stForm"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 10px !important;
-    color: var(--ink-primary) !important;
-    height: 36px !important;
-    min-width: 48px !important;
-    padding: 0 9px !important;
-    font-weight: 700 !important;
-    font-size: 12.5px !important;
-    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
+    padding: 14px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
-
-/* ==========================================================================
-   SABİT AKIŞ SAYACI ŞERİDİ
-   ========================================================================== */
-.sy-sticky-feed-shell {
-    position: sticky !important;
-    top: calc(var(--h-top-shell, 118px) + var(--h-search-row, 38px) + 8px) !important;
-    z-index: 980 !important;
-    background: rgba(233, 239, 247, 0.96);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 2px 2px 5px 2px;
-    margin-bottom: 2px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+div[data-testid="stPopover"] > button {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 9px !important;
+    color: #0f172a !important;
+    height: 38px !important;
+    padding: 0 10px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
-
-.feed-status-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    font-size: 10.5px;
-    color: var(--ink-muted);
-    font-weight: 600;
+div[data-testid="stPopover"] > button:hover {
+    border-color: #f97316 !important;
+    background-color: #fff7ed !important;
 }
-
-.feed-count-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    padding: 1.5px 7px;
-    border-radius: 999px;
-    color: var(--ink-secondary);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-.feed-count-pill strong {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--ink-primary);
-    font-weight: 800;
-}
-
-.feed-mode-badge {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: var(--brand-cobalt);
-    background: rgba(0, 82, 255, 0.08);
-    padding: 1.5px 7px;
-    border-radius: 999px;
-    white-space: nowrap;
-}
-
-/* ==========================================================================
-   DARALTILMIŞ & KABARTMALI SİPARİŞ KARTLARI (ALTINDAN AKAN LİSTE)
-   ========================================================================== */
-.sip-stream {
-    position: relative;
-    z-index: 1;
+.sip-list-container {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     width: 100%;
-    max-width: 100%;
-    padding-top: 2px;
+    margin: 0;
+    padding: 0;
 }
-
 .sip-row-wrap {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 5px;
+    align-items: flex-start;
+    gap: 6px;
     width: 100%;
-    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-
-details.neo-card {
-    position: relative;
+details.custom-sip-card {
     flex: 1 1 auto;
     min-width: 0;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-left: 3.5px solid var(--accent-color, #0052ff);
-    border-radius: 10px;
-    box-shadow: var(--emboss-card);
+    margin: 0;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     overflow: hidden;
-    transition: transform 0.12s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
 }
-
-details.neo-card.is-pending-approval {
-    background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
-    border-color: rgba(249, 115, 22, 0.36);
-    box-shadow:
-        0 4px 12px -2px rgba(249, 115, 22, 0.16),
-        0 1px 3px rgba(15, 23, 42, 0.06),
-        inset 0 1px 0 #ffffff;
-}
-
-details.neo-card[open] {
-    border-color: rgba(0, 82, 255, 0.30);
-    box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 #ffffff;
-}
-
-/* Kart Yüksekliği Daraltıldı (42px kompakt satır yüksekliği) */
-details.neo-card > summary {
+details.custom-sip-card > summary {
     list-style: none;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    padding: 5px 8px;
+    gap: 8px;
+    padding: 7px 10px;
     cursor: pointer;
     user-select: none;
-    min-height: 42px;
-    width: 100%;
+    height: 48px;
+    box-sizing: border-box;
 }
-
-details.neo-card > summary::-webkit-details-marker {
+details.custom-sip-card > summary::-webkit-details-marker {
     display: none;
 }
-
-details.neo-card > summary:hover {
-    background-color: rgba(241, 245, 251, 0.7);
+details.custom-sip-card > summary:hover {
+    background-color: #f8fafc;
 }
-
-.card-left-rail {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.sip-no-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 3.5px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--ink-primary);
-    background: linear-gradient(180deg, #f8fafd 0%, #e9eff8 100%);
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    padding: 2px 5.5px;
-    border-radius: 6px;
-    box-shadow: inset 0 1px 0 #ffffff;
-    flex-shrink: 0;
-}
-
-.status-dot {
-    width: 5.5px;
-    height: 5.5px;
-    border-radius: 50%;
-    background: var(--accent-color, #0052ff);
-    flex-shrink: 0;
-}
-
-.status-dot.pulse {
-    animation: pulseRing 1.8s infinite;
-}
-
-.card-main-info {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.card-route-line {
-    font-size: 12px;
+.custom-card-arrow {
+    font-size: 11px;
+    color: #475569;
     font-weight: 700;
-    color: var(--ink-primary);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.route-arrow {
-    color: var(--brand-cobalt);
-    font-weight: 800;
-    padding: 0 1px;
-}
-
-.card-meta-line {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 1.5px;
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--ink-muted);
-    line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-meta-site {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.card-meta-date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9.2px;
-    color: var(--ink-secondary);
+    transition: transform 0.15s ease;
     flex-shrink: 0;
 }
-
-.card-right-rail {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-}
-
-.mini-op-pill {
-    font-size: 8.8px;
-    font-weight: 800;
-    letter-spacing: 0.15px;
-    padding: 2px 5px;
-    border-radius: 5px;
-    background: var(--accent-bg, #eff6ff);
-    color: var(--accent-color, #0052ff);
-    border: 1px solid var(--accent-border, rgba(0, 82, 255, 0.22));
-    white-space: nowrap;
-    max-width: 78px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.neo-chevron {
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
-    background: linear-gradient(180deg, #f8fafd 0%, #e9eff8 100%);
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    color: var(--ink-secondary);
-    font-size: 9px;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease, background 0.15s ease;
-    flex-shrink: 0;
-}
-
-details.neo-card[open] .neo-chevron {
+details.custom-sip-card[open] .custom-card-arrow {
     transform: rotate(90deg);
-    background: #0052ff;
-    color: #ffffff;
 }
-
-/* Kart Açılır İçerik Gövdesi */
-.neo-card-body {
-    padding: 8px 9px 9px 9px;
-    border-top: 1px dashed rgba(15, 23, 42, 0.10);
-    background: #ffffff;
+.custom-card-lines {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #0f172a;
 }
-
-/* Yönetici Hızlı Onay İnceleme Butonu (Kart yüksekliği ile uyumlu 42px) */
-a.quick-inspect-btn {
-    flex: 0 0 40px;
-    width: 40px;
-    min-height: 42px;
-    border-radius: 10px;
-    background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
-    border: 1px solid #c2410c;
+.custom-card-line1 {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.custom-card-line2 {
+    font-weight: 400;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.custom-card-body {
+    padding: 6px 10px 10px 10px;
+    border-top: 1px solid #e2e8f0;
+    background-color: #ffffff;
+}
+a.mini-onay-btn {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 48px;
+    box-sizing: border-box;
+    background-color: #f97316;
+    border: 1px solid #ea580c;
+    border-radius: 9px;
     color: #ffffff !important;
+    font-size: 20px;
+    font-weight: 900;
     text-decoration: none !important;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5px;
-    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: transform 0.12s ease;
+    box-shadow: 0 1px 2px rgba(249, 115, 22, 0.25);
 }
-
-a.quick-inspect-btn:active {
-    transform: scale(0.95);
+a.mini-onay-btn:active {
+    background-color: #ea580c;
+    transform: scale(0.96);
 }
-
-.qi-icon {
-    font-size: 13px;
-    font-weight: 900;
-    line-height: 1;
-}
-
-.qi-txt {
-    font-size: 7.8px;
-    font-weight: 800;
-    letter-spacing: 0.25px;
-    text-transform: uppercase;
-}
-
-/* Toast Bildirim Bandı */
-.auto-toast-banner {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 1px solid #6ee7b7;
-    border-left: 4px solid #10b981;
-    color: #064e3b;
-    border-radius: 10px;
-    padding: 7px 10px;
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 5px;
-    opacity: 1;
-    transition: opacity 0.35s ease;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.16);
-}
-
-/* ==========================================================================
-   DETAY ROZETİ, BİLGİ IZGARASI & ÜRÜN TABLOSU
-   ========================================================================== */
-.detail-status-strip {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-    margin-bottom: 6px;
-}
-
-.op-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 7px;
-    color: #ffffff;
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
-}
-
-.sevk-status-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: var(--ink-secondary);
-    background: #f1f5fb;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    padding: 2.5px 7px;
-    border-radius: 7px;
-}
-
-.info-matrix {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 5px;
-    margin-bottom: 7px;
-}
-
-.matrix-cell {
-    background: linear-gradient(180deg, #fafcff 0%, #f3f6fc 100%);
-    border: 1px solid rgba(15, 23, 42, 0.07);
-    border-radius: 8px;
-    padding: 4px 7px;
-    min-width: 0;
-    box-shadow: inset 0 1px 0 #ffffff;
-}
-
-.matrix-cell.span-2 {
-    grid-column: span 2;
-}
-
-.matrix-lbl {
-    display: block;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: var(--ink-muted);
-    margin-bottom: 1px;
-}
-
-.matrix-val {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--ink-primary);
-    word-break: break-word;
-}
-
-.matrix-val-red {
-    display: block;
-    font-size: 11.8px;
-    font-weight: 800;
-    color: #dc2626;
-    word-break: break-word;
-}
-
-.matrix-val-navy {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #0052ff;
-    word-break: break-word;
-}
-
-.neo-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 9px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-}
-
-.urun-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11.3px;
-    background: #ffffff;
-}
-
-.urun-table th {
-    background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-    color: #f8fafc;
-    text-align: left;
-    padding: 5px 7px;
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.25px;
-}
-
-.urun-table td {
-    padding: 5px 7px;
-    color: var(--ink-primary);
-    border-bottom: 1px solid #eef2f7;
-    font-weight: 600;
-}
-
-.urun-table tr:last-child td {
-    border-bottom: none;
-}
-
-.urun-table tr:nth-child(even) td {
-    background-color: #f8fafd;
-}
-
-.urun-miktar {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 800;
-    text-align: right;
-    white-space: nowrap;
-    color: #0052ff !important;
-}
-
-/* ==========================================================================
-   YÖNETİCİ TAM EKRAN ONAY İNCELEME KONSOLU
-   ========================================================================== */
-.review-console {
-    background: #ffffff;
-    border: 1px solid rgba(249, 115, 22, 0.34);
+.fullscreen-review-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
     border-top: 4px solid #f97316;
-    border-radius: 14px;
-    padding: 11px;
-    margin-top: 6px;
-    box-shadow: var(--emboss-card);
+    border-radius: 11px;
+    padding: 10px 11px 12px 11px;
+    margin-top: 2px;
+    margin-bottom: 10px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07);
 }
-
-.review-console-head {
+.fullscreen-review-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
     margin-bottom: 8px;
-    border-bottom: 1px solid #eef2f7;
+    gap: 8px;
 }
-
-.review-console-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13.5px;
+.fullscreen-review-title {
+    font-size: 14px;
     font-weight: 800;
-    color: var(--ink-primary);
-    min-width: 0;
+    color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
-.review-id-pill {
-    font-family: 'JetBrains Mono', monospace;
-    background: #fff7ed;
-    color: #ea580c;
-    border: 1px solid #fed7aa;
-    padding: 1.5px 6px;
-    border-radius: 6px;
-    font-size: 12px;
-}
-
 a.close-review-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 8px;
-    background: #f1f5fb;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    color: var(--ink-secondary) !important;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 800;
+    color: #475569 !important;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
     text-decoration: none !important;
     flex-shrink: 0;
 }
-
+a.close-review-link:active {
+    background-color: #e2e8f0;
+}
 .onay-aksiyon-bar {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px dashed rgba(15, 23, 42, 0.12);
+    border-top: 1px solid #cbd5e1;
     width: 100%;
+    box-sizing: border-box;
 }
-
 a.aksiyon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    height: 40px;
-    border-radius: 10px;
-    font-size: 11.5px;
+    height: 42px;
+    border-radius: 9px;
+    font-size: 12.5px;
     font-weight: 800;
-    letter-spacing: 0.25px;
+    letter-spacing: 0.3px;
     text-decoration: none !important;
-    padding: 0 5px;
+    box-sizing: border-box;
+    padding: 0 6px;
     white-space: nowrap;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
 }
-
 a.aksiyon-btn:active {
-    transform: scale(0.96);
+    transform: scale(0.98);
 }
-
 a.aksiyon-onayla {
-    background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+    background-color: #16a34a !important;
+    border: 1px solid #15803d !important;
     color: #ffffff !important;
 }
-
 a.aksiyon-revize {
-    background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%) !important;
+    background-color: #facc15 !important;
+    border: 1px solid #eab308 !important;
     color: #0f172a !important;
 }
-
 a.aksiyon-reddet {
-    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
     color: #ffffff !important;
 }
-
-/* ==========================================================================
-   GİRİŞ FORMU, BOŞ DURUM & SAYFALAMA
-   ========================================================================== */
-div[data-testid="stForm"] {
-    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%) !important;
-    border: 1px solid rgba(0, 82, 255, 0.14) !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-    box-shadow: var(--emboss-tile) !important;
-    margin-top: 6px !important;
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px 8px;
+    font-size: 12px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+    padding: 7px 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
 }
-
-.empty-state-box {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
-    border: 1.5px dashed rgba(0, 82, 255, 0.24);
-    border-radius: 14px;
-    padding: 24px 14px;
-    text-align: center;
-    margin: 6px 0;
-    box-shadow: var(--emboss-card);
+.info-item-label {
+    font-size: 10px;
+    color: #64748b;
+    display: block;
 }
-
-.empty-state-icon {
-    font-size: 28px;
-    margin-bottom: 5px;
+.info-item-val {
+    font-weight: 600;
+    color: #0f172a;
 }
-
-.empty-state-title {
-    font-size: 13.5px;
+.info-item-val-red {
     font-weight: 800;
-    color: var(--ink-primary);
-    margin-bottom: 3px;
+    color: #dc2626;
 }
-
-.empty-state-desc {
-    font-size: 11.5px;
-    color: var(--ink-muted);
-}
-
-.pagination-box {
-    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
-    border: 1px solid rgba(15, 23, 42, 0.09);
-    border-radius: 11px;
-    padding: 8px 12px;
-    margin-top: 8px;
-    margin-bottom: 5px;
-    text-align: center;
-    box-shadow: var(--emboss-card);
-}
-
-.pagination-text {
-    font-size: 11px;
-    color: var(--ink-secondary);
-    margin-bottom: 5px;
+.info-item-val-navy {
     font-weight: 700;
+    color: #1e3a8a;
 }
-
+.urun-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    font-size: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+.urun-table th {
+    background-color: #1e293b;
+    color: #f8fafc;
+    text-align: left;
+    padding: 5px 7px;
+    font-weight: 600;
+    font-size: 11px;
+}
+.urun-table td {
+    padding: 5px 7px;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
+}
+.urun-table tr:nth-child(even) td {
+    background-color: #f8fafc;
+}
+.urun-miktar {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+}
+.badge {
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    font-size: 11px;
+    display: inline-block;
+}
+.durum-plain {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 11.5px;
+}
+.empty-state-box {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 28px 16px;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+.empty-state-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+.empty-state-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.empty-state-desc {
+    font-size: 12.5px;
+    color: #64748b;
+}
+.pagination-box {
+    margin-top: 12px;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.pagination-text {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
 .progress-track {
     width: 100%;
     max-width: 240px;
     height: 5px;
     background-color: #e2e8f0;
     border-radius: 999px;
-    margin: 0 auto;
+    margin: 0 auto 8px auto;
     overflow: hidden;
 }
-
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #0052ff 0%, #0ea5e9 50%, #10b981 100%);
+    background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
     border-radius: 999px;
-    transition: width 0.3s ease;
-}
-
-/* Küçük Mobil Ekranlar (< 380px) Ek Koruma */
-@media (max-width: 380px) {
-    .block-container {
-        padding-left: 0.4rem !important;
-        padding-right: 0.4rem !important;
-    }
-    .kpi-num { font-size: 15.5px; }
-    .kpi-tag { font-size: 8.8px; }
-    .mini-op-pill { display: none; }
-    .brand-name { font-size: 12.2px; }
+    transition: width 0.25s ease;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1438,26 +782,22 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div class="sy-sticky-top-shell">'
-            f'<div class="command-header" style="margin-bottom:0;">'
-            f'<div class="brand-cluster">'
-            f'{LOGO_HTML}'
-            f'<div class="brand-text-wrap">'
-            f'<div class="brand-title-row"><span class="brand-name">SAYAR YAPI</span><span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>GÜVENLİ</span></div>'
-            f'<div class="brand-sub-row">Canlı Sipariş & Sevkiyat Telemetri Sistemi</div>'
-            f'</div></div></div></div>',
+            f'<div class="header-banner"><div class="header-info">'
+            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
+            f'<div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>'
+            f'</div></div>',
             unsafe_allow_html=True
         )
 
         if url_musteri:
-            st.caption(f"Müşteri Erişimi: **{url_musteri}**")
+            st.caption(f"Müşteri Girişi: **{url_musteri}**")
         elif url_veren:
-            st.caption(f"Personel Erişimi: **{url_veren}**")
+            st.caption(f"Personel Girişi: **{url_veren}**")
 
         with st.form("login_form", clear_on_submit=False):
-            pin = st.text_input("Erişim Şifresi:", type="password", placeholder="••••••••")
-            beni_hatirla = st.checkbox("Bu cihazda oturumu açık tut (90 Gün)", value=True)
-            giris_yapildi = st.form_submit_button("Sisteme Bağlan", use_container_width=True, type="primary")
+            pin = st.text_input("Erişim Şifresi:", type="password")
+            beni_hatirla = st.checkbox("Beni Hatırla", value=True)
+            giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
 
         if giris_yapildi:
             basarili_tip = None
@@ -1601,7 +941,28 @@ def verileri_getir():
 
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
-anlik_saat = datetime.now().strftime("%H:%M:%S")
+
+# İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
+if not inceleme_aktif_mi:
+    if yetki_tipi == "MUSTERI":
+        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
+        alt_metin = "Müşteri Sipariş İzleme Paneli"
+    elif yetki_tipi == "SIPARIS_VEREN":
+        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
+        alt_metin = "Personel Sipariş İzleme Paneli"
+    else:
+        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Sipariş İzleme</span>'
+        alt_metin = "Yönetici Canlı Takip Paneli"
+
+    st.markdown(
+        f'<div class="header-banner">'
+        f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
+        f'<div class="header-actions">'
+        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
+        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
 
 try:
     df_sip, df_kalem = verileri_getir()
@@ -1631,19 +992,29 @@ if yetki_tipi == "MUSTERI":
 elif yetki_tipi == "SIPARIS_VEREN":
     df_sip = df_sip[df_sip["siparis_veren"].fillna("").str.strip().str.upper() == yetki_deger.strip().upper()]
 
-OP_STYLE = {
-    "İŞLENDİ": {"color": "#0052ff", "bg": "#eff6ff", "border": "rgba(0,82,255,0.22)", "short": "İŞLENDİ", "pulse": True},
-    "ONAY BEKLİYOR": {"color": "#f97316", "bg": "#fff7ed", "border": "rgba(249,115,22,0.28)", "short": "ONAY BEKLİYOR", "pulse": True},
-    "ONAYLANDI": {"color": "#10b981", "bg": "#ecfdf5", "border": "rgba(16,185,129,0.25)", "short": "ONAYLANDI", "pulse": True},
-    "REVİZE İSTENDİ": {"color": "#d97706", "bg": "#fffbeb", "border": "rgba(217,119,6,0.28)", "short": "REVİZE", "pulse": True},
-    "REDDEDİLDİ": {"color": "#ef4444", "bg": "#fef2f2", "border": "rgba(239,68,68,0.25)", "short": "REDDEDİLDİ", "pulse": False},
-    "TAMAMLANDI": {"color": "#059669", "bg": "#ecfdf5", "border": "rgba(5,150,105,0.22)", "short": "TAMAMLANDI", "pulse": False},
-    "MUHASEBEYE İLETİLDİ": {"color": "#0284c7", "bg": "#f0f9ff", "border": "rgba(2,132,199,0.22)", "short": "MUHASEBE", "pulse": False},
-    "İPTAL EDİLDİ": {"color": "#dc2626", "bg": "#fef2f2", "border": "rgba(220,38,38,0.22)", "short": "İPTAL", "pulse": False},
-    "KISMİ EVRAK": {"color": "#7c3aed", "bg": "#f5f3ff", "border": "rgba(124,58,237,0.25)", "short": "KISMİ EVRAK", "pulse": True}
+OP_RENK = {
+    "İŞLENDİ": "#0284c7",
+    "ONAY BEKLİYOR": "#f97316",
+    "ONAYLANDI": "#16a34a",
+    "REVİZE İSTENDİ": "#f59e0b",
+    "REDDEDİLDİ": "#dc2626",
+    "TAMAMLANDI": "#16a34a",
+    "MUHASEBEYE İLETİLDİ": "#16a34a",
+    "İPTAL EDİLDİ": "#dc2626",
+    "KISMİ EVRAK": "#7c3aed"
 }
 
-DEFAULT_OP_STYLE = {"color": "#475569", "bg": "#f1f5f9", "border": "rgba(71,85,105,0.2)", "short": "BEKLİYOR", "pulse": False}
+OP_IKON = {
+    "İŞLENDİ": "🔵",
+    "ONAY BEKLİYOR": "🟠",
+    "ONAYLANDI": "🟢",
+    "REVİZE İSTENDİ": "🟡",
+    "REDDEDİLDİ": "⛔",
+    "TAMAMLANDI": "✅",
+    "MUHASEBEYE İLETİLDİ": "✅",
+    "İPTAL EDİLDİ": "🔴",
+    "KISMİ EVRAK": "🟣"
+}
 
 ETIKET_MAP = {
     "tarih": "Sipariş Tarihi",
@@ -1690,8 +1061,7 @@ kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.emp
 def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
-    st_info = OP_STYLE.get(op_upper, DEFAULT_OP_STYLE)
-    renk = st_info["color"]
+    renk = OP_RENK.get(op_upper, "#475569")
     durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
 
     haric_sutunlar = {
@@ -1718,21 +1088,21 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         deger_str = "-" if bos_mu else html.escape(str(val).strip())
 
         if vurgulu_onay and col_lower in kirmizi_alanlar:
-            val_cls = "matrix-val-red"
+            val_cls = "info-item-val-red"
         elif vurgulu_onay and col_lower in lacivert_alanlar:
-            val_cls = "matrix-val-navy"
+            val_cls = "info-item-val-navy"
         else:
-            val_cls = "matrix-val"
+            val_cls = "info-item-val"
 
-        span_cls = " span-2" if (col_lower == "notlar" or len(deger_str) > 32) else ""
+        span_style = ' style="grid-column: span 2;"' if col_lower == "notlar" or len(deger_str) > 35 else ""
         grid_items_html += (
-            f'<div class="matrix-cell{span_cls}">'
-            f'<span class="matrix-lbl">{html.escape(etiket)}</span>'
+            f'<div{span_style}>'
+            f'<span class="info-item-label">{html.escape(etiket)}</span>'
             f'<span class="{val_cls}">{deger_str}</span>'
             f'</div>'
         )
 
-    grid_html = f'<div class="info-matrix">{grid_items_html}</div>' if grid_items_html else ""
+    grid_html = f'<div class="info-grid">{grid_items_html}</div>' if grid_items_html else ""
 
     tablo_html = ""
     kalemler = kalem_gruplari.get(sip_no)
@@ -1766,13 +1136,12 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
             satirlar_html += (
                 f"<tr>"
                 f"<td>{urun_adi}</td>"
-                f"<td style='text-align:left; white-space:nowrap; color:#64748b; font-weight:700;'>{birim_str}</td>"
+                f"<td style='text-align:left; white-space:nowrap; color:#475569; font-weight:600;'>{birim_str}</td>"
                 f"<td class='urun-miktar'>{miktar_str}</td>"
                 f"</tr>"
             )
 
         tablo_html = (
-            f"<div class='neo-table-wrap'>"
             f"<table class='urun-table'>"
             f"<thead><tr>"
             f"<th>Malzeme / Ürün</th>"
@@ -1781,14 +1150,11 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
             f"</tr></thead>"
             f"<tbody>{satirlar_html}</tbody>"
             f"</table>"
-            f"</div>"
         )
 
     rozet_html = (
-        f"<div class='detail-status-strip'>"
-        f"<span class='op-status-badge' style='background-color:{renk};'>● {html.escape(op_val)}</span>"
-        f"<span class='sevk-status-chip'>Sevk Durumu: <strong>{durum_gosterim}</strong></span>"
-        f"</div>"
+        f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span> &nbsp; "
+        f"<span class='durum-plain'>Durum: {durum_gosterim}</span>"
     )
     return rozet_html, grid_html, tablo_html
 
@@ -1811,15 +1177,15 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
         st.cache_data.clear()
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.bekleyen_revize_sip_no = None
-        st.session_state.flash_mesaj = f"Sipariş #{sip_no} için {karar} kararı işlendi."
+        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı kaydedildi."
         st.rerun()
     except Exception as err:
         st.error(f"Karar PostgreSQL'e yazılamadı: {err}")
 
 
-@st.dialog("Revize Talebi Notu")
+@st.dialog("Revize Notu")
 def revize_not_penceresi(sip_no: int, row_data):
-    st.caption(f"Sipariş #{sip_no} için revize açıklamasını giriniz:")
+    st.caption(f"Sipariş #{sip_no} için revize açıklaması giriniz:")
     revize_aciklama = st.text_area(
         "Revize Açıklaması",
         placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin...",
@@ -1840,7 +1206,7 @@ def revize_not_penceresi(sip_no: int, row_data):
 
 
 # ==============================================================================
-# YÖNETİCİ TAM EKRAN ONAY İNCELEME KONSOLU
+# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
 # ==============================================================================
 aktif_inceleme_no = st.session_state.get("onay_inceleme_sip_no")
 if inceleme_aktif_mi and aktif_inceleme_no is not None:
@@ -1866,18 +1232,18 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     reddet_href = f"{base_incele_href}&karar=REDDET"
 
     st.markdown(
-        f'<div class="review-console">'
-        f'<div class="review-console-head">'
-        f'<div class="review-console-title"><span class="review-id-pill">#{html.escape(str(aktif_inceleme_no))}</span><span>Yönetici Onay İnceleme</span></div>'
-        f'<a data-spa="1" href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Listeye Dön">✕</a>'
+        f'<div class="fullscreen-review-card">'
+        f'<div class="fullscreen-review-header">'
+        f'<div class="fullscreen-review-title">🟠 SİPARİŞ ONAY İNCELEME — #{html.escape(str(aktif_inceleme_no))}</div>'
+        f'<a data-spa="1" href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
         f'</div>'
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
         f'<div class="onay-aksiyon-bar">'
-        f'<a data-spa="1" href="{onayla_href}" target="_self" class="aksiyon-btn aksiyon-onayla">✓ ONAYLA</a>'
-        f'<a data-spa="1" href="{revize_href}" target="_self" class="aksiyon-btn aksiyon-revize">↻ REVİZE</a>'
-        f'<a data-spa="1" href="{reddet_href}" target="_self" class="aksiyon-btn aksiyon-reddet">✕ REDDET</a>'
+        f'<a data-spa="1" href="{onayla_href}" target="_self" class="aksiyon-btn aksiyon-onayla">ONAYLA</a>'
+        f'<a data-spa="1" href="{revize_href}" target="_self" class="aksiyon-btn aksiyon-revize">REVİZE</a>'
+        f'<a data-spa="1" href="{reddet_href}" target="_self" class="aksiyon-btn aksiyon-reddet">REDDET</a>'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True
@@ -1889,8 +1255,36 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# SABİT ÜST KONSOLLAR (ÜST BAR + 3'LÜ KPI KARTLARI TEK SABİT BLOKTA)
+# ANA LİSTE VE KPI GÖRÜNÜMÜ
 # ==============================================================================
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
+    toast_id = f"toast_{int(time.time() * 1000)}"
+    st.markdown(
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
+        unsafe_allow_html=True
+    )
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const el = doc.getElementById({json.dumps(toast_id)});
+            if (!el) return;
+            setTimeout(function() {{
+                el.style.opacity = '0';
+                setTimeout(function() {{
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
+                }}, 350);
+            }}, 2500);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
+    st.session_state.flash_mesaj = None
+
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -1900,68 +1294,23 @@ sevk_bekleyen = len(
     ]
 )
 
-kpi_toplam = max(tamamlandi_siparis + onay_bekleyen + sevk_bekleyen, 1)
-pct_tamam = int(round((tamamlandi_siparis / kpi_toplam) * 100))
-pct_onay = int(round((onay_bekleyen / kpi_toplam) * 100))
-pct_sevk = int(round((sevk_bekleyen / kpi_toplam) * 100))
-
 kpi_mod = st.session_state.kpi_mod
-cls_tamamlandi = "kpi-selected" if kpi_mod == "TAMAMLANDI" else ""
-cls_onay = "kpi-selected" if kpi_mod == "ONAY" else ""
-cls_sevk = "kpi-selected" if kpi_mod == "SEVK" else ""
-
-if yetki_tipi == "MUSTERI":
-    baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
-    alt_metin = "Müşteri İzleme"
-elif yetki_tipi == "SIPARIS_VEREN":
-    baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
-    alt_metin = "Personel Takip"
-else:
-    baslik_metni = "SAYAR YAPI"
-    alt_metin = "Canlı Lojistik Radarı"
+cls_tamamlandi = "kpi-active" if kpi_mod == "TAMAMLANDI" else ""
+cls_onay = "kpi-active" if kpi_mod == "ONAY" else ""
+cls_sevk = "kpi-active" if kpi_mod == "SEVK" else ""
 
 st.markdown(
-    f'<div class="sy-sticky-top-shell">'
-    f'<div class="command-header">'
-    f'<div class="brand-cluster">'
-    f'{LOGO_HTML}'
-    f'<div class="brand-text-wrap">'
-    f'<div class="brand-title-row">'
-    f'<span class="brand-name">{baslik_metni}</span>'
-    f'<span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>CANLI</span>'
-    f'</div>'
-    f'<div class="brand-sub-row"><span>{alt_metin}</span><span>•</span><span id="sy-live-clock" class="telemetry-clock">{anlik_saat}</span></div>'
-    f'</div>'
-    f'</div>'
-    f'<div class="header-actions">'
-    f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn" title="Verileri Yenile">↻</a>'
-    f'<a data-spa="1" href="?action=logout" target="_self" class="cmd-icon-btn" title="Güvenli Çıkış">⏻</a>'
-    f'</div>'
-    f'</div>'
-    f'<div class="kpi-deck">'
-    f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-tile kpi-t-blue {cls_tamamlandi}" title="Tamamlanan siparişleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Tamamlanan</span><span class="kpi-badge-dot"></span></div>'
-    f'<div class="kpi-tile-mid"><span class="kpi-num">{tamamlandi_siparis}</span><span class="kpi-pct">%{pct_tamam}</span></div>'
-    f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_tamam, 6)}%;"></div></div>'
-    f'</a>'
-    f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="kpi-tile kpi-t-amber {cls_onay}" title="Onay bekleyenleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Onay Bekleyen</span><span class="kpi-badge-dot"></span></div>'
-    f'<div class="kpi-tile-mid"><span class="kpi-num">{onay_bekleyen}</span><span class="kpi-pct">%{pct_onay}</span></div>'
-    f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_onay, 6)}%;"></div></div>'
-    f'</a>'
-    f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="kpi-tile kpi-t-emerald {cls_sevk}" title="Sevk bekleyen aktif siparişleri filtrele">'
-    f'<div class="kpi-tile-top"><span class="kpi-tag">Sevk Bekleyen</span><span class="kpi-badge-dot"></span></div>'
-    f'<div class="kpi-tile-mid"><span class="kpi-num">{sevk_bekleyen}</span><span class="kpi-pct">%{pct_sevk}</span></div>'
-    f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_sevk, 6)}%;"></div></div>'
-    f'</a>'
-    f'</div>'
+    f'<div class="kpi-grid">'
+    f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-card kpi-blue {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
+    f'<div class="kpi-label">Tamamlandı</div><div class="kpi-value">{tamamlandi_siparis}</div></a>'
+    f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="kpi-card kpi-orange {cls_onay}" title="Sadece onay bekleyenleri göster">'
+    f'<div class="kpi-label">Onay Bekleyen</div><div class="kpi-value">{onay_bekleyen}</div></a>'
+    f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="kpi-card kpi-green {cls_sevk}" title="Sadece devam edenleri göster">'
+    f'<div class="kpi-label">Sevk Bekleyen</div><div class="kpi-value">{sevk_bekleyen}</div></a>'
     f'</div>',
     unsafe_allow_html=True
 )
 
-# ==============================================================================
-# SABİT ARAMA & FİLTRE ÇUBUĞU
-# ==============================================================================
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
 musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
@@ -1991,21 +1340,21 @@ ek_filtre_aktif = (
     st.session_state.f_gizle_muh or
     st.session_state.f_gizle_ipt
 )
-popover_etiket = "🎛️ •" if ek_filtre_aktif else "🎛️"
+popover_etiket = "⚙️ •" if ek_filtre_aktif else "⚙️"
 
 col_arama, col_filtre = st.columns([5, 1])
 with col_arama:
     arama = st.text_input(
         "Arama",
         key="arama_metni",
-        placeholder="🔎 Sipariş No, Firma, Müşteri, Şantiye...",
+        placeholder="🔍 Sipariş No, Firma, Müşteri, Şantiye...",
         label_visibility="collapsed"
     )
 
 with col_filtre:
     with st.popover(popover_etiket, use_container_width=True):
-        st.markdown("**Akıllı Filtre Merkezi**")
-        secili_op = st.selectbox("Operasyon Durumu", op_listesi, key="f_op")
+        st.markdown("**Detaylı Filtreleme**")
+        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
         secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
 
         if yetki_tipi != "MUSTERI":
@@ -2019,38 +1368,6 @@ with col_filtre:
         if ek_filtre_aktif or arama.strip():
             st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
-# Flash Bildirim Bandı
-flash_msg = st.session_state.flash_mesaj
-if flash_msg:
-    toast_id = f"toast_{int(time.time() * 1000)}"
-    st.markdown(
-        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
-        unsafe_allow_html=True
-    )
-    components.html(
-        f"""
-        <script>
-        (function() {{
-            const doc = window.parent.document;
-            const el = doc.getElementById({json.dumps(toast_id)});
-            if (!el) return;
-            setTimeout(function() {{
-                el.style.opacity = '0';
-                setTimeout(function() {{
-                    if (el && el.parentNode) el.parentNode.removeChild(el);
-                }}, 350);
-            }}, 2500);
-        }})();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
-    st.session_state.flash_mesaj = None
-
-# ==============================================================================
-# FİLTRELEME VE KAYDIRILABİLİR SİPARİŞ AKIŞI
-# ==============================================================================
 filtered = df_sip
 
 if gizle_tamamlanan:
@@ -2083,41 +1400,27 @@ toplam_filtrelenen = len(filtered)
 gosterilen_limit = st.session_state.sayfa_limiti
 gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
-MOD_ETIKET = {
-    "SEVK": "Aktif Sevkiyat Akışı",
-    "ONAY": "Onay Bekleyenler",
-    "TAMAMLANDI": "Tamamlanan Arşiv"
-}
-
 if toplam_filtrelenen == 0:
     st.markdown(
         '<div class="empty-state-box">'
-        '<div class="empty-state-icon">📡</div>'
-        '<div class="empty-state-title">Kriterlere Uygun Kayıt Bulunamadı</div>'
-        '<div class="empty-state-desc">Arama terimini değiştirebilir veya aktif filtreleri tek dokunuşla sıfırlayabilirsiniz.</div>'
+        '<div class="empty-state-icon">🔍</div>'
+        '<div class="empty-state-title">Eşleşen Sipariş Bulunamadı</div>'
+        '<div class="empty-state-desc">Arama kriterlerinizi değiştirerek veya aktif filtreleri temizleyerek tekrar deneyebilirsiniz.</div>'
         '</div>',
         unsafe_allow_html=True
     )
     col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
     with col_e2:
-        st.button("↻ Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
+        st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
-    st.markdown(
-        f'<div class="sy-sticky-feed-shell">'
-        f'<div class="feed-status-bar">'
-        f'<span class="feed-count-pill">Akış: <strong>{gosterilen_adet}</strong> / {toplam_filtrelenen}</span>'
-        f'<span class="feed-mode-badge">{MOD_ETIKET.get(kpi_mod, "Canlı Akış")}</span>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    st.caption(f"Gösterilen sipariş sayısı: **{gosterilen_adet} / {toplam_filtrelenen}**")
 
-    kart_parcalari = ['<div class="sip-stream">']
+    kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
-        st_info = OP_STYLE.get(op_upper, DEFAULT_OP_STYLE)
+        durum_ikon = OP_IKON.get(op_upper, "⚪")
 
         firma_str = row.get("firma") or "-"
         musteri_str = row.get("musteri") or "-"
@@ -2132,44 +1435,26 @@ else:
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
         if yetki_tipi == "MUSTERI":
-            rota_html = f'{html.escape(f_md)}'
+            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)}"
         else:
-            rota_html = f'{html.escape(f_md)} <span class="route-arrow">➔</span> {html.escape(m_md)}'
-
-        dot_pulse_cls = " pulse" if st_info["pulse"] else ""
-        pending_cls = " is-pending-approval" if op_upper == "ONAY BEKLİYOR" else ""
-        card_style = (
-            f'--accent-color:{st_info["color"]};'
-            f'--accent-bg:{st_info["bg"]};'
-            f'--accent-border:{st_info["border"]};'
-        )
+            satir1_html = f"{durum_ikon} #{html.escape(str(sip_no))} | {html.escape(f_md)} ➔ {html.escape(m_md)}"
+        satir2_html = f"📍 {html.escape(s_md)} &nbsp; • &nbsp; {html.escape(t_md)}"
 
         onay_buton_html = ""
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            onay_buton_html = (
-                f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="quick-inspect-btn" title="Siparişi İncele">'
-                f'<span class="qi-icon">✓</span>'
-                f'<span class="qi-txt">ONAY</span>'
-                f'</a>'
-            )
+            onay_buton_html = f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
 
         kart_parcalari.append(
             f'<div class="sip-row-wrap">'
-            f'<details class="neo-card{pending_cls}" style="{card_style}">'
+            f'<details class="custom-sip-card">'
             f'<summary>'
-            f'<div class="card-left-rail">'
-            f'<span class="sip-no-chip"><span class="status-dot{dot_pulse_cls}"></span>#{html.escape(str(sip_no))}</span>'
-            f'<div class="card-main-info">'
-            f'<div class="card-route-line">{rota_html}</div>'
-            f'<div class="card-meta-line"><span class="card-meta-site">📍 {html.escape(s_md)}</span><span>•</span><span class="card-meta-date">{html.escape(t_md)}</span></div>'
-            f'</div>'
-            f'</div>'
-            f'<div class="card-right-rail">'
-            f'<span class="mini-op-pill">{html.escape(st_info["short"])}</span>'
-            f'<span class="neo-chevron">❯</span>'
+            f'<span class="custom-card-arrow">❯</span>'
+            f'<div class="custom-card-lines">'
+            f'<div class="custom-card-line1">{satir1_html}</div>'
+            f'<div class="custom-card-line2">{satir2_html}</div>'
             f'</div>'
             f'</summary>'
-            f'<div class="neo-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
+            f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
             f'</details>'
             f'{onay_buton_html}'
             f'</div>'
@@ -2181,7 +1466,7 @@ else:
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
         f'<div class="pagination-box">'
-        f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi canlı akışta (%{yuzde})</div>'
+        f'<div class="pagination-text">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi gösteriliyor</div>'
         f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
         f'</div>',
         unsafe_allow_html=True
@@ -2190,6 +1475,6 @@ else:
     if gosterilen_adet < toplam_filtrelenen:
         kalan = toplam_filtrelenen - gosterilen_adet
         eklenecek = min(50, kalan)
-        if st.button(f"Daha Fazla Sipariş Yükle (+{eklenecek})", use_container_width=True):
+        if st.button(f"Daha Fazla Göster (+{eklenecek})", use_container_width=True):
             st.session_state.sayfa_limiti += 50
             st.rerun()
