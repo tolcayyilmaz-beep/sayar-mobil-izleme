@@ -37,11 +37,11 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 
 
 LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="sy-brand-logo" alt="Sayar Yapı">' if LOGO_DATA_URI else '<span class="sy-brand-mark">SY</span>'
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="sy-logo-img" alt="Sayar Yapı">' if LOGO_DATA_URI else '<span class="sy-logo-fallback">SY</span>'
 
 # Sayfa ve Mobil Görünüm Ayarları
 st.set_page_config(
-    page_title="Sayar Yapı | Saha & Sevkiyat Merkezi",
+    page_title="SAYAR YAPI • Lojistik Komuta Merkezi",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -95,12 +95,30 @@ components.html(
 )
 
 # ==============================================================================
-# YENİ NESİL SAHA LOJİSTİK & KOMUTA MERKEZİ ARAYÜZÜ (MODERN BENTO & CARD UI)
+# ULTRA-MODERN ENDÜSTRİYEL TELEMETRİ & KOMUTA MERKEZİ ARAYÜZ TASARIMI (CSS)
 # ==============================================================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
+:root {
+    --bg-canvas: #070b14;
+    --bg-surface: rgba(15, 23, 42, 0.78);
+    --bg-surface-solid: #0f172a;
+    --bg-elevated: rgba(30, 41, 59, 0.72);
+    --border-subtle: rgba(148, 163, 184, 0.14);
+    --border-glow: rgba(249, 115, 22, 0.45);
+    --accent-primary: #f97316;
+    --accent-secondary: #38bdf8;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+}
+
+/* Streamlit Varsayılan Chrome Gizleme */
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -121,86 +139,81 @@ a[href*="streamlit.io/cloud"] {
     pointer-events: none !important;
 }
 
-:root {
-    --bg-app: #f3f5f8;
-    --bg-card: #ffffff;
-    --bg-soft: #f8fafc;
-    --ink-main: #0f172a;
-    --ink-sub: #475569;
-    --ink-mute: #64748b;
-    --border-light: #e2e8f0;
-    --border-mid: #cbd5e1;
-    --brand-navy: #0c192c;
-    --brand-orange: #f97316;
-    --brand-orange-dark: #ea580c;
-    --brand-orange-bg: #fff7ed;
-    --shadow-card: 0 4px 14px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
-    --shadow-float: 0 12px 28px -6px rgba(15, 23, 42, 0.14);
-}
-
+/* Ana Tuval & Mimari Izgara Arka Planı */
 .stApp, [data-testid="stAppViewContainer"] {
-    background-color: var(--bg-app) !important;
-    color: var(--ink-main) !important;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    background-color: var(--bg-canvas) !important;
+    background-image: 
+        radial-gradient(circle at 12% 0%, rgba(249, 115, 22, 0.14) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.11) 0%, transparent 38%),
+        linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 100% 100%, 26px 26px, 26px 26px !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .block-container {
-    max-width: 760px !important;
-    margin: 0 auto !important;
-    padding-top: 0.6rem !important;
-    padding-bottom: 5.5rem !important;
+    max-width: 960px !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 2.2rem !important;
     padding-left: 0.85rem !important;
     padding-right: 0.85rem !important;
 }
 
 [data-testid="stVerticalBlock"] {
-    gap: 0.5rem !important;
+    gap: 0.55rem !important;
 }
 
-/* Bildirim Toast */
-.sy-toast {
+/* Bildirim Toast Banner (Neon Cam Efektli) */
+.auto-toast-banner {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #064e3b;
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.92) 0%, rgba(15, 23, 42, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    border-left: 4px solid #10b981;
     color: #ecfdf5;
-    border-radius: 14px;
-    padding: 11px 14px;
+    border-radius: 12px;
+    padding: 10px 14px;
     font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    box-shadow: var(--shadow-float);
-    transition: opacity 0.35s ease;
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 1;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.22);
 }
 
-/* Üst Komuta Kartı */
-.sy-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(135deg, #091322 0%, #132540 55%, #1e3a5f 100%);
-    border-radius: 18px;
-    padding: 12px 14px;
-    color: #ffffff;
-    box-shadow: 0 10px 24px -8px rgba(9, 19, 34, 0.45);
-    margin-bottom: 10px;
+/* Üst Komuta Başlığı (Glassmorphic Command Header) */
+.sy-cmd-header {
     position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.82) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 4px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     overflow: hidden;
+    gap: 10px;
 }
 
-.sy-topbar::after {
+.sy-cmd-header::before {
     content: "";
     position: absolute;
-    right: -25px;
-    top: -35px;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.28) 0%, transparent 70%);
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #f97316 35%, #38bdf8 65%, transparent 100%);
 }
 
-.sy-top-left {
+.sy-brand-wrap {
     display: flex;
     align-items: center;
     gap: 11px;
@@ -208,168 +221,236 @@ a[href*="streamlit.io/cloud"] {
     flex: 1;
 }
 
-.sy-brand-logo {
-    height: 36px;
-    width: 36px;
-    object-fit: contain;
+.sy-logo-box {
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
-    background: #ffffff;
-    padding: 3px;
-    flex-shrink: 0;
-}
-
-.sy-brand-mark {
-    display: inline-flex;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(56, 189, 248, 0.15));
+    border: 1px solid rgba(249, 115, 22, 0.4);
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.25);
+}
+
+.sy-logo-img {
+    height: 26px;
+    width: 26px;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.sy-logo-fallback {
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800;
     font-size: 14px;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
+    color: #f97316;
+    letter-spacing: 0.5px;
 }
 
-.sy-top-titles {
+.sy-title-col {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
-    flex: 1;
 }
 
-.sy-top-role {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #fdba74;
-    margin-bottom: 1px;
-}
-
-.sy-top-name {
+.sy-main-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 15.5px;
     font-weight: 800;
     color: #ffffff;
+    letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    letter-spacing: -0.01em;
+    line-height: 1.2;
 }
 
-.sy-top-actions {
+.sy-sub-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    z-index: 1;
+    gap: 7px;
+    margin-top: 3px;
 }
 
-.sy-circle-btn {
+.sy-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.sy-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: syPulse 1.8s infinite;
+}
+
+@keyframes syPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.sy-sub-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-header-actions {
+    display: flex;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.sy-cmd-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 36px;
     height: 36px;
-    border-radius: 11px;
-    background: rgba(255, 255, 255, 0.11);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #e2e8f0 !important;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.sy-cmd-btn:hover {
+    background: rgba(249, 115, 22, 0.18);
+    border-color: rgba(249, 115, 22, 0.55);
     color: #ffffff !important;
-    text-decoration: none !important;
-    transition: all 0.15s ease;
-}
-
-.sy-circle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.sy-circle-btn:active {
-    transform: scale(0.94);
-    background: var(--brand-orange);
-}
-
-/* Segmented Durum Sekmeleri (Bento Switcher) */
-.sy-segment-wrap {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-a.sy-seg-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border-light);
-    border-radius: 15px;
-    padding: 10px 11px;
-    text-decoration: none !important;
-    box-shadow: var(--shadow-card);
-    transition: all 0.16s ease;
-    position: relative;
-}
-
-a.sy-seg-card:hover {
-    border-color: var(--border-mid);
     transform: translateY(-1px);
 }
 
-a.sy-seg-card.active {
-    background: #0f172a;
-    border-color: #0f172a;
-    box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.35);
+.sy-cmd-btn:active {
+    transform: scale(0.95);
 }
 
-.sy-seg-top {
+/* Telemetri KPI Kartları */
+.sy-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+a.sy-kpi-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(160deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.65) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 10px 11px;
+    text-decoration: none !important;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+a.sy-kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.24);
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.85) 100%);
+}
+
+a.sy-kpi-card:active {
+    transform: scale(0.97);
+}
+
+.sy-kpi-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    margin-bottom: 6px;
+    gap: 4px;
+    margin-bottom: 4px;
 }
 
-.sy-seg-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-}
-
-.dot-green { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18); }
-.dot-orange { background: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
-.dot-blue { background: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18); }
-
-.sy-seg-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--ink-main);
-    line-height: 1;
-}
-
-a.sy-seg-card.active .sy-seg-num {
-    color: #ffffff;
-}
-
-.sy-seg-label {
-    font-size: 11px;
+.sy-kpi-label {
+    font-size: 10.5px;
     font-weight: 700;
-    color: var(--ink-sub);
-    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-secondary);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-a.sy-seg-card.active .sy-seg-label {
-    color: #cbd5e1;
+.sy-kpi-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
-/* Arama ve Filtre Çubuğu */
+.sy-kpi-cyan .sy-kpi-dot { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+.sy-kpi-amber .sy-kpi-dot { background: #f97316; box-shadow: 0 0 8px #f97316; }
+.sy-kpi-emerald .sy-kpi-dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+.sy-kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.sy-kpi-bar {
+    height: 3px;
+    width: 100%;
+    border-radius: 999px;
+    margin-top: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.sy-kpi-cyan .sy-kpi-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.sy-kpi-amber .sy-kpi-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ea580c, #fb923c); }
+.sy-kpi-emerald .sy-kpi-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #059669, #34d399); }
+
+/* Aktif Seçili KPI Kartı Vurgusu */
+a.sy-kpi-card.sy-kpi-active {
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+    border: 1.5px solid #f97316 !important;
+    box-shadow: 0 0 22px rgba(249, 115, 22, 0.28), inset 0 0 12px rgba(249, 115, 22, 0.12) !important;
+}
+
+a.sy-kpi-card.sy-kpi-active .sy-kpi-label {
+    color: #fdba74 !important;
+}
+
+/* Arama ve Filtre Çubuğu (Streamlit Input & Popover Override) */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 8px !important;
-    margin-bottom: 6px !important;
+    margin-top: 4px !important;
 }
 
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
@@ -380,559 +461,674 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:fir
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
+    min-width: 60px !important;
 }
 
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
-    background-color: var(--bg-card) !important;
-    border: 1.5px solid var(--border-light) !important;
-    border-radius: 13px !important;
-    color: var(--ink-main) !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    box-shadow: var(--shadow-card) !important;
+    background-color: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    border-radius: 12px !important;
+    color: #f8fafc !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13.5px !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.2s ease !important;
 }
 
-div[data-testid="stTextInput"] input {
-    height: 42px !important;
-    font-size: 13.5px !important;
-    padding-left: 14px !important;
+div[data-testid="stTextInput"] input::placeholder,
+div[data-testid="stTextArea"] textarea::placeholder {
+    color: #64748b !important;
 }
 
 div[data-testid="stTextInput"] input:focus,
 div[data-testid="stTextArea"] textarea:focus {
-    border-color: var(--brand-orange) !important;
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15) !important;
+    border-color: #f97316 !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18) !important;
+}
+
+div[data-testid="stTextInput"] input {
+    height: 42px !important;
+    padding: 0 14px !important;
 }
 
 div[data-testid="stPopover"] > button {
-    background-color: var(--bg-card) !important;
-    border: 1.5px solid var(--border-light) !important;
-    border-radius: 13px !important;
-    color: var(--ink-main) !important;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    border-radius: 12px !important;
+    color: #f8fafc !important;
     height: 42px !important;
-    padding: 0 13px !important;
+    padding: 0 12px !important;
     font-weight: 700 !important;
     font-size: 13px !important;
-    box-shadow: var(--shadow-card) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+    transition: all 0.2s ease !important;
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: var(--brand-orange) !important;
-    background-color: var(--brand-orange-bg) !important;
+    border-color: #f97316 !important;
+    background: rgba(249, 115, 22, 0.15) !important;
+    color: #fdba74 !important;
+}
+
+/* Popover İçeriği ve Form Elemanları Koyu Tema Uyumu */
+div[data-testid="stPopoverBody"] {
+    background-color: #0f172a !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    border-radius: 14px !important;
+    color: #f8fafc !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.65) !important;
+}
+
+div[data-testid="stPopoverBody"] label,
+div[data-testid="stPopoverBody"] p,
+div[data-testid="stPopoverBody"] span {
+    color: #e2e8f0 !important;
+}
+
+div[data-baseweb="select"] > div {
+    background-color: #1e293b !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    color: #f8fafc !important;
+    border-radius: 10px !important;
+}
+
+/* Login Formu Özel Tasarımı */
+.sy-login-hero {
+    background: linear-gradient(155deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #f97316;
+    border-radius: 18px;
+    padding: 22px 18px;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+}
+
+.sy-login-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fb923c;
+    background: rgba(249, 115, 22, 0.14);
+    border: 1px solid rgba(249, 115, 22, 0.35);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+
+.sy-login-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.sy-login-sub {
+    font-size: 12.5px;
+    color: #94a3b8;
 }
 
 div[data-testid="stForm"] {
-    background-color: var(--bg-card) !important;
-    border: 1px solid var(--border-light) !important;
-    border-radius: 18px !important;
+    background: rgba(15, 23, 42, 0.88) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border-radius: 16px !important;
     padding: 18px !important;
-    box-shadow: var(--shadow-card) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Sonuç Sayaç Şeridi */
+div[data-testid="stForm"] label {
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+
+/* Genel Butonlar */
+button[kind="primary"] {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 11px !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+
+button[kind="primary"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 22px rgba(249, 115, 22, 0.5) !important;
+}
+
+button[kind="secondary"] {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    border-radius: 11px !important;
+    color: #f8fafc !important;
+    font-weight: 600 !important;
+}
+
+button[kind="secondary"]:hover {
+    border-color: #f97316 !important;
+    color: #fdba74 !important;
+}
+
+/* Liste Sayacı Üst Satırı */
 .sy-list-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 4px 4px 2px 4px;
     font-size: 11.5px;
-    font-weight: 700;
-    color: var(--ink-mute);
-    padding: 2px 4px 6px 4px;
+    color: var(--text-secondary);
 }
 
-/* YENİ ZENGİN SİPARİŞ KARTLARI */
-.sy-feed {
+.sy-list-meta strong {
+    font-family: 'JetBrains Mono', monospace;
+    color: #f8fafc;
+}
+
+/* Sipariş Kartları (Sevkiyat Fişi & Telemetri Kartı) */
+.sip-list-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
-details.sy-order-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    box-shadow: var(--shadow-card);
+.sip-row-wrap {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 7px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+details.custom-sip-card {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    background: linear-gradient(150deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.76) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-left: 4px solid var(--card-accent, #38bdf8);
+    border-radius: 13px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
     overflow: hidden;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-details.sy-order-card[open] {
-    border-color: var(--border-mid);
-    box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.12);
+details.custom-sip-card[open] {
+    border-color: rgba(249, 115, 22, 0.45);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.48);
 }
 
-details.sy-order-card > summary {
+details.custom-sip-card > summary {
     list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
     cursor: pointer;
     user-select: none;
-    padding: 12px 13px;
-    display: block;
+    min-height: 54px;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
 }
 
-details.sy-order-card > summary::-webkit-details-marker {
+details.custom-sip-card > summary::-webkit-details-marker {
     display: none;
 }
 
-.sy-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
+details.custom-sip-card > summary:hover {
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
-.sy-card-id-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.sy-order-no {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 800;
-    color: #0f172a;
-    background: #f1f5f9;
-    padding: 3px 8px;
-    border-radius: 7px;
-}
-
-.sy-order-date {
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--ink-mute);
-}
-
-.sy-status-pill {
+.custom-card-arrow {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 10.5px;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 10px;
+    color: #94a3b8;
     font-weight: 800;
-    letter-spacing: 0.02em;
-    padding: 3px 9px;
-    border-radius: 999px;
-    color: #ffffff;
-    white-space: nowrap;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
 }
 
-/* Rota Akış Bloğu (Tedarikçi -> Müşteri) */
-.sy-route-box {
+details.custom-sip-card[open] .custom-card-arrow {
+    transform: rotate(90deg);
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c;
+}
+
+.custom-card-lines {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 3px;
-    margin-bottom: 9px;
 }
 
-.sy-supplier {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--ink-main);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sy-customer-row {
+.custom-card-line1 {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--ink-sub);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sy-arrow-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff7ed;
-    color: #ea580c;
-    border-radius: 5px;
-    padding: 1px 5px;
-    font-size: 10.5px;
-    font-weight: 800;
-    flex-shrink: 0;
-}
-
-/* Alt Bilgi Çipleri (Şantiye + Malzeme Özeti + Açılır Ok) */
-.sy-card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed var(--border-light);
-}
-
-.sy-chips {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-}
-
-.sy-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink-sub);
-    background: var(--bg-soft);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 3px 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 56%;
-}
-
-.sy-chip-item {
-    background: #eff6ff;
-    border-color: #dbeafe;
-    color: #1e40af;
+    font-size: 13px;
     font-weight: 700;
-    max-width: 44%;
-}
-
-.sy-expand-hint {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    color: var(--ink-sub);
-    flex-shrink: 0;
-    transition: transform 0.18s ease, background-color 0.15s ease;
-}
-
-details.sy-order-card[open] .sy-expand-hint {
-    transform: rotate(180deg);
-    background: #0f172a;
-    color: #ffffff;
-}
-
-/* Kart İçi Hızlı Onay Şeridi (Yönetici & Onay Bekleyenler) */
-.sy-quick-approve-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(90deg, #fff7ed 0%, #ffedd5 100%);
-    border-top: 1px solid #fed7aa;
-    padding: 8px 13px;
-}
-
-.sy-quick-approve-text {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #9a3412;
-}
-
-a.sy-quick-approve-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-    color: #ffffff !important;
-    text-decoration: none !important;
-    font-size: 11.5px;
-    font-weight: 800;
-    padding: 6px 12px;
-    border-radius: 9px;
-    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.28);
-}
-
-a.sy-quick-approve-cta:active {
-    transform: scale(0.96);
-}
-
-/* Açılır Detay Alanı */
-.sy-card-drawer {
-    background: #f8fafc;
-    border-top: 1px solid var(--border-light);
-    padding: 12px 13px 14px 13px;
-}
-
-.sy-drawer-status-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ink-sub);
-}
-
-.sy-spec-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.sy-spec-cell {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    padding: 7px 9px;
-}
-
-.sy-spec-cell.full {
-    grid-column: span 2;
-}
-
-.sy-spec-lbl {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--ink-mute);
-    margin-bottom: 2px;
-}
-
-.sy-spec-val {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--ink-main);
-    word-break: break-word;
-}
-
-.sy-spec-val.red { color: #b91c1c; font-weight: 800; }
-.sy-spec-val.navy { color: #1d4ed8; font-weight: 700; }
-
-/* Malzeme Listesi Kartı */
-.sy-items-box {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 11px;
-    overflow: hidden;
-}
-
-.sy-items-header {
-    background: #0f172a;
     color: #f8fafc;
-    font-size: 10.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 7px 10px;
-    display: flex;
-    justify-content: space-between;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.sy-item-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 12.5px;
-}
-
-.sy-item-row:last-child {
-    border-bottom: none;
-}
-
-.sy-item-name {
-    font-weight: 700;
-    color: var(--ink-main);
-    flex: 1;
-    min-width: 0;
-}
-
-.sy-item-qty {
+.sy-sip-chip {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 800;
-    color: #0f172a;
-    background: #f1f5f9;
-    padding: 3px 8px;
-    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+    flex-shrink: 0;
+}
+
+.sy-route-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* ==========================================================================
-   YÖNETİCİ TAM EKRAN ONAY İNCELEME EKRANI
-   ========================================================================== */
-.sy-review-sheet {
-    background: #ffffff;
-    border: 1px solid var(--border-light);
-    border-radius: 20px;
-    padding: 14px;
-    box-shadow: var(--shadow-float);
-    margin-bottom: 14px;
+.sy-route-arrow {
+    color: #f97316;
+    font-weight: 800;
+    margin: 0 2px;
 }
 
-.sy-review-top {
+.custom-card-line2 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 11px;
-    margin-bottom: 11px;
-    border-bottom: 1px solid var(--border-light);
+    gap: 8px;
+    font-size: 11.5px;
+    color: #94a3b8;
 }
 
-.sy-review-badge-title {
+.sy-site-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-date-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 1px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Kart Açılır Gövde */
+.custom-card-body {
+    padding: 10px 12px 12px 12px;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(9, 14, 26, 0.65);
+}
+
+/* Hızlı Onay İnceleme Butonu (Sağ Aksiyon Modülü) */
+a.mini-onay-btn {
+    flex: 0 0 46px;
+    width: 46px;
+    min-height: 54px;
+    max-height: 54px;
+    box-sizing: border-box;
+    background: linear-gradient(145deg, #f97316 0%, #ea580c 100%);
+    border: 1px solid rgba(253, 186, 116, 0.45);
+    border-radius: 13px;
+    color: #ffffff !important;
+    font-size: 19px;
+    font-weight: 900;
+    text-decoration: none !important;
     display: flex;
     align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+    transition: all 0.18s ease;
+}
+
+a.mini-onay-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+}
+
+a.mini-onay-btn:active {
+    transform: scale(0.95);
+}
+
+/* Yönetici Tam Ekran Onay İnceleme Konsolu */
+.fullscreen-review-card {
+    background: linear-gradient(160deg, rgba(15, 23, 42, 0.96) 0%, rgba(11, 17, 32, 0.98) 100%);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(249, 115, 22, 0.45);
+    border-top: 4px solid #f97316;
+    border-radius: 16px;
+    padding: 14px 14px 16px 14px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65), 0 0 30px rgba(249, 115, 22, 0.15);
+}
+
+.fullscreen-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
     gap: 8px;
 }
 
-.sy-review-pill {
-    font-family: 'JetBrains Mono', monospace;
+.fullscreen-review-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+a.close-review-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
     font-size: 13px;
     font-weight: 800;
-    background: #fff7ed;
-    color: #ea580c;
-    border: 1px solid #fed7aa;
-    padding: 4px 10px;
-    border-radius: 9px;
-}
-
-.sy-review-heading {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--ink-main);
-}
-
-a.sy-close-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: #f1f5f9;
-    color: var(--ink-sub) !important;
+    color: #cbd5e1 !important;
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 8px;
     text-decoration: none !important;
-    font-weight: 800;
-    font-size: 14px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
 }
 
-.sy-decision-dock {
+a.close-review-link:hover {
+    background: rgba(244, 63, 94, 0.2);
+    border-color: #f43f5e;
+    color: #ffffff !important;
+}
+
+.onay-aksiyon-bar {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px solid var(--border-light);
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+    width: 100%;
+    box-sizing: border-box;
 }
 
-a.sy-dec-btn {
+a.aksiyon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 46px;
-    border-radius: 12px;
+    height: 44px;
+    border-radius: 11px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 12.5px;
     font-weight: 800;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.4px;
     text-decoration: none !important;
-    box-shadow: var(--shadow-card);
-    transition: transform 0.1s ease;
+    box-sizing: border-box;
+    padding: 0 6px;
+    white-space: nowrap;
+    transition: all 0.18s ease;
 }
 
-a.sy-dec-btn:active {
+a.aksiyon-btn:active {
     transform: scale(0.97);
 }
 
-a.dec-approve {
-    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+a.aksiyon-onayla {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: 1px solid rgba(110, 231, 183, 0.4) !important;
     color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
 }
 
-a.dec-revise {
-    background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
-    color: #0f172a !important;
+a.aksiyon-revize {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border: 1px solid rgba(253, 224, 71, 0.45) !important;
+    color: #090d16 !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
 }
 
-a.dec-reject {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+a.aksiyon-reddet {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+    border: 1px solid rgba(253, 164, 175, 0.4) !important;
     color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.35);
 }
 
-/* Boş Durum & Sayfalama */
-.sy-empty {
-    background: #ffffff;
-    border: 1.5px dashed var(--border-mid);
-    border-radius: 18px;
+/* Detay Bilgi Izgarası (Data Cells) */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px 10px;
+    font-size: 12px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 10px;
+}
+
+.info-cell {
+    background: rgba(30, 41, 59, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+    border-radius: 7px;
+    padding: 5px 8px;
+}
+
+.info-item-label {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748b;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 1px;
+}
+
+.info-item-val {
+    font-weight: 600;
+    color: #f1f5f9;
+    word-break: break-word;
+}
+
+.info-item-val-red {
+    font-weight: 800;
+    color: #fb7185;
+    word-break: break-word;
+}
+
+.info-item-val-navy {
+    font-weight: 700;
+    color: #38bdf8;
+    word-break: break-word;
+}
+
+/* Malzeme / Kalem Tablosu */
+.urun-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 6px;
+    font-size: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.urun-table th {
+    background: rgba(30, 41, 59, 0.95);
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 700;
+    font-size: 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.urun-table td {
+    padding: 7px 9px;
+    color: #f8fafc;
+    background: rgba(15, 23, 42, 0.7);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.urun-table tr:nth-child(even) td {
+    background: rgba(30, 41, 59, 0.35);
+}
+
+.urun-table tr:last-child td {
+    border-bottom: none;
+}
+
+.urun-miktar {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #38bdf8 !important;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Operasyon Rozeti & Durum Etiketi */
+.sy-status-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 4px;
+}
+
+.badge {
+    padding: 3px 9px;
+    border-radius: 6px;
+    color: #ffffff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.durum-plain {
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 11.5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* Boş Durum (Empty State) */
+.empty-state-box {
+    background: linear-gradient(160deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.5) 100%);
+    border: 1px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 16px;
     padding: 32px 18px;
     text-align: center;
     margin-top: 10px;
+    margin-bottom: 12px;
 }
 
-.sy-empty-ico {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: #f1f5f9;
-    color: var(--ink-sub);
-    margin-bottom: 10px;
+.empty-state-icon {
+    font-size: 34px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.4));
 }
 
-.sy-empty-t {
+.empty-state-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 15px;
     font-weight: 800;
-    color: var(--ink-main);
+    color: #f8fafc;
     margin-bottom: 4px;
 }
 
-.sy-empty-d {
+.empty-state-desc {
     font-size: 12.5px;
-    color: var(--ink-sub);
+    color: #94a3b8;
 }
 
-.sy-pager {
+/* Sayfalama & İlerleme Barı */
+.pagination-box {
     margin-top: 14px;
     margin-bottom: 8px;
     text-align: center;
 }
 
-.sy-pager-lbl {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--ink-sub);
+.pagination-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #94a3b8;
     margin-bottom: 6px;
+    font-weight: 600;
 }
 
-.sy-pager-bar {
+.progress-track {
     width: 100%;
-    max-width: 220px;
+    max-width: 260px;
     height: 6px;
-    background: #e2e8f0;
+    background-color: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.15);
     border-radius: 999px;
-    margin: 0 auto 10px auto;
+    margin: 0 auto 8px auto;
     overflow: hidden;
 }
 
-.sy-pager-fill {
+.progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #0f172a 0%, #f97316 100%);
+    background: linear-gradient(90deg, #38bdf8 0%, #f97316 100%);
     border-radius: 999px;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+    transition: width 0.3s ease;
 }
 </style>
 """, unsafe_allow_html=True)
-
-ICON_REFRESH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>'
-ICON_LOGOUT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
-ICON_DOWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
-ICON_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-ICON_SEARCH = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
 
 
 def md_temizle(metin):
@@ -1037,7 +1233,7 @@ def onay_ntfy_gonder(siparis_no: int, firma: str, musteri: str, karar: str, acik
         pass
 
 
-# Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
+# Şifrelemesiz Oturum Jetonu (Beni Hatırla) Oluşturma ve Doğrulama
 def token_olustur(yetki_tipi, yetki_deger, gun=90):
     exp = int(time.time()) + (gun * 86400)
     payload_json = json.dumps({"tip": yetki_tipi, "deger": yetki_deger, "exp": exp}, separators=(",", ":")).encode("utf-8")
@@ -1094,25 +1290,28 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
+        rol_bilgi = "Kurumsal Sevkiyat & Sipariş İzleme Platformu"
+        if url_musteri:
+            rol_bilgi = f"Müşteri Erişim Portalı • {html.escape(url_musteri)}"
+        elif url_veren:
+            rol_bilgi = f"Personel Erişim Portalı • {html.escape(url_veren)}"
+
         st.markdown(
-            f'<div class="sy-topbar"><div class="sy-top-left">'
-            f'{LOGO_HTML}'
-            f'<div class="sy-top-titles">'
-            f'<span class="sy-top-role">Saha & Sevkiyat Merkezi</span>'
-            f'<div class="sy-top-name">SAYAR YAPI</div>'
-            f'</div></div></div>',
+            f'<div class="sy-login-hero">'
+            f'<div class="sy-login-badge">SECURE LOGISTICS TELEMETRY</div>'
+            f'<div style="display:flex; justify-content:center; margin-bottom:10px;">'
+            f'<div class="sy-logo-box" style="width:48px; height:48px; border-radius:14px;">{LOGO_HTML}</div>'
+            f'</div>'
+            f'<div class="sy-login-title">SAYAR YAPI</div>'
+            f'<div class="sy-login-sub">{rol_bilgi}</div>'
+            f'</div>',
             unsafe_allow_html=True
         )
 
-        if url_musteri:
-            st.caption(f"Müşteri Girişi: **{url_musteri}**")
-        elif url_veren:
-            st.caption(f"Personel Girişi: **{url_veren}**")
-
         with st.form("login_form", clear_on_submit=False):
-            pin = st.text_input("Erişim Şifresi:", type="password")
-            beni_hatirla = st.checkbox("Oturumu Açık Tut (90 Gün)", value=True)
-            giris_yapildi = st.form_submit_button("Sisteme Giriş Yap", use_container_width=True, type="primary")
+            pin = st.text_input("Erişim Şifresi:", type="password", placeholder="••••••••")
+            beni_hatirla = st.checkbox("Bu cihazda oturumu açık tut (90 Gün)", value=True)
+            giris_yapildi = st.form_submit_button("Sisteme Bağlan", use_container_width=True, type="primary")
 
         if giris_yapildi:
             basarili_tip = None
@@ -1152,7 +1351,7 @@ def check_password():
                     st.session_state.active_token = ""
                 st.rerun()
             else:
-                st.error("Hatalı erişim şifresi!")
+                st.error("Erişim reddedildi: Hatalı güvenlik şifresi.")
         st.stop()
 
 
@@ -1257,26 +1456,38 @@ def verileri_getir():
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
+# İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
 if not inceleme_aktif_mi:
     if yetki_tipi == "MUSTERI":
-        rol_etiket = "Müşteri Portalı"
-        ana_baslik = html.escape(str(yetki_deger))
+        baslik_metni = f'SAYAR YAPI • {html.escape(str(yetki_deger))}'
+        alt_metin = "Müşteri Sevkiyat İzleme"
     elif yetki_tipi == "SIPARIS_VEREN":
-        rol_etiket = "Personel Takip"
-        ana_baslik = html.escape(str(yetki_deger))
+        baslik_metni = f'SAYAR YAPI • {html.escape(str(yetki_deger))}'
+        alt_metin = "Saha & Personel Takibi"
     else:
-        rol_etiket = "Yönetici Komuta"
-        ana_baslik = "SAYAR YAPI"
+        baslik_metni = 'SAYAR YAPI'
+        alt_metin = "Lojistik Komuta Merkezi"
+
+    svg_refresh = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>'
+    svg_logout = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
 
     st.markdown(
-        f'<div class="sy-topbar">'
-        f'<div class="sy-top-left">{LOGO_HTML}'
-        f'<div class="sy-top-titles"><span class="sy-top-role">{rol_etiket}</span><div class="sy-top-name">{ana_baslik}</div></div>'
+        f'<div class="sy-cmd-header">'
+        f'<div class="sy-brand-wrap">'
+        f'<div class="sy-logo-box">{LOGO_HTML}</div>'
+        f'<div class="sy-title-col">'
+        f'<div class="sy-main-title">{baslik_metni}</div>'
+        f'<div class="sy-sub-row">'
+        f'<span class="sy-live-pill"><span class="sy-live-dot"></span>CANLI</span>'
+        f'<span class="sy-sub-text">{alt_metin}</span>'
         f'</div>'
-        f'<div class="sy-top-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="sy-circle-btn" title="Yenile">{ICON_REFRESH}</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="sy-circle-btn" title="Çıkış">{ICON_LOGOUT}</a>'
-        f'</div></div>',
+        f'</div>'
+        f'</div>'
+        f'<div class="sy-header-actions">'
+        f'<a data-spa="1" href="{refresh_href}" target="_self" class="sy-cmd-btn" title="Verileri Yenile">{svg_refresh}</a>'
+        f'<a data-spa="1" href="?action=logout" target="_self" class="sy-cmd-btn" title="Güvenli Çıkış">{svg_logout}</a>'
+        f'</div>'
+        f'</div>',
         unsafe_allow_html=True
     )
 
@@ -1310,14 +1521,26 @@ elif yetki_tipi == "SIPARIS_VEREN":
 
 OP_RENK = {
     "İŞLENDİ": "#0284c7",
-    "ONAY BEKLİYOR": "#ea580c",
-    "ONAYLANDI": "#16a34a",
-    "REVİZE İSTENDİ": "#ca8a04",
-    "REDDEDİLDİ": "#dc2626",
-    "TAMAMLANDI": "#059669",
-    "MUHASEBEYE İLETİLDİ": "#059669",
-    "İPTAL EDİLDİ": "#dc2626",
-    "KISMİ EVRAK": "#7c3aed"
+    "ONAY BEKLİYOR": "#f97316",
+    "ONAYLANDI": "#10b981",
+    "REVİZE İSTENDİ": "#f59e0b",
+    "REDDEDİLDİ": "#f43f5e",
+    "TAMAMLANDI": "#10b981",
+    "MUHASEBEYE İLETİLDİ": "#10b981",
+    "İPTAL EDİLDİ": "#f43f5e",
+    "KISMİ EVRAK": "#8b5cf6"
+}
+
+OP_IKON = {
+    "İŞLENDİ": "🔵",
+    "ONAY BEKLİYOR": "🟠",
+    "ONAYLANDI": "🟢",
+    "REVİZE İSTENDİ": "🟡",
+    "REDDEDİLDİ": "⛔",
+    "TAMAMLANDI": "✅",
+    "MUHASEBEYE İLETİLDİ": "✅",
+    "İPTAL EDİLDİ": "🔴",
+    "KISMİ EVRAK": "🟣"
 }
 
 ETIKET_MAP = {
@@ -1331,69 +1554,41 @@ ETIKET_MAP = {
     "nakliye": "Nakliye",
     "yetkili": "Yetkili",
     "telefon": "Telefon",
-    "arac": "Araç Sınıfı",
-    "ted_sip_no": "Ted. Sipariş No",
+    "arac": "Araç",
+    "ted_sip_no": "Ted.Sip.No",
     "siparis_veren": "Sipariş Veren",
     "plaka": "Plaka",
-    "notlar": "Sipariş Notu"
+    "notlar": "Not",
+    "nakliye_fatura": "Nakliye Fatura",
+    "firma_yetkili": "Firma Yetkili",
+    "siparis_gecen": "Sipariş Geçen"
 }
 
 oncelik = [
-    "sevk_tarihi",
     "tarih",
+    "sevk_tarihi",
     "firma",
     "musteri",
     "santiye",
     "sehir",
     "fabrika",
     "nakliye",
-    "arac",
-    "plaka",
     "yetkili",
     "telefon",
+    "arac",
     "ted_sip_no",
     "siparis_veren",
+    "plaka",
     "notlar"
 ]
 
 kalem_gruplari = dict(tuple(df_kalem.groupby("siparis_no"))) if not df_kalem.empty else {}
 
 
-def kalem_ozeti_getir(sip_no):
-    """Kart ön yüzünde gösterilecek kısa malzeme özetini döner (örn: 'GRİO MATİK • 26 TON')."""
-    kalemler = kalem_gruplari.get(sip_no)
-    if kalemler is None or kalemler.empty:
-        return None
-    olasi_ad = ["urun", "urun_adi", "malzeme", "malzeme_adi", "stok_adi", "kalem", "aciklama", "cinsi"]
-    ad_col = next((c for c in olasi_ad if c in kalemler.columns), None)
-    olasi_mik = ["miktar", "adet", "siparis_miktari", "siparis_adet", "tonaj", "kilo", "metraj", "miktari"]
-    mik_col = next((c for c in olasi_mik if c in kalemler.columns), None)
-    olasi_bir = ["birim", "birimi", "olcu_birimi"]
-    bir_col = next((c for c in olasi_bir if c in kalemler.columns), None)
-
-    ilk = kalemler.iloc[0]
-    ad = str(ilk.get(ad_col) or "").strip() if ad_col else ""
-    mik = ilk.get(mik_col) if mik_col else None
-    if isinstance(mik, float) and mik.is_integer():
-        mik = int(mik)
-    mik_s = str(mik).strip() if pd.notna(mik) and str(mik).strip() != "" else ""
-    bir_s = str(ilk.get(bir_col) or "").strip() if bir_col else ""
-
-    parcalar = []
-    if ad:
-        parcalar.append(ad)
-    if mik_s:
-        parcalar.append(f"{mik_s} {bir_s}".strip())
-    ozet = " • ".join(parcalar)
-    if len(kalemler) > 1 and ozet:
-        ozet += f" (+{len(kalemler) - 1})"
-    return ozet or None
-
-
 def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
     op_val = str(row.get("operasyon") or "-")
     op_upper = op_val.upper()
-    renk = OP_RENK.get(op_upper, "#475569")
+    renk = OP_RENK.get(op_upper, "#64748b")
     durum_gosterim = html.escape(durum_metni_formatla(row.get("durum")))
 
     haric_sutunlar = {
@@ -1420,21 +1615,21 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
         deger_str = "-" if bos_mu else html.escape(str(val).strip())
 
         if vurgulu_onay and col_lower in kirmizi_alanlar:
-            val_cls = "sy-spec-val red"
+            val_cls = "info-item-val-red"
         elif vurgulu_onay and col_lower in lacivert_alanlar:
-            val_cls = "sy-spec-val navy"
+            val_cls = "info-item-val-navy"
         else:
-            val_cls = "sy-spec-val"
+            val_cls = "info-item-val"
 
-        full_cls = " full" if col_lower == "notlar" or len(deger_str) > 32 else ""
+        span_style = ' style="grid-column: span 2;"' if col_lower == "notlar" or len(deger_str) > 35 else ""
         grid_items_html += (
-            f'<div class="sy-spec-cell{full_cls}">'
-            f'<span class="sy-spec-lbl">{html.escape(etiket)}</span>'
+            f'<div class="info-cell"{span_style}>'
+            f'<span class="info-item-label">{html.escape(etiket)}</span>'
             f'<span class="{val_cls}">{deger_str}</span>'
             f'</div>'
         )
 
-    grid_html = f'<div class="sy-spec-grid">{grid_items_html}</div>' if grid_items_html else ""
+    grid_html = f'<div class="info-grid">{grid_items_html}</div>' if grid_items_html else ""
 
     tablo_html = ""
     kalemler = kalem_gruplari.get(sip_no)
@@ -1463,28 +1658,32 @@ def siparis_detay_html_olustur(row, sip_no, vurgulu_onay=False):
             if isinstance(miktar_val, float) and miktar_val.is_integer():
                 miktar_val = int(miktar_val)
             miktar_str = html.escape(str(miktar_val if pd.notna(miktar_val) and str(miktar_val).strip() != "" else "-"))
-            birim_str = html.escape(str(k_row.get(birim_sutunu) or "")) if birim_sutunu else ""
-            miktar_etiket = f"{miktar_str} {birim_str}".strip()
+            birim_str = html.escape(str(k_row.get(birim_sutunu) or "-")) if birim_sutunu else "-"
 
             satirlar_html += (
-                f'<div class="sy-item-row">'
-                f'<span class="sy-item-name">{urun_adi}</span>'
-                f'<span class="sy-item-qty">{miktar_etiket}</span>'
-                f'</div>'
+                f"<tr>"
+                f"<td>{urun_adi}</td>"
+                f"<td style='text-align:left; white-space:nowrap; color:#94a3b8; font-weight:600;'>{birim_str}</td>"
+                f"<td class='urun-miktar'>{miktar_str}</td>"
+                f"</tr>"
             )
 
         tablo_html = (
-            f'<div class="sy-items-box">'
-            f'<div class="sy-items-header"><span>Sipariş Kalemleri ({len(kalemler)})</span><span>Miktar</span></div>'
-            f'{satirlar_html}'
-            f'</div>'
+            f"<table class='urun-table'>"
+            f"<thead><tr>"
+            f"<th>Malzeme / Ürün</th>"
+            f"<th style='text-align:left;'>Birim</th>"
+            f"<th style='text-align:right;'>Miktar</th>"
+            f"</tr></thead>"
+            f"<tbody>{satirlar_html}</tbody>"
+            f"</table>"
         )
 
     rozet_html = (
-        f'<div class="sy-drawer-status-row">'
-        f'<span class="sy-status-pill" style="background-color:{renk};">{html.escape(op_val)}</span>'
-        f'<span>Sevk Durumu: <strong>{durum_gosterim}</strong></span>'
-        f'</div>'
+        f"<div class='sy-status-strip'>"
+        f"<span class='badge' style='background-color:{renk};'>{html.escape(op_val)}</span>"
+        f"<span class='durum-plain'>Durum: {durum_gosterim}</span>"
+        f"</div>"
     )
     return rozet_html, grid_html, tablo_html
 
@@ -1507,36 +1706,36 @@ def karari_uygula(sip_no: int, row_data, karar: str, aciklama: str = ""):
         st.cache_data.clear()
         st.session_state.onay_inceleme_sip_no = None
         st.session_state.bekleyen_revize_sip_no = None
-        st.session_state.flash_mesaj = f"Sipariş #{sip_no} için {karar} kararı kaydedildi."
+        st.session_state.flash_mesaj = f"Sipariş #{sip_no} {karar} kararı kaydedildi."
         st.rerun()
     except Exception as err:
         st.error(f"Karar PostgreSQL'e yazılamadı: {err}")
 
 
-@st.dialog("Revize Talebi Notu")
+@st.dialog("Revize Notu")
 def revize_not_penceresi(sip_no: int, row_data):
-    st.caption(f"Sipariş #{sip_no} için revize gerekçesini yazınız:")
+    st.caption(f"Sipariş #{sip_no} için revize açıklaması giriniz:")
     revize_aciklama = st.text_area(
         "Revize Açıklaması",
-        placeholder="Örn: Nakliye fiyatı veya araç tipi güncellensin...",
+        placeholder="Örn: Fiyat kontrol edilsin veya araç bilgisi güncellensin...",
         height=100,
         label_visibility="collapsed"
     )
     col_r1, col_r2 = st.columns(2)
     with col_r1:
-        if st.button("Revize Gönder", type="primary", use_container_width=True):
+        if st.button("Gönder", type="primary", use_container_width=True):
             if not revize_aciklama.strip():
                 st.warning("Lütfen kısa bir revize açıklaması yazınız.")
             else:
                 karari_uygula(sip_no, row_data, "REVİZE İSTENDİ", revize_aciklama)
     with col_r2:
-        if st.button("Vazgeç", use_container_width=True):
+        if st.button("İptal", use_container_width=True):
             st.session_state.bekleyen_revize_sip_no = None
             st.rerun()
 
 
 # ==============================================================================
-# YÖNETİCİ TAM EKRAN ONAY İNCELEME SAYFASI
+# YÖNETİCİ TAM EKRAN ONAY İNCELEME MODU
 # ==============================================================================
 aktif_inceleme_no = st.session_state.get("onay_inceleme_sip_no")
 if inceleme_aktif_mi and aktif_inceleme_no is not None:
@@ -1562,21 +1761,18 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     reddet_href = f"{base_incele_href}&karar=REDDET"
 
     st.markdown(
-        f'<div class="sy-review-sheet">'
-        f'<div class="sy-review-top">'
-        f'<div class="sy-review-badge-title">'
-        f'<span class="sy-review-pill">#{html.escape(str(aktif_inceleme_no))}</span>'
-        f'<span class="sy-review-heading">Yönetici Onay İnceleme</span>'
-        f'</div>'
-        f'<a data-spa="1" href="?incele_kapat=1{token_param}" target="_self" class="sy-close-btn" title="Listeye Dön">✕</a>'
+        f'<div class="fullscreen-review-card">'
+        f'<div class="fullscreen-review-header">'
+        f'<div class="fullscreen-review-title">⚡ YÖNETİCİ ONAY KONSOLU • #{html.escape(str(aktif_inceleme_no))}</div>'
+        f'<a data-spa="1" href="?incele_kapat=1{token_param}" target="_self" class="close-review-link" title="Kapat">✕</a>'
         f'</div>'
         f'{rozet_html}'
         f'{grid_html}'
         f'{tablo_html}'
-        f'<div class="sy-decision-dock">'
-        f'<a data-spa="1" href="{onayla_href}" target="_self" class="sy-dec-btn dec-approve">✓ ONAYLA</a>'
-        f'<a data-spa="1" href="{revize_href}" target="_self" class="sy-dec-btn dec-revise">✎ REVİZE</a>'
-        f'<a data-spa="1" href="{reddet_href}" target="_self" class="sy-dec-btn dec-reject">✕ REDDET</a>'
+        f'<div class="onay-aksiyon-bar">'
+        f'<a data-spa="1" href="{onayla_href}" target="_self" class="aksiyon-btn aksiyon-onayla">✓ ONAYLA</a>'
+        f'<a data-spa="1" href="{revize_href}" target="_self" class="aksiyon-btn aksiyon-revize">↻ REVİZE</a>'
+        f'<a data-spa="1" href="{reddet_href}" target="_self" class="aksiyon-btn aksiyon-reddet">✕ REDDET</a>'
         f'</div>'
         f'</div>',
         unsafe_allow_html=True
@@ -1588,13 +1784,13 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# ANA AKIŞ EKRANI (BENTO SEGMENTLER + ZENGİN KART LİSTESİ)
+# ANA LİSTE VE TELEMETRİ KPI GÖRÜNÜMÜ
 # ==============================================================================
 flash_msg = st.session_state.flash_mesaj
 if flash_msg:
     toast_id = f"toast_{int(time.time() * 1000)}"
     st.markdown(
-        f'<div id="{toast_id}" class="sy-toast">✅ <span>{html.escape(str(flash_msg))}</span></div>',
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
         unsafe_allow_html=True
     )
     components.html(
@@ -1609,7 +1805,7 @@ if flash_msg:
                 setTimeout(function() {{
                     if (el && el.parentNode) el.parentNode.removeChild(el);
                 }}, 350);
-            }}, 2600);
+            }}, 2500);
         }})();
         </script>
         """,
@@ -1628,21 +1824,27 @@ sevk_bekleyen = len(
 )
 
 kpi_mod = st.session_state.kpi_mod
-act_sevk = " active" if kpi_mod == "SEVK" else ""
-act_onay = " active" if kpi_mod == "ONAY" else ""
-act_tamam = " active" if kpi_mod == "TAMAMLANDI" else ""
+cls_tamamlandi = "sy-kpi-active" if kpi_mod == "TAMAMLANDI" else ""
+cls_onay = "sy-kpi-active" if kpi_mod == "ONAY" else ""
+cls_sevk = "sy-kpi-active" if kpi_mod == "SEVK" else ""
 
 st.markdown(
-    f'<div class="sy-segment-wrap">'
-    f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="sy-seg-card{act_sevk}">'
-    f'<div class="sy-seg-top"><span class="sy-seg-num">{sevk_bekleyen}</span><span class="sy-seg-dot dot-green"></span></div>'
-    f'<div class="sy-seg-label">Sevk Bekleyen</div></a>'
-    f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="sy-seg-card{act_onay}">'
-    f'<div class="sy-seg-top"><span class="sy-seg-num">{onay_bekleyen}</span><span class="sy-seg-dot dot-orange"></span></div>'
-    f'<div class="sy-seg-label">Onay Bekleyen</div></a>'
-    f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="sy-seg-card{act_tamam}">'
-    f'<div class="sy-seg-top"><span class="sy-seg-num">{tamamlandi_siparis}</span><span class="sy-seg-dot dot-blue"></span></div>'
-    f'<div class="sy-seg-label">Tamamlanan</div></a>'
+    f'<div class="sy-kpi-grid">'
+    f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="sy-kpi-card sy-kpi-cyan {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
+    f'<div class="sy-kpi-top"><span class="sy-kpi-label">Tamamlandı</span><span class="sy-kpi-dot"></span></div>'
+    f'<div class="sy-kpi-value">{tamamlandi_siparis}</div>'
+    f'<div class="sy-kpi-bar"><div class="sy-kpi-bar-fill"></div></div>'
+    f'</a>'
+    f'<a data-spa="1" href="?kpi=ONAY{token_param}" target="_self" class="sy-kpi-card sy-kpi-amber {cls_onay}" title="Sadece onay bekleyenleri göster">'
+    f'<div class="sy-kpi-top"><span class="sy-kpi-label">Onay Bekleyen</span><span class="sy-kpi-dot"></span></div>'
+    f'<div class="sy-kpi-value">{onay_bekleyen}</div>'
+    f'<div class="sy-kpi-bar"><div class="sy-kpi-bar-fill"></div></div>'
+    f'</a>'
+    f'<a data-spa="1" href="?kpi=SEVK{token_param}" target="_self" class="sy-kpi-card sy-kpi-emerald {cls_sevk}" title="Sadece devam edenleri göster">'
+    f'<div class="sy-kpi-top"><span class="sy-kpi-label">Sevk Bekleyen</span><span class="sy-kpi-dot"></span></div>'
+    f'<div class="sy-kpi-value">{sevk_bekleyen}</div>'
+    f'<div class="sy-kpi-bar"><div class="sy-kpi-bar-fill"></div></div>'
+    f'</a>'
     f'</div>',
     unsafe_allow_html=True
 )
@@ -1676,21 +1878,21 @@ ek_filtre_aktif = (
     st.session_state.f_gizle_muh or
     st.session_state.f_gizle_ipt
 )
-popover_etiket = "Filtre •" if ek_filtre_aktif else "Filtre"
+popover_etiket = "🎛️ •" if ek_filtre_aktif else "🎛️"
 
-col_arama, col_filtre = st.columns([4.5, 1.3])
+col_arama, col_filtre = st.columns([5, 1])
 with col_arama:
     arama = st.text_input(
         "Arama",
         key="arama_metni",
-        placeholder="Sipariş no, tedarikçi, müşteri, şantiye ara...",
+        placeholder="🔍 Sipariş No, Tedarikçi, Müşteri veya Şantiye ara...",
         label_visibility="collapsed"
     )
 
 with col_filtre:
     with st.popover(popover_etiket, use_container_width=True):
-        st.markdown("**Detaylı Filtreleme**")
-        secili_op = st.selectbox("Operasyon Durumu", op_listesi, key="f_op")
+        st.markdown("**Gelişmiş Parametre Filtresi**")
+        secili_op = st.selectbox("Operasyon", op_listesi, key="f_op")
         secili_firma = st.selectbox("Tedarikçi Firma", firma_listesi, key="f_firma")
 
         if yetki_tipi != "MUSTERI":
@@ -1738,84 +1940,78 @@ gosterilen_adet = min(toplam_filtrelenen, gosterilen_limit)
 
 if toplam_filtrelenen == 0:
     st.markdown(
-        f'<div class="sy-empty">'
-        f'<div class="sy-empty-ico">{ICON_SEARCH}</div>'
-        f'<div class="sy-empty-t">Kayıt Bulunamadı</div>'
-        f'<div class="sy-empty-d">Seçili filtrelere veya arama metnine uygun sipariş kaydı yok.</div>'
-        f'</div>',
+        '<div class="empty-state-box">'
+        '<div class="empty-state-icon">📡</div>'
+        '<div class="empty-state-title">Kayıtlı Sevkiyat Bulunamadı</div>'
+        '<div class="empty-state-desc">Arama sorgunuzu güncelleyebilir veya aktif filtre parametrelerini sıfırlayabilirsiniz.</div>'
+        '</div>',
         unsafe_allow_html=True
     )
     col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
     with col_e2:
-        st.button("Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
+        st.button("🔄 Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
-    aktif_sekme_adi = {"SEVK": "Sevk Bekleyenler", "ONAY": "Onay Bekleyenler", "TAMAMLANDI": "Tamamlananlar"}.get(kpi_mod, "Liste")
     st.markdown(
         f'<div class="sy-list-meta">'
-        f'<span>{aktif_sekme_adi}</span>'
-        f'<span>{gosterilen_adet} / {toplam_filtrelenen} kayıt</span>'
+        f'<span>SEVKİYAT AKIŞI</span>'
+        f'<span>Gösterilen: <strong>{gosterilen_adet}</strong> / <strong>{toplam_filtrelenen}</strong></span>'
         f'</div>',
         unsafe_allow_html=True
     )
 
-    kart_parcalari = ['<div class="sy-feed">']
+    kart_parcalari = ['<div class="sip-list-container">']
     for _, row in filtered.head(gosterilen_limit).iterrows():
         sip_no = row.get("siparis_no", "-")
         op_val = str(row.get("operasyon") or "-")
         op_upper = op_val.upper()
-        rozet_renk = OP_RENK.get(op_upper, "#475569")
+        durum_ikon = OP_IKON.get(op_upper, "⚪")
+        kart_accent = OP_RENK.get(op_upper, "#38bdf8")
 
-        firma_str = md_temizle(row.get("firma"))
-        musteri_str = md_temizle(row.get("musteri"))
-        santiye_str = md_temizle(row.get("santiye"))
-        sevk_t = str(row.get("sevk_tarihi") or "").strip()
-        sip_t = str(row.get("tarih") or "").strip()
-        tarih_gosterim = sevk_t if sevk_t and sevk_t not in ("None", "nan", "-") else (sip_t or "-")
+        firma_str = row.get("firma") or "-"
+        musteri_str = row.get("musteri") or "-"
+        santiye_str = row.get("santiye") or "-"
+        tarih_str = row.get("tarih") or "-"
 
-        kalem_ozet = kalem_ozeti_getir(sip_no)
-        kalem_chip_html = f'<span class="sy-chip sy-chip-item">📦 {html.escape(kalem_ozet)}</span>' if kalem_ozet else ""
+        f_md = md_temizle(firma_str)
+        m_md = md_temizle(musteri_str)
+        s_md = md_temizle(santiye_str)
+        t_md = md_temizle(tarih_str)
 
         rozet_html, grid_html, tablo_html = siparis_detay_html_olustur(row, sip_no)
 
         if yetki_tipi == "MUSTERI":
-            rota_html = f'<div class="sy-supplier">{html.escape(firma_str)}</div>'
+            satir1_html = (
+                f'<span class="sy-sip-chip">{durum_ikon} #{html.escape(str(sip_no))}</span>'
+                f'<span class="sy-route-text">{html.escape(f_md)}</span>'
+            )
         else:
-            rota_html = (
-                f'<div class="sy-supplier">{html.escape(firma_str)}</div>'
-                f'<div class="sy-customer-row"><span class="sy-arrow-badge">TESLİM</span><span>{html.escape(musteri_str)}</span></div>'
+            satir1_html = (
+                f'<span class="sy-sip-chip">{durum_ikon} #{html.escape(str(sip_no))}</span>'
+                f'<span class="sy-route-text">{html.escape(f_md)} <span class="sy-route-arrow">➔</span> {html.escape(m_md)}</span>'
             )
+        satir2_html = (
+            f'<span class="sy-site-text">📍 {html.escape(s_md)}</span>'
+            f'<span class="sy-date-pill">{html.escape(t_md)}</span>'
+        )
 
-        onay_cta_html = ""
+        onay_buton_html = ""
         if yetki_tipi == "YONETICI" and op_upper == "ONAY BEKLİYOR":
-            onay_cta_html = (
-                f'<div class="sy-quick-approve-bar">'
-                f'<span class="sy-quick-approve-text">Yönetici onayı bekleniyor</span>'
-                f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="sy-quick-approve-cta">{ICON_CHECK} İncele & Karar Ver</a>'
-                f'</div>'
-            )
+            onay_buton_html = f'<a data-spa="1" href="?incele={sip_no}{token_param}" target="_self" class="mini-onay-btn" title="Siparişi İncele">✓</a>'
 
         kart_parcalari.append(
-            f'<details class="sy-order-card">'
+            f'<div class="sip-row-wrap">'
+            f'<details class="custom-sip-card" style="--card-accent:{kart_accent};">'
             f'<summary>'
-            f'<div class="sy-card-head">'
-            f'<div class="sy-card-id-group">'
-            f'<span class="sy-order-no">#{html.escape(str(sip_no))}</span>'
-            f'<span class="sy-order-date">📅 {html.escape(tarih_gosterim)}</span>'
-            f'</div>'
-            f'<span class="sy-status-pill" style="background-color:{rozet_renk};">{html.escape(op_val)}</span>'
-            f'</div>'
-            f'<div class="sy-route-box">{rota_html}</div>'
-            f'<div class="sy-card-footer">'
-            f'<div class="sy-chips">'
-            f'<span class="sy-chip">📍 {html.escape(santiye_str)}</span>'
-            f'{kalem_chip_html}'
-            f'</div>'
-            f'<span class="sy-expand-hint">{ICON_DOWN}</span>'
+            f'<span class="custom-card-arrow">❯</span>'
+            f'<div class="custom-card-lines">'
+            f'<div class="custom-card-line1">{satir1_html}</div>'
+            f'<div class="custom-card-line2">{satir2_html}</div>'
             f'</div>'
             f'</summary>'
-            f'{onay_cta_html}'
-            f'<div class="sy-card-drawer">{rozet_html}{grid_html}{tablo_html}</div>'
+            f'<div class="custom-card-body">{rozet_html}{grid_html}{tablo_html}</div>'
             f'</details>'
+            f'{onay_buton_html}'
+            f'</div>'
         )
 
     kart_parcalari.append('</div>')
@@ -1823,9 +2019,9 @@ else:
 
     yuzde = int((gosterilen_adet / toplam_filtrelenen) * 100) if toplam_filtrelenen > 0 else 100
     st.markdown(
-        f'<div class="sy-pager">'
-        f'<div class="sy-pager-lbl">{toplam_filtrelenen} siparişten {gosterilen_adet} tanesi listeleniyor</div>'
-        f'<div class="sy-pager-bar"><div class="sy-pager-fill" style="width:{yuzde}%;"></div></div>'
+        f'<div class="pagination-box">'
+        f'<div class="pagination-text">{toplam_filtrelenen} KAYITTAN {gosterilen_adet} TANESİ LİSTELENDİ (%{yuzde})</div>'
+        f'<div class="progress-track"><div class="progress-fill" style="width:{yuzde}%;"></div></div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -1833,6 +2029,6 @@ else:
     if gosterilen_adet < toplam_filtrelenen:
         kalan = toplam_filtrelenen - gosterilen_adet
         eklenecek = min(50, kalan)
-        if st.button(f"Daha Fazla Sipariş Yükle (+{eklenecek})", use_container_width=True):
+        if st.button(f"Daha Fazla Kayıt Yükle (+{eklenecek})", use_container_width=True):
             st.session_state.sayfa_limiti += 50
             st.rerun()
