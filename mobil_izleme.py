@@ -208,16 +208,38 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 }
 
 /*
-   ÖNEMLİ: Streamlit'in kendi dikey konteynerlerinin height/overflow özelliklerine
-   ASLA müdahale edilmiyor. Her blok kendi doğal yüksekliğinde alt alta sıralanır,
-   böylece hiçbir üst bileşen bir diğerinin üzerine binmez.
+   ÖNEMLİ DÜZELTME:
+   Streamlit 1.38+ sürümlerinde [data-testid="stVerticalBlock"] gap: 6px yerine
+   row-gap + column-gap olarak işlenir ve bazı konteynerlerde negatife düşen
+   marjinleri engelleyecek şekilde açık dikey boşluk (row-gap: 8px) tanımlanır.
+   Ayrıca stMarkdownContainer içindeki blokların dışarı taşması engellenir.
 */
 [data-testid="stVerticalBlock"] {
-    gap: 6px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    row-gap: 8px !important;
+    column-gap: 0px !important;
 }
 
-div[data-testid="stElementContainer"] {
-    margin-bottom: 0 !important;
+div[data-testid="stElementContainer"],
+div[data-testid="stMarkdown"],
+div[data-testid="stMarkdownContainer"] {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+}
+
+/* Görünmez components.html iframe'lerinin ekstra dikey boşluk bırakmasını önle */
+div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* ==========================================================================
@@ -246,7 +268,7 @@ div[data-testid="stElementContainer"] {
     padding: 6px 9px;
     box-shadow: var(--emboss-tile);
     overflow: hidden;
-    margin: 0;
+    margin: 0 0 2px 0;
 }
 
 .command-header::after {
@@ -416,7 +438,7 @@ a.cmd-icon-btn:active {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
-    margin: 0;
+    margin: 0 0 2px 0;
 }
 
 a.kpi-tile {
@@ -527,15 +549,27 @@ a.kpi-tile.kpi-selected.kpi-t-emerald {
 }
 
 /* ==========================================================================
-   ARAMA & FİLTRE SATIRI (DOĞAL AKIŞTA, HİÇBİR ŞEYLE ÇAKIŞMAZ)
+   ARAMA & FİLTRE SATIRI (DOĞAL AKIŞTA, NET MARJİNLİ, SIFIR ÇAKIŞMA)
    ========================================================================== */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
+    position: relative !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 6px !important;
     width: 100% !important;
+    height: auto !important;
+    min-height: 36px !important;
+    margin: 2px 0 2px 0 !important;
+    padding: 0 !important;
+    z-index: 2 !important;
+}
+
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -549,7 +583,13 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:fir
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
-    min-width: 48px !important;
+    min-width: 52px !important;
+}
+
+div[data-testid="stTextInput"] > div,
+div[data-testid="stTextInput"] > div > div {
+    min-height: 35px !important;
+    height: 35px !important;
 }
 
 div[data-testid="stTextInput"] input,
@@ -581,7 +621,8 @@ div[data-testid="stPopover"] > button {
     border-radius: 9px !important;
     color: var(--ink-primary) !important;
     height: 35px !important;
-    min-width: 48px !important;
+    min-height: 35px !important;
+    min-width: 52px !important;
     padding: 0 9px !important;
     font-weight: 700 !important;
     font-size: 12.5px !important;
@@ -641,8 +682,8 @@ div[data-testid="stPopover"] > button {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     padding: 2px 1px 16px 1px;
-    height: calc(100dvh - 188px);
-    max-height: calc(100dvh - 188px);
+    height: calc(100dvh - 196px);
+    max-height: calc(100dvh - 196px);
 }
 
 .sy-scroll-stream::-webkit-scrollbar {
