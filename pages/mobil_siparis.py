@@ -36,10 +36,10 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 
 
 LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="sy-logo-img" alt="Sayar Yapı Logo">' if LOGO_DATA_URI else '<span class="sy-logo-fallback">🏗️</span>'
 
 st.set_page_config(
-    page_title="Sayar Yapı | Hızlı Sipariş Girişi",
+    page_title="Sayar Yapı | Canlı Sipariş Komuta Merkezi",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -83,6 +83,20 @@ components.html(
                 win.dispatchEvent(new PopStateEvent('popstate'));
             }}, true);
         }}
+
+        function syncLiveClock() {{
+            const clockEl = doc.getElementById('sy-live-clock');
+            if (!clockEl) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            clockEl.textContent = `${{hh}}:${{mm}}:${{ss}}`;
+        }}
+        syncLiveClock();
+        if (!win.__syClockTimer) {{
+            win.__syClockTimer = win.setInterval(syncLiveClock, 1000);
+        }}
     }})();
     </script>
     """,
@@ -92,9 +106,36 @@ components.html(
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+:root {
+    --bg-canvas: #f4f7fb;
+    --bg-grid: rgba(15, 23, 42, 0.032);
+    --surface-card: rgba(255, 255, 255, 0.94);
+    --surface-subtle: #f8fafc;
+    --surface-tint-indigo: #eef2ff;
+    --surface-tint-teal: #ecfdf5;
+    --surface-tint-amber: #fffbeb;
+    --ink-primary: #0b132b;
+    --ink-secondary: #475569;
+    --ink-muted: #64748b;
+    --accent-indigo: #4f46e5;
+    --accent-indigo-dark: #3730a3;
+    --accent-cyan: #0284c7;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --border-soft: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 10px 28px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -4px rgba(79, 70, 229, 0.06);
+    --shadow-lg: 0 18px 38px -10px rgba(15, 23, 42, 0.11);
+}
+
 *, *::before, *::after {
     box-sizing: border-box !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -114,315 +155,551 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
+
 html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
+    background-color: var(--bg-canvas) !important;
+    background-image:
+        radial-gradient(circle at 12% 4%, rgba(79, 70, 229, 0.07) 0%, transparent 42%),
+        radial-gradient(circle at 88% 12%, rgba(2, 132, 199, 0.07) 0%, transparent 45%),
+        linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px !important;
+    color: var(--ink-primary) !important;
     overflow-x: hidden !important;
     max-width: 100% !important;
     width: 100% !important;
 }
+
 .block-container {
-    padding-top: 0.45rem !important;
-    padding-bottom: 5.2rem !important;
-    padding-left: 0.70rem !important;
-    padding-right: 0.70rem !important;
-    max-width: 540px !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 5.5rem !important;
+    padding-left: 0.72rem !important;
+    padding-right: 0.72rem !important;
+    max-width: 560px !important;
     width: 100% !important;
     margin: 0 auto !important;
     background: transparent !important;
     border: 0 !important;
-    border-radius: 0 !important;
     box-shadow: none !important;
 }
+
 [data-testid="stVerticalBlock"] {
-    gap: 0.32rem !important;
+    gap: 0.36rem !important;
     width: 100% !important;
     max-width: 100% !important;
 }
+
 [data-testid="element-container"] {
     width: 100% !important;
     max-width: 100% !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) {
+
+/* Mobil iki sütunlu yatay blokları tek satırda ve taşmasız tut */
+div[data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 6px !important;
+    gap: 7px !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.iki-sutun-isaret) > div[data-testid="column"] {
-    flex: 1 1 50% !important;
-    width: 50% !important;
-    min-width: 0 !important;
-    max-width: 50% !important;
-    padding: 0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
     align-items: stretch !important;
-    gap: 6px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="column"]:nth-child(1) {
-    flex: 1 1 auto !important;
+
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     min-width: 0 !important;
     padding: 0 !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.ozet-satir-isaret) > div[data-testid="column"]:nth-child(2) {
-    flex: 0 0 42px !important;
-    width: 42px !important;
-    min-width: 42px !important;
-    max-width: 42px !important;
-    padding: 0 !important;
+
+/* Canlı Kurumsal Komuta Başlığı */
+.sy-hero-header {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 55%, #eef2ff 100%);
+    border: 1px solid rgba(79, 70, 229, 0.16);
+    border-radius: 18px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-md);
 }
-.header-banner {
+
+.sy-hero-header::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3.5px;
+    background: linear-gradient(90deg, #4f46e5 0%, #0284c7 50%, #10b981 100%);
+}
+
+.sy-hero-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #ffffff;
-    border: 0;
-    border-bottom: 1px solid #e2e8f0;
-    border-radius: 0;
-    padding: 1px 0 8px;
-    margin: 0 0 8px;
-    color: #0f172a;
-    box-shadow: none;
-    gap: 8px;
-    width: 100%;
+    gap: 10px;
 }
-.header-info {
-    flex: 1;
-    min-width: 0;
-}
-.header-title {
+
+.sy-brand-group {
     display: flex;
     align-items: center;
-    gap: 7px;
-    font-size: 14px;
-    font-weight: 800;
-    margin: 0;
-    color: #172033;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
 }
-.header-logo {
-    height: 23px;
-    width: auto;
-    object-fit: contain;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-.header-sub {
-    font-size: 10.5px;
-    color: #64748b;
-    margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.header-actions {
+
+.sy-logo-frame {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
     display: flex;
-    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sy-logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.sy-logo-fallback {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.sy-brand-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.sy-brand-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-brand-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-action-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     flex-shrink: 0;
 }
-.icon-btn {
+
+.sy-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 31px;
-    height: 31px;
-    border-radius: 7px;
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #475569 !important;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border-strong);
+    color: var(--ink-primary) !important;
     text-decoration: none !important;
     font-size: 14px;
-    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
-.icon-btn:active {
-    background-color: #f97316;
+
+.sy-icon-btn:hover {
+    border-color: var(--accent-indigo);
+    background: var(--surface-tint-indigo);
+    transform: translateY(-1px);
 }
-.auto-toast-banner {
-    background-color: #dcfce7;
-    border: 1px solid #86efac;
-    border-left: 4px solid #16a34a;
-    color: #14532d;
-    border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 12.5px;
+
+.sy-icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* Canlı Nabız & Saat Şeridi */
+.sy-telemetry-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 10.5px;
+    color: var(--ink-secondary);
+}
+
+.sy-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    padding: 2px 8px;
+    border-radius: 999px;
     font-weight: 700;
-    margin-bottom: 4px;
-    opacity: 1;
-    transition: opacity 0.35s ease;
-    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
+
+.sy-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: syPulse 1.8s infinite;
+}
+
+@keyframes syPulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.sy-clock-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-primary);
+    background: #ffffff;
+    border: 1px solid var(--border-soft);
+    padding: 2px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+/* Canlı Telemetri Sayaç Kartları */
+.sy-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 8px;
+}
+
+.sy-kpi-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 8px 9px;
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+
+.sy-kpi-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-primary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-kpi-tag {
+    font-size: 9.5px;
+    font-weight: 600;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sy-tag-indigo { color: var(--accent-indigo); }
+.sy-tag-emerald { color: var(--accent-emerald); }
+.sy-tag-amber { color: var(--accent-amber); }
+
+/* Bildirim Bannerı */
+.sy-toast-success {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #6ee7b7;
+    border-left: 4px solid #059669;
+    color: #064e3b;
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Ana Form Kapsayıcı Kartı */
 .st-key-siparis-form-card {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-top: 4px solid #f97316 !important;
-    border-radius: 11px !important;
-    padding: 10px 11px 12px 11px !important;
-    margin-top: 2px !important;
-    margin-bottom: 10px !important;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07) !important;
+    background: var(--surface-card) !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 20px !important;
+    padding: 12px 12px 14px 12px !important;
+    box-shadow: var(--shadow-lg) !important;
+    backdrop-filter: blur(12px);
 }
+
 .st-key-siparis-form-card > div {
     gap: 0.42rem !important;
 }
-.st-key-siparis-form-card .header-banner {
+
+/* Bölüm Başlık Çubukları */
+.sy-section-bar {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 0 0 8px;
-    margin: 0 0 8px;
+    justify-content: space-between;
+    margin: 8px 0 3px 0;
+    padding: 0 2px;
 }
-.st-key-siparis-form-card .header-title {
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
-}
-.st-key-siparis-form-card .header-sub {
-    font-size: 10px !important;
-    color: #64748b !important;
-}
-.st-key-siparis-form-card .siparis-kalem-baslik {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 74px 72px;
+
+.sy-section-title {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
-    background: #1e293b;
-    color: #ffffff;
-    border-radius: 7px 7px 0 0;
-    padding: 9px 8px;
     font-size: 11px;
     font-weight: 800;
-    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-primary);
 }
-.siparis-kalem-baslik span:nth-child(2),
-.siparis-kalem-baslik span:nth-child(3) { text-align: center; }
-.eklenen-urun-birim {
-    width: 74px;
-    text-align: center;
-    font-size: 11px;
+
+.sy-section-badge {
+    font-size: 10px;
     font-weight: 700;
-    color: #475569;
-    flex-shrink: 0;
+    color: var(--accent-indigo);
+    background: var(--surface-tint-indigo);
+    border: 1px solid #c7d2fe;
+    padding: 1px 7px;
+    border-radius: 999px;
 }
-.eklenen-urun-satir {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 74px 72px;
-    gap: 6px;
-    align-items: center;
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-left: 3px solid #f97316 !important;
-    border-radius: 6px !important;
-    padding: 7px 10px;
-    min-height: 40px !important;
-    width: 100%;
-    overflow: hidden;
-}
-div[data-testid="stHorizontalBlock"] {
-    gap: 8px !important;
-}
+
+/* Form Elemanları: Açık, Net ve Dokunmatik Uyumlu */
 div[data-testid="stDateInput"] label,
 div[data-testid="stTextInput"] label,
 div[data-testid="stSelectbox"] label {
-    color: #64748b !important;
-    font-size: 10px !important;
+    color: var(--ink-muted) !important;
+    font-size: 10.5px !important;
     font-weight: 600 !important;
 }
+
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
     background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    color: #0f172a !important;
-    min-height: 43px !important;
-    font-size: 14px !important;
+    border: 1.5px solid var(--border-soft) !important;
+    border-radius: 12px !important;
+    color: var(--ink-primary) !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     width: 100% !important;
     max-width: 100% !important;
 }
+
+div[data-testid="stTextInput"] input:focus,
+div[data-testid="stDateInput"] input:focus,
+div[data-baseweb="select"] > div:focus-within {
+    border-color: var(--accent-indigo) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+}
+
+div[data-baseweb="select"] span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
 div[data-testid="stNumberInput"] button {
     display: none !important;
 }
-div[data-testid="stNumberInput"] input {
-    padding-left: 10px !important;
-    padding-right: 8px !important;
+
+div[data-testid="stTextInput"] input::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
 }
+
+/* Butonlar */
 div[data-testid="stButton"] button {
-    min-height: 42px !important;
-    padding: 0 6px !important;
-    font-size: 12.5px !important;
-    font-weight: 800 !important;
-    border-radius: 9px !important;
+    min-height: 43px !important;
+    height: 43px !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    border: 1.5px solid var(--border-strong) !important;
+    background-color: #ffffff !important;
+    color: var(--ink-primary) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     width: 100% !important;
     max-width: 100% !important;
 }
+
+div[data-testid="stButton"] button:hover {
+    border-color: var(--accent-indigo) !important;
+    background-color: var(--surface-tint-indigo) !important;
+    color: var(--accent-indigo-dark) !important;
+}
+
 button[kind="primary"] {
-    background-color: #f97316 !important;
-    border-color: #ea580c !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    border: 1.5px solid #3730a3 !important;
     color: #ffffff !important;
     font-weight: 800 !important;
-    height: 42px !important;
-    border-radius: 9px !important;
-    font-size: 12.5px !important;
+    box-shadow: 0 6px 16px -4px rgba(79, 70, 229, 0.42) !important;
 }
+
 button[kind="primary"]:hover {
-    background-color: #ea580c !important;
+    background: linear-gradient(135deg, #4338ca 0%, #312e81 100%) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
 }
+
+/* Alt Sabit Aksiyon Çubuğu */
 div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 100% !important;
-    max-width: 540px !important;
-    padding: 7px 0.55rem 9px 0.55rem !important;
-    background: linear-gradient(180deg, rgba(241,245,249,0.88) 0%, #f1f5f9 30%) !important;
-    backdrop-filter: blur(4px);
+    max-width: 560px !important;
+    padding: 8px 0.72rem 10px 0.72rem !important;
+    background: rgba(244, 247, 251, 0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    border-top: 1px solid rgba(203, 213, 225, 0.75) !important;
     z-index: 9999 !important;
     margin: 0 !important;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08) !important;
 }
-.eklenen-urun-ad {
-    font-size: 12.5px;
+
+/* Kalem Listesi Tablo ve Satırları */
+.sy-kalem-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 68px 74px;
+    gap: 6px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f8fafc;
+    border-radius: 11px 11px 0 0;
+    padding: 8px 10px;
+    font-size: 10.5px;
     font-weight: 700;
-    color: #0f172a;
+    letter-spacing: 0.03em;
+    margin-top: 6px;
+}
+
+.sy-kalem-header span:nth-child(2),
+.sy-kalem-header span:nth-child(3) {
+    text-align: center;
+}
+
+.sy-kalem-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 68px 74px;
+    gap: 6px;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--border-soft);
+    border-left: 3.5px solid var(--accent-indigo);
+    border-radius: 10px;
+    padding: 8px 10px;
+    min-height: 43px;
+    width: 100%;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+}
+
+.sy-kalem-ad {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
 }
-.eklenen-urun-miktar {
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #0f172a;
-    padding: 2px 0;
-    border-radius: 5px;
+
+.sy-kalem-birim {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 2px 4px;
+    text-align: center;
     white-space: nowrap;
-    flex-shrink: 0;
-    text-align: center;
 }
-.bos-liste-kutusu {
-    background-color: #f8fafc;
-    border: 1px dashed #94a3b8;
-    border-radius: 7px;
-    padding: 8px;
+
+.sy-kalem-miktar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-primary);
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 2px 5px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.sy-empty-state {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 12px 10px;
     text-align: center;
     font-size: 11.5px;
-    color: #64748b;
+    color: var(--ink-secondary);
     font-weight: 600;
-    width: 100%;
+    margin-top: 4px;
+}
+
+.sy-login-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: var(--shadow-md);
+    margin-top: 6px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -483,6 +760,29 @@ def token_dogrula(token_str):
     return None, None
 
 
+def _render_canli_ust_panel(baslik: str, alt_baslik: str, sag_aksiyon_html: str = ""):
+    """Canlı telemetri ve gerçek zamanlı saat içeren kurumsal üst panel."""
+    st.markdown(
+        f'<div class="sy-hero-header">'
+        f'<div class="sy-hero-top">'
+        f'<div class="sy-brand-group">'
+        f'<div class="sy-logo-frame">{LOGO_HTML}</div>'
+        f'<div class="sy-brand-text">'
+        f'<div class="sy-brand-title">{html.escape(str(baslik))}</div>'
+        f'<div class="sy-brand-sub">{html.escape(str(alt_baslik))}</div>'
+        f'</div>'
+        f'</div>'
+        f'{sag_aksiyon_html}'
+        f'</div>'
+        f'<div class="sy-telemetry-bar">'
+        f'<span class="sy-live-pill"><span class="sy-pulse-dot"></span>CANLI BAĞLANTI · POSTGRESQL</span>'
+        f'<span class="sy-clock-box">🕒 <span id="sy-live-clock">{datetime.now().strftime("%H:%M:%S")}</span></span>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -513,20 +813,17 @@ def check_password():
     url_veren = st.query_params.get("veren", "")
 
     if not st.session_state.authenticated:
-        st.markdown(
-            f'<div class="header-banner"><div class="header-info">'
-            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
-            f'<div class="header-sub">Hızlı Mobil Sipariş Girişi</div>'
-            f'</div></div>',
-            unsafe_allow_html=True
+        _render_canli_ust_panel(
+            "SAYAR YAPI · KOMUTA",
+            "Kurumsal Mobil Sipariş & Sevkiyat Portalı"
         )
         if url_veren:
-            st.caption(f"Personel Girişi: **{url_veren}**")
+            st.caption(f"Yetkili Personel Kanalı: **{url_veren}**")
 
         with st.form("login_form", clear_on_submit=False):
-            pin = st.text_input("Erişim Şifresi", placeholder="Erişim Şifresi...", type="password", label_visibility="collapsed")
-            beni_hatirla = st.checkbox("Beni Hatırla", value=True)
-            giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
+            pin = st.text_input("Erişim Şifresi", placeholder="Erişim şifrenizi girin...", type="password", label_visibility="collapsed")
+            beni_hatirla = st.checkbox("Oturumu 90 gün açık tut (Beni Hatırla)", value=True)
+            giris_yapildi = st.form_submit_button("Sisteme Giriş Yap", use_container_width=True, type="primary")
 
         if giris_yapildi:
             basarili_tip = None
@@ -735,7 +1032,8 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
         sip_no_etiket = f" #{sip['siparis_no']}" if sip.get("siparis_no") else ""
         baslik = f"Yeni Mobil Siparis{sip_no_etiket} - {sip.get('musteri') or '-'}"
-        mesaj = "\n".join([
+        mesaj = "
+".join([
             f"Firma: {sip.get('firma') or '-'}",
             f"Musteri: {sip.get('musteri') or '-'}",
             f"Santiye: {sip.get('santiye') or '-'} ({sip.get('sehir') or '-'})",
@@ -763,7 +1061,7 @@ def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
         secenekler.insert(0, varsayilan)
-    secimler = [f"— {etiket} —"] + secenekler
+    secimler = [f"▾ {etiket}"] + secenekler
     if key not in st.session_state:
         st.session_state[key] = varsayilan if varsayilan in secenekler else secimler[0]
     secim = st.selectbox(
@@ -774,22 +1072,19 @@ def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
 
 
 def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Tıklanınca kayıtlı değerleri buton olarak açılan hızlı seçim alanı."""
+    """Tıklanınca kayıtlı değerleri açılır kutu (popover) içinde sunan seçim alanı."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
         secenekler.insert(0, varsayilan)
     secim_key = f"{key}_value"
-    acik_key = f"{key}_open"
     if secim_key not in st.session_state:
         st.session_state[secim_key] = varsayilan if varsayilan in secenekler else ""
     secili = st.session_state[secim_key]
-    baslik = secili if secili else f"— {etiket} seçin —"
+    baslik = f"✓ {secili}" if secili else f"▾ {etiket}"
 
-    if st.button(baslik, key=f"{key}_toggle", use_container_width=True):
-        st.session_state[acik_key] = not st.session_state.get(acik_key, False)
-
-    if st.session_state.get(acik_key, False):
+    with st.popover(baslik, use_container_width=True):
+        st.markdown(f"**{etiket} Seçin**")
         if not secenekler:
             st.caption(f"{etiket} için kayıtlı seçenek bulunamadı.")
         else:
@@ -799,13 +1094,18 @@ def hizli_secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str =
                 for offset, secenek in enumerate(secenekler[baslangic:baslangic + sutun_sayisi]):
                     with kolonlar[offset]:
                         if st.button(
-                            secenek, key=f"{key}_opt_{baslangic + offset}",
+                            secenek,
+                            key=f"{key}_pop_{baslangic + offset}",
                             use_container_width=True,
                             type="primary" if secenek == secili else "secondary"
                         ):
                             st.session_state[secim_key] = secenek
-                            st.session_state[acik_key] = False
                             st.rerun()
+        if secili:
+            if st.button("Seçimi Temizle", key=f"{key}_pop_clear", use_container_width=True):
+                st.session_state[secim_key] = ""
+                st.rerun()
+
     return st.session_state[secim_key]
 
 
@@ -848,51 +1148,80 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
-with st.container(key="siparis-form-card"):
-    alt_baslik = f"Personel: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Yeni Sipariş Girişi"
+alt_baslik = f"Aktif Operatör: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Yönetici Sipariş & Lojistik Girişi"
+sag_aksiyon = (
+    f'<div class="sy-action-group">'
+    f'<a data-spa="1" href="{refresh_href}" target="_self" class="sy-icon-btn" title="Listeleri Yenile">🔄</a>'
+    f'<a data-spa="1" href="?action=logout" target="_self" class="sy-icon-btn" title="Çıkış Yap">🚪</a>'
+    f'</div>'
+)
+_render_canli_ust_panel("SAYAR YAPI · SİPARİŞ", alt_baslik, sag_aksiyon)
+
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
     st.markdown(
-        f'<div class="header-banner">'
-        f'<div class="header-info">'
-        f'<div class="header-title">{LOGO_HTML}<span>YENİ SİPARİŞ</span></div>'
-        f'<div class="header-sub">{html.escape(str(alt_baslik))}</div>'
-        f'</div>'
-        f'<div class="header-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Listeleri Yenile">🔄</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
-        f'</div></div>',
+        f'<div class="sy-toast-success">✅ {html.escape(str(flash_msg))}</div>',
         unsafe_allow_html=True
     )
+    st.session_state.flash_mesaj = None
 
-    flash_msg = st.session_state.flash_mesaj
-    if flash_msg:
-        st.markdown(
-            f'<div class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
-            unsafe_allow_html=True
-        )
-        st.session_state.flash_mesaj = None
+if st.session_state.siparis_ekrani_kapali:
+    st.info("Yeni sipariş ekranı kapatıldı.")
+    if st.button("YENİ SİPARİŞ EKRANINI AÇ", type="primary", use_container_width=True):
+        st.session_state.siparis_ekrani_kapali = False
+        st.rerun()
+    st.stop()
 
-    if st.session_state.siparis_ekrani_kapali:
-        st.info("Yeni sipariş ekranı kapatıldı.")
-        if st.button("YENİ SİPARİŞ AÇ", type="primary", use_container_width=True):
-            st.session_state.siparis_ekrani_kapali = False
-            st.rerun()
-        st.stop()
+listeler = secim_listelerini_getir()
+kalem_sayisi = len(st.session_state.eklenen_urunler)
+rol_etiketi = "PERSONEL" if yetki_tipi == "SIPARIS_VEREN" else "YÖNETİCİ"
 
-    listeler = secim_listelerini_getir()
+st.markdown(
+    f'<div class="sy-kpi-grid">'
+    f'<div class="sy-kpi-card">'
+    f'<div class="sy-kpi-label">Sepet Kalemi</div>'
+    f'<div class="sy-kpi-value">{kalem_sayisi}</div>'
+    f'<div class="sy-kpi-tag sy-tag-indigo">Aktif Kalem</div>'
+    f'</div>'
+    f'<div class="sy-kpi-card">'
+    f'<div class="sy-kpi-label">Katalog Ürün</div>'
+    f'<div class="sy-kpi-value">{len(listeler["urunler_detay"])}</div>'
+    f'<div class="sy-kpi-tag sy-tag-emerald">Senkronize</div>'
+    f'</div>'
+    f'<div class="sy-kpi-card">'
+    f'<div class="sy-kpi-label">Erişim Modu</div>'
+    f'<div class="sy-kpi-value">{rol_etiketi}</div>'
+    f'<div class="sy-kpi-tag sy-tag-amber">Hazır</div>'
+    f'</div>'
+    f'</div>',
+    unsafe_allow_html=True
+)
+
+with st.container(key="siparis-form-card"):
     fv = st.session_state.form_versiyon
     uv = st.session_state.urun_input_versiyon
     taslak = st.session_state.taslak_bilgi
     bugun = date.today()
 
+    st.markdown(
+        '<div class="sy-section-bar">'
+        '<span class="sy-section-title">📅 Planlama & Cari Bilgileri</span>'
+        '<span class="sy-section-badge">ADIM 1</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
     tarih_default = taslak.get("tarih_obj", bugun)
     sevk_default = taslak.get("sevk_tarihi_obj", bugun)
     tarih_col, sevk_col = st.columns(2)
     with tarih_col:
+        st.caption("Sipariş Tarihi")
         siparis_tarihi = st.date_input(
             "Sipariş Tarihi", value=tarih_default, format="DD.MM.YYYY",
             key=f"siparis_tarihi_{fv}", label_visibility="collapsed"
         )
     with sevk_col:
+        st.caption("Sevk Tarihi")
         sevk_tarihi = st.date_input(
             "Sevk Tarihi", value=sevk_default, format="DD.MM.YYYY",
             key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
@@ -909,6 +1238,14 @@ with st.container(key="siparis-form-card"):
         santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
     with alan_sag:
         sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
+
+    st.markdown(
+        '<div class="sy-section-bar">'
+        '<span class="sy-section-title">🚚 Lojistik & Operasyon Ataması</span>'
+        '<span class="sy-section-badge">ADIM 2</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     alan_sol, alan_sag = st.columns(2)
     with alan_sol:
@@ -938,17 +1275,25 @@ with st.container(key="siparis-form-card"):
                 taslak.get("siparis_veren", "")
             )
 
+    st.markdown(
+        '<div class="sy-section-bar">'
+        '<span class="sy-section-title">📦 Ürün Kalemleri</span>'
+        '<span class="sy-section-badge">ADIM 3</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
         u["deger"] for u in listeler["urunler_detay"]
         if not firma_aktif or not u.get("firma") or u["firma"].upper() == firma_aktif.upper()
     ]
-    urun_secimi = secim_alani("Ürün", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
-    urun_col, birim_col, miktar_col, ekle_col = st.columns([4, 2, 3, 1])
+    urun_secimi = secim_alani("Katalogdan Ürün Seç", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
+    urun_col, birim_col, miktar_col, ekle_col = st.columns([3.6, 2.2, 2.8, 1.4])
     with urun_col:
         urun_serbest = st.text_input(
             "Ürün", key=f"urun_serbest_{fv}_{uv}",
-            placeholder="Ürün", label_visibility="collapsed"
+            placeholder="Serbest ürün adı...", label_visibility="collapsed"
         ).strip()
         u_ad = urun_serbest or urun_secimi
     with birim_col:
@@ -960,7 +1305,7 @@ with st.container(key="siparis-form-card"):
     with miktar_col:
         u_miktar = st.text_input(
             "Adet / Tonaj", key=f"miktar_giris_{fv}_{uv}",
-            placeholder="Adet / Tonaj", label_visibility="collapsed"
+            placeholder="Miktar / TONAJ", label_visibility="collapsed"
         ).strip()
     with ekle_col:
         ekle_tiklandi = st.button("＋", key=f"btn_urun_ekle_{fv}_{uv}", use_container_width=True)
@@ -979,19 +1324,19 @@ with st.container(key="siparis-form-card"):
 
     if st.session_state.eklenen_urunler:
         st.markdown(
-            '<div class="siparis-kalem-baslik">'
+            '<div class="sy-kalem-header">'
             '<span>Malzeme / Ürün</span><span>Birim</span><span>Miktar</span>'
             '</div>',
             unsafe_allow_html=True
         )
         for idx, item in enumerate(st.session_state.eklenen_urunler):
-            satir_col, sil_col = st.columns([6, 1])
+            satir_col, sil_col = st.columns([6.4, 1.1])
             with satir_col:
                 st.markdown(
-                    f'<div class="eklenen-urun-satir">'
-                    f'<span class="eklenen-urun-ad">{idx + 1}. {html.escape(str(item["urun"]))}</span>'
-                    f'<span class="eklenen-urun-birim">{html.escape(str(item["birim"]))}</span>'
-                    f'<span class="eklenen-urun-miktar">{html.escape(str(item["miktar"]))}</span>'
+                    f'<div class="sy-kalem-row">'
+                    f'<span class="sy-kalem-ad">{idx + 1}. {html.escape(str(item["urun"]))}</span>'
+                    f'<span class="sy-kalem-birim">{html.escape(str(item["birim"]))}</span>'
+                    f'<span class="sy-kalem-miktar">{html.escape(str(item["miktar"]))}</span>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -1001,12 +1346,12 @@ with st.container(key="siparis-form-card"):
                     st.rerun()
     else:
         st.markdown(
-            '<div class="bos-liste-kutusu">Henüz ürün eklenmedi. Ürün, birim ve miktar girerek ＋ butonuna dokunun.</div>',
+            '<div class="sy-empty-state">Henüz ürün kalemi eklenmedi · Ürün ve miktar girip <b>＋</b> ile sepete ekleyin</div>',
             unsafe_allow_html=True
         )
 
 st.markdown('<div class="sticky-gonder-isaret"></div>', unsafe_allow_html=True)
-alt_kaydet, alt_temizle, alt_kapat = st.columns(3)
+alt_kaydet, alt_temizle, alt_kapat = st.columns([1.3, 1, 1])
 with alt_kaydet:
     kaydet_tiklandi = st.button("KAYDET", key=f"btn_kaydet_{fv}", type="primary", use_container_width=True)
 with alt_temizle:
