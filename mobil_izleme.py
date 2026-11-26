@@ -51,7 +51,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonu + Tam Sayfa Yenilemesiz SPA Link Yakalayıcı + Canlı Saat Motoru
+# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Üst Sabit Alan Yükseklik Ölçer (Çakışma Önleyici)
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -105,6 +105,38 @@ components.html(
                 }}
             }}, 1000);
         }}
+
+        function syncStickyStack() {{
+            const root = doc.documentElement;
+            const topShell = doc.querySelector('.sy-sticky-top-shell');
+            const searchRow = doc.querySelector('div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"])');
+            const feedBar = doc.querySelector('.sy-sticky-feed-shell');
+
+            let h1 = 0;
+            if (topShell) {{
+                h1 = Math.ceil(topShell.getBoundingClientRect().height);
+                root.style.setProperty('--h-top-shell', h1 + 'px');
+            }}
+            let h2 = 0;
+            if (searchRow) {{
+                searchRow.style.top = (h1 + 4) + 'px';
+                h2 = Math.ceil(searchRow.getBoundingClientRect().height);
+                root.style.setProperty('--h-search-row', h2 + 'px');
+            }}
+            if (feedBar) {{
+                feedBar.style.top = (h1 + h2 + 8) + 'px';
+            }}
+        }}
+
+        syncStickyStack();
+        setTimeout(syncStickyStack, 120);
+        setTimeout(syncStickyStack, 450);
+        if (!win.__stickyResizeHooked) {{
+            win.__stickyResizeHooked = true;
+            win.addEventListener('resize', syncStickyStack);
+            const obs = new MutationObserver(syncStickyStack);
+            obs.observe(doc.body, {{ childList: true, subtree: true }});
+        }}
     }})();
     </script>
     """,
@@ -113,32 +145,40 @@ components.html(
 )
 
 # ==============================================================================
-# YENİLİKÇİ AYDINLIK KURUMSAL TEKNOLOJİK TASARIM (MOBILE-FIRST ZERO-OVERFLOW)
+# ULTRA-KOMPAKT, KABARTMALI (EMBOSSED), SABİT ÜST KONSOLLU MOBİL-İLK TASARIM
 # ==============================================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap');
 
 :root {
-    --bg-canvas: #eef3f9;
+    --bg-canvas: #e9eff7;
     --bg-surface: #ffffff;
-    --bg-soft: #f8fafd;
+    --bg-elevated: #fcfdff;
     --ink-primary: #0b1528;
     --ink-secondary: #475569;
     --ink-muted: #64748b;
-    --border-hairline: rgba(15, 23, 42, 0.08);
-    --border-strong: rgba(15, 23, 42, 0.14);
     --brand-cobalt: #0052ff;
     --brand-cyan: #0ea5e9;
     --brand-amber: #f97316;
     --brand-emerald: #10b981;
     --brand-rose: #ef4444;
-    --brand-violet: #7c3aed;
-    --shadow-card: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
-    --shadow-float: 0 10px 28px -6px rgba(0, 82, 255, 0.14), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+    --h-top-shell: 118px;
+    --h-search-row: 38px;
+    /* Hafif Kabartmalı (3D Tactile Emboss) Gölgeler */
+    --emboss-card:
+        0 4px 10px -2px rgba(15, 23, 42, 0.08),
+        0 1px 3px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(15, 23, 42, 0.05);
+    --emboss-tile:
+        0 5px 12px -3px rgba(15, 23, 42, 0.09),
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        inset 0 1.5px 0 rgba(255, 255, 255, 1),
+        inset 0 -1.5px 0 rgba(15, 23, 42, 0.06);
 }
 
-/* Streamlit Varsayılan Üst/Alt Chrome Gizleme */
+/* Streamlit Varsayılan Chrome Gizleme */
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -159,14 +199,14 @@ a[href*="streamlit.io/cloud"] {
     pointer-events: none !important;
 }
 
-/* Küresel Taşma Kilidi & Tipografi */
+/* Küresel Yatay Taşma Kilidi (Sticky uyumlu clip kullanımı) */
 html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     background:
-        radial-gradient(circle at 12% 0%, rgba(0, 82, 255, 0.07) 0%, transparent 42%),
-        radial-gradient(circle at 92% 4%, rgba(14, 165, 233, 0.08) 0%, transparent 38%),
+        radial-gradient(circle at 15% 0%, rgba(0, 82, 255, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 88% 2%, rgba(14, 165, 233, 0.07) 0%, transparent 36%),
         var(--bg-canvas) !important;
     color: var(--ink-primary) !important;
     -webkit-font-smoothing: antialiased;
@@ -177,21 +217,43 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 }
 
 .block-container {
-    max-width: 760px !important;
+    max-width: 720px !important;
     margin: 0 auto !important;
-    padding: 0.5rem 0.65rem 1.75rem 0.65rem !important;
-    overflow-x: hidden !important;
+    padding: 0 0.55rem 1.4rem 0.55rem !important;
+    overflow: visible !important;
 }
 
+/* Streamlit dikey boşluklarını sıkılaştır */
 [data-testid="stVerticalBlock"] {
-    gap: 0.42rem !important;
+    gap: 0.28rem !important;
 }
 
-/* Canlı Nabız & Akış Animasyonları */
+div[data-testid="stElementContainer"] {
+    margin-bottom: 0 !important;
+}
+
+/* ==========================================================================
+   SABİT ÜST KONSOLLAR (ZERO OVERLAP STICKY STACK)
+   ========================================================================== */
+.sy-sticky-top-shell {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    background: rgba(233, 239, 247, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 6px 0 4px 0;
+    margin: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+/* ==========================================================================
+   KOMPAKT CABARTMALI ÜST BAR
+   ========================================================================== */
 @keyframes pulseRing {
-    0% { transform: scale(0.85); opacity: 0.85; }
-    70% { transform: scale(2.15); opacity: 0; }
-    100% { transform: scale(2.15); opacity: 0; }
+    0% { transform: scale(0.85); opacity: 0.9; }
+    70% { transform: scale(2.1); opacity: 0; }
+    100% { transform: scale(2.1); opacity: 0; }
 }
 
 @keyframes shimmerSweep {
@@ -199,53 +261,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     100% { background-position: 200% 0; }
 }
 
-@keyframes subtleFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-1.5px); }
-}
-
-@keyframes borderGlowAmber {
-    0%, 100% { box-shadow: 0 4px 14px rgba(249, 115, 22, 0.14); }
-    50% { box-shadow: 0 6px 20px rgba(249, 115, 22, 0.28); }
-}
-
-/* Toast Bildirim Bandı */
-.auto-toast-banner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 1px solid #6ee7b7;
-    border-left: 4px solid #10b981;
-    color: #064e3b;
-    border-radius: 12px;
-    padding: 9px 12px;
-    font-size: 12.5px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    opacity: 1;
-    transition: opacity 0.35s ease;
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.16);
-}
-
-/* ==========================================================================
-   ÜST KOMUTA BAŞLIĞI (FROSTED GLASS TELEMETRY HEADER)
-   ========================================================================== */
 .command-header {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 255, 0.92) 100%);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.95);
-    outline: 1px solid rgba(0, 82, 255, 0.12);
-    border-radius: 16px;
-    padding: 9px 11px;
-    box-shadow: var(--shadow-float);
+    gap: 7px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 13px;
+    padding: 6px 9px;
+    box-shadow: var(--emboss-tile);
     overflow: hidden;
+    margin-bottom: 6px;
 }
 
 .command-header::after {
@@ -254,7 +282,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 2.5px;
+    height: 2px;
     background: linear-gradient(90deg, #0052ff, #0ea5e9, #10b981, #0052ff);
     background-size: 200% 100%;
     animation: shimmerSweep 5s linear infinite;
@@ -263,37 +291,36 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .brand-cluster {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 8px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .brand-logo {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     object-fit: contain;
     background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    padding: 2px;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    padding: 1.5px;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.07);
 }
 
 .brand-monogram {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #0052ff 0%, #0ea5e9 100%);
     color: #ffffff;
     font-weight: 800;
-    font-size: 13px;
-    letter-spacing: 0.5px;
+    font-size: 11.5px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(0, 82, 255, 0.25);
+    box-shadow: 0 3px 8px rgba(0, 82, 255, 0.25);
 }
 
 .brand-text-wrap {
@@ -304,12 +331,12 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .brand-title-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
 }
 
 .brand-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     color: var(--ink-primary);
     letter-spacing: -0.2px;
@@ -321,38 +348,38 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .live-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(16, 185, 129, 0.11);
-    border: 1px solid rgba(16, 185, 129, 0.28);
+    gap: 4px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.30);
     color: #047857;
-    padding: 1.5px 7px;
+    padding: 1px 6px;
     border-radius: 999px;
-    font-size: 9.5px;
+    font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.35px;
     flex-shrink: 0;
 }
 
 .live-dot-wrap {
     position: relative;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
 .live-dot-core {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background-color: #10b981;
 }
 
 .live-dot-ring {
     position: absolute;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: #10b981;
     animation: pulseRing 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
@@ -361,9 +388,9 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .brand-sub-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 2px;
-    font-size: 10.5px;
+    gap: 5px;
+    margin-top: 1px;
+    font-size: 10px;
     color: var(--ink-muted);
     font-weight: 600;
     white-space: nowrap;
@@ -373,19 +400,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 
 .telemetry-clock {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--brand-cobalt);
-    background: rgba(0, 82, 255, 0.07);
-    padding: 1px 5px;
-    border-radius: 5px;
+    background: rgba(0, 82, 255, 0.08);
+    padding: 0.5px 5px;
+    border-radius: 4px;
     flex-shrink: 0;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
 }
 
@@ -393,42 +420,32 @@ a.cmd-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: #f1f5fb;
-    border: 1px solid rgba(15, 23, 42, 0.09);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ffffff 0%, #eef3fa 100%);
+    border: 1px solid rgba(15, 23, 42, 0.11);
     color: var(--ink-primary) !important;
     text-decoration: none !important;
-    font-size: 14px;
-    transition: all 0.16s ease;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-a.cmd-icon-btn:hover {
-    background: #e0ebff;
-    border-color: rgba(0, 82, 255, 0.3);
-    transform: translateY(-1px);
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06), inset 0 1px 0 #ffffff;
+    transition: transform 0.12s ease;
 }
 
 a.cmd-icon-btn:active {
-    transform: scale(0.94);
-}
-
-a.cmd-icon-logout:hover {
-    background: #fee2e2;
-    border-color: rgba(239, 68, 68, 0.35);
+    transform: scale(0.93);
 }
 
 /* ==========================================================================
-   3'LÜ CANLI TELEMETRİ KPI KARTLARI (ZERO-OVERFLOW RESPONSIVE GRID)
+   3'LÜ KOMPAKT KABARTMALI KPI KARTLARI
    ========================================================================== */
 .kpi-deck {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    margin: 4px 0 2px 0;
+    gap: 6px;
     width: 100%;
+    margin: 0;
 }
 
 a.kpi-tile {
@@ -437,19 +454,14 @@ a.kpi-tile {
     flex-direction: column;
     justify-content: space-between;
     min-width: 0;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-hairline);
-    border-radius: 14px;
-    padding: 8px 9px 7px 9px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 11px;
+    padding: 6px 8px 5px 8px;
     text-decoration: none !important;
-    box-shadow: var(--shadow-card);
-    transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--emboss-tile);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
     overflow: hidden;
-}
-
-a.kpi-tile:hover {
-    transform: translateY(-1.5px);
-    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.09);
 }
 
 a.kpi-tile:active {
@@ -460,12 +472,12 @@ a.kpi-tile:active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
-    margin-bottom: 3px;
+    gap: 3px;
+    margin-bottom: 2px;
 }
 
 .kpi-tag {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--ink-secondary);
     white-space: nowrap;
@@ -474,8 +486,8 @@ a.kpi-tile:active {
 }
 
 .kpi-badge-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -484,48 +496,46 @@ a.kpi-tile:active {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 4px;
+    gap: 3px;
 }
 
 .kpi-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.05;
     color: var(--ink-primary);
-    letter-spacing: -0.6px;
+    letter-spacing: -0.5px;
 }
 
 .kpi-pct {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9.5px;
+    font-size: 8.8px;
     font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 6px;
+    padding: 0.5px 4px;
+    border-radius: 5px;
     flex-shrink: 0;
 }
 
 .kpi-mini-bar {
     width: 100%;
-    height: 3.5px;
-    background: #eef2f7;
+    height: 3px;
+    background: #e5ebf3;
     border-radius: 999px;
-    margin-top: 6px;
+    margin-top: 4px;
     overflow: hidden;
 }
 
 .kpi-mini-fill {
     height: 100%;
     border-radius: 999px;
-    transition: width 0.4s ease;
 }
 
-/* KPI Renk Varyantları */
 .kpi-t-blue .kpi-badge-dot { background: #0052ff; }
 .kpi-t-blue .kpi-pct { background: rgba(0, 82, 255, 0.09); color: #0052ff; }
 .kpi-t-blue .kpi-mini-fill { background: linear-gradient(90deg, #0052ff, #38bdf8); }
 
-.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18); }
+.kpi-t-amber .kpi-badge-dot { background: #f97316; box-shadow: 0 0 0 2.5px rgba(249, 115, 22, 0.18); }
 .kpi-t-amber .kpi-pct { background: rgba(249, 115, 22, 0.12); color: #c2410c; }
 .kpi-t-amber .kpi-mini-fill { background: linear-gradient(90deg, #f97316, #fbbf24); }
 
@@ -533,34 +543,40 @@ a.kpi-tile:active {
 .kpi-t-emerald .kpi-pct { background: rgba(16, 185, 129, 0.11); color: #047857; }
 .kpi-t-emerald .kpi-mini-fill { background: linear-gradient(90deg, #10b981, #34d399); }
 
-/* Aktif Seçili KPI Kartı */
 a.kpi-tile.kpi-selected.kpi-t-blue {
-    background: linear-gradient(160deg, #ffffff 0%, #eff6ff 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #e8f1ff 100%);
     border: 1.5px solid #0052ff;
-    box-shadow: 0 6px 18px rgba(0, 82, 255, 0.16);
+    box-shadow: 0 4px 12px rgba(0, 82, 255, 0.18), inset 0 1px 0 #ffffff;
 }
 a.kpi-tile.kpi-selected.kpi-t-amber {
-    background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fff1e5 100%);
     border: 1.5px solid #f97316;
-    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.18);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20), inset 0 1px 0 #ffffff;
 }
 a.kpi-tile.kpi-selected.kpi-t-emerald {
-    background: linear-gradient(160deg, #ffffff 0%, #ecfdf5 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #e6fbf2 100%);
     border: 1.5px solid #10b981;
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.16);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.18), inset 0 1px 0 #ffffff;
 }
 
 /* ==========================================================================
-   ARAMA & AKILLI FİLTRE ÇUBUĞU (MOBİL YAN YANA KİLİTLİ)
+   SABİT ARAMA & FİLTRE SATIRI (ÜST KONSOLLA SIFIR ÇAKIŞMA)
    ========================================================================== */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
+    position: sticky !important;
+    top: calc(var(--h-top-shell, 118px) + 4px) !important;
+    z-index: 990 !important;
+    background: rgba(233, 239, 247, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    padding: 3px 0 4px 0 !important;
+    margin: 0 !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 7px !important;
+    gap: 6px !important;
     width: 100% !important;
-    margin-top: 2px !important;
 }
 
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
@@ -572,61 +588,66 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:fir
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:last-child {
     flex: 0 0 auto !important;
     width: auto !important;
-    min-width: 52px !important;
+    min-width: 48px !important;
 }
 
 div[data-testid="stTextInput"] input,
 div[data-testid="stTextArea"] textarea {
-    background-color: #ffffff !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%) !important;
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     color: var(--ink-primary) !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-size: 13px !important;
+    font-size: 12.5px !important;
     font-weight: 500 !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
 }
 
 div[data-testid="stTextInput"] input {
-    height: 40px !important;
-    padding: 0 12px !important;
+    height: 36px !important;
+    padding: 0 10px !important;
 }
 
 div[data-testid="stTextInput"] input:focus,
 div[data-testid="stTextArea"] textarea:focus {
     border-color: #0052ff !important;
-    box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12) !important;
+    box-shadow: 0 0 0 2.5px rgba(0, 82, 255, 0.14) !important;
 }
 
 div[data-testid="stPopover"] > button {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5fb 100%) !important;
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     color: var(--ink-primary) !important;
-    height: 40px !important;
-    min-width: 52px !important;
-    padding: 0 11px !important;
+    height: 36px !important;
+    min-width: 48px !important;
+    padding: 0 9px !important;
     font-weight: 700 !important;
-    font-size: 13px !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
-}
-
-div[data-testid="stPopover"] > button:hover {
-    border-color: #0052ff !important;
-    background: #eff6ff !important;
+    font-size: 12.5px !important;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff !important;
 }
 
 /* ==========================================================================
-   CANLI AKIŞ DURUM ŞERİDİ (TELEMETRY STRIP)
+   SABİT AKIŞ SAYACI ŞERİDİ
    ========================================================================== */
+.sy-sticky-feed-shell {
+    position: sticky !important;
+    top: calc(var(--h-top-shell, 118px) + var(--h-search-row, 38px) + 8px) !important;
+    z-index: 980 !important;
+    background: rgba(233, 239, 247, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2px 2px 5px 2px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
 .feed-status-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 3px 4px;
-    font-size: 11px;
+    gap: 6px;
+    font-size: 10.5px;
     color: var(--ink-muted);
     font-weight: 600;
 }
@@ -634,12 +655,13 @@ div[data-testid="stPopover"] > button:hover {
 .feed-count-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid var(--border-hairline);
-    padding: 2px 8px;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 1.5px 7px;
     border-radius: 999px;
     color: var(--ink-secondary);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .feed-count-pill strong {
@@ -649,24 +671,27 @@ div[data-testid="stPopover"] > button:hover {
 }
 
 .feed-mode-badge {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     color: var(--brand-cobalt);
-    background: rgba(0, 82, 255, 0.07);
-    padding: 2px 8px;
+    background: rgba(0, 82, 255, 0.08);
+    padding: 1.5px 7px;
     border-radius: 999px;
     white-space: nowrap;
 }
 
 /* ==========================================================================
-   YENİ NESİL SİPARİŞ KARTLARI (ACCORDION + CANLI DURUM ŞERİDİ)
+   DARALTILMIŞ & KABARTMALI SİPARİŞ KARTLARI (ALTINDAN AKAN LİSTE)
    ========================================================================== */
 .sip-stream {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 5px;
     width: 100%;
     max-width: 100%;
+    padding-top: 2px;
 }
 
 .sip-row-wrap {
@@ -674,7 +699,7 @@ div[data-testid="stPopover"] > button:hover {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
-    gap: 6px;
+    gap: 5px;
     width: 100%;
     max-width: 100%;
 }
@@ -683,36 +708,40 @@ details.neo-card {
     position: relative;
     flex: 1 1 auto;
     min-width: 0;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-hairline);
-    border-left: 4px solid var(--accent-color, #0052ff);
-    border-radius: 13px;
-    box-shadow: var(--shadow-card);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-left: 3.5px solid var(--accent-color, #0052ff);
+    border-radius: 10px;
+    box-shadow: var(--emboss-card);
     overflow: hidden;
-    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
 }
 
 details.neo-card.is-pending-approval {
-    background: linear-gradient(135deg, #ffffff 0%, #fffaf5 100%);
-    border-color: rgba(249, 115, 22, 0.35);
-    animation: borderGlowAmber 3.2s ease-in-out infinite;
+    background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+    border-color: rgba(249, 115, 22, 0.36);
+    box-shadow:
+        0 4px 12px -2px rgba(249, 115, 22, 0.16),
+        0 1px 3px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 #ffffff;
 }
 
 details.neo-card[open] {
-    border-color: rgba(0, 82, 255, 0.28);
-    box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.1);
+    border-color: rgba(0, 82, 255, 0.30);
+    box-shadow: 0 8px 18px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 #ffffff;
 }
 
+/* Kart Yüksekliği Daraltıldı (42px kompakt satır yüksekliği) */
 details.neo-card > summary {
     list-style: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: 6px;
+    padding: 5px 8px;
     cursor: pointer;
     user-select: none;
-    min-height: 54px;
+    min-height: 42px;
     width: 100%;
 }
 
@@ -721,13 +750,13 @@ details.neo-card > summary::-webkit-details-marker {
 }
 
 details.neo-card > summary:hover {
-    background-color: rgba(248, 250, 253, 0.85);
+    background-color: rgba(241, 245, 251, 0.7);
 }
 
 .card-left-rail {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     flex: 1 1 auto;
 }
@@ -735,21 +764,22 @@ details.neo-card > summary:hover {
 .sip-no-chip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3.5px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
     color: var(--ink-primary);
-    background: #f1f5fb;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    padding: 3px 7px;
-    border-radius: 8px;
+    background: linear-gradient(180deg, #f8fafd 0%, #e9eff8 100%);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    padding: 2px 5.5px;
+    border-radius: 6px;
+    box-shadow: inset 0 1px 0 #ffffff;
     flex-shrink: 0;
 }
 
 .status-dot {
-    width: 6.5px;
-    height: 6.5px;
+    width: 5.5px;
+    height: 5.5px;
     border-radius: 50%;
     background: var(--accent-color, #0052ff);
     flex-shrink: 0;
@@ -765,10 +795,10 @@ details.neo-card > summary:hover {
 }
 
 .card-route-line {
-    font-size: 12.8px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--ink-primary);
-    line-height: 1.25;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -777,17 +807,18 @@ details.neo-card > summary:hover {
 .route-arrow {
     color: var(--brand-cobalt);
     font-weight: 800;
-    padding: 0 2px;
+    padding: 0 1px;
 }
 
 .card-meta-line {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-top: 2.5px;
-    font-size: 11px;
+    gap: 4px;
+    margin-top: 1.5px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--ink-muted);
+    line-height: 1.15;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -801,7 +832,7 @@ details.neo-card > summary:hover {
 
 .card-meta-date {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+    font-size: 9.2px;
     color: var(--ink-secondary);
     flex-shrink: 0;
 }
@@ -809,32 +840,33 @@ details.neo-card > summary:hover {
 .card-right-rail {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-shrink: 0;
 }
 
 .mini-op-pill {
-    font-size: 9.5px;
+    font-size: 8.8px;
     font-weight: 800;
-    letter-spacing: 0.2px;
-    padding: 2.5px 6px;
-    border-radius: 6px;
+    letter-spacing: 0.15px;
+    padding: 2px 5px;
+    border-radius: 5px;
     background: var(--accent-bg, #eff6ff);
     color: var(--accent-color, #0052ff);
-    border: 1px solid var(--accent-border, rgba(0, 82, 255, 0.2));
+    border: 1px solid var(--accent-border, rgba(0, 82, 255, 0.22));
     white-space: nowrap;
-    max-width: 84px;
+    max-width: 78px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .neo-chevron {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    background: #f1f5fb;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #f8fafd 0%, #e9eff8 100%);
+    border: 1px solid rgba(15, 23, 42, 0.08);
     color: var(--ink-secondary);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
@@ -851,28 +883,28 @@ details.neo-card[open] .neo-chevron {
 
 /* Kart Açılır İçerik Gövdesi */
 .neo-card-body {
-    padding: 9px 10px 11px 10px;
-    border-top: 1px dashed rgba(15, 23, 42, 0.1);
-    background: linear-gradient(180deg, #fafcff 0%, #ffffff 100%);
+    padding: 8px 9px 9px 9px;
+    border-top: 1px dashed rgba(15, 23, 42, 0.10);
+    background: #ffffff;
 }
 
-/* Yönetici Hızlı Onay İnceleme Butonu (Sağda) */
+/* Yönetici Hızlı Onay İnceleme Butonu (Kart yüksekliği ile uyumlu 42px) */
 a.quick-inspect-btn {
-    flex: 0 0 44px;
-    width: 44px;
-    min-height: 54px;
-    border-radius: 13px;
-    background: linear-gradient(145deg, #f97316 0%, #ea580c 100%);
-    border: 1px solid #ea580c;
+    flex: 0 0 40px;
+    width: 40px;
+    min-height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+    border: 1px solid #c2410c;
     color: #ffffff !important;
     text-decoration: none !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.28);
-    transition: transform 0.12s ease, box-shadow 0.15s ease;
+    gap: 0.5px;
+    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform 0.12s ease;
 }
 
 a.quick-inspect-btn:active {
@@ -880,16 +912,35 @@ a.quick-inspect-btn:active {
 }
 
 .qi-icon {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 900;
     line-height: 1;
 }
 
 .qi-txt {
-    font-size: 8.5px;
+    font-size: 7.8px;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.25px;
     text-transform: uppercase;
+}
+
+/* Toast Bildirim Bandı */
+.auto-toast-banner {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #6ee7b7;
+    border-left: 4px solid #10b981;
+    color: #064e3b;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.16);
 }
 
 /* ==========================================================================
@@ -900,49 +951,50 @@ a.quick-inspect-btn:active {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 7px;
+    gap: 5px;
+    margin-bottom: 6px;
 }
 
 .op-status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3.5px 9px;
-    border-radius: 8px;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 7px;
     color: #ffffff;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: 0.25px;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    letter-spacing: 0.2px;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
 }
 
 .sevk-status-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     color: var(--ink-secondary);
     background: #f1f5fb;
-    border: 1px solid var(--border-hairline);
-    padding: 3px 8px;
-    border-radius: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 2.5px 7px;
+    border-radius: 7px;
 }
 
 .info-matrix {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 5px;
+    margin-bottom: 7px;
 }
 
 .matrix-cell {
-    background: #f8fafd;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    border-radius: 9px;
-    padding: 5px 8px;
+    background: linear-gradient(180deg, #fafcff 0%, #f3f6fc 100%);
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    border-radius: 8px;
+    padding: 4px 7px;
     min-width: 0;
+    box-shadow: inset 0 1px 0 #ffffff;
 }
 
 .matrix-cell.span-2 {
@@ -951,17 +1003,17 @@ a.quick-inspect-btn:active {
 
 .matrix-lbl {
     display: block;
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.35px;
+    letter-spacing: 0.3px;
     color: var(--ink-muted);
     margin-bottom: 1px;
 }
 
 .matrix-val {
     display: block;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     color: var(--ink-primary);
     word-break: break-word;
@@ -969,7 +1021,7 @@ a.quick-inspect-btn:active {
 
 .matrix-val-red {
     display: block;
-    font-size: 12.2px;
+    font-size: 11.8px;
     font-weight: 800;
     color: #dc2626;
     word-break: break-word;
@@ -977,7 +1029,7 @@ a.quick-inspect-btn:active {
 
 .matrix-val-navy {
     display: block;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     color: #0052ff;
     word-break: break-word;
@@ -986,14 +1038,14 @@ a.quick-inspect-btn:active {
 .neo-table-wrap {
     width: 100%;
     overflow-x: auto;
-    border-radius: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
 }
 
 .urun-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11.8px;
+    font-size: 11.3px;
     background: #ffffff;
 }
 
@@ -1001,14 +1053,14 @@ a.quick-inspect-btn:active {
     background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
     color: #f8fafc;
     text-align: left;
-    padding: 6px 8px;
+    padding: 5px 7px;
     font-weight: 700;
-    font-size: 10.5px;
-    letter-spacing: 0.3px;
+    font-size: 10px;
+    letter-spacing: 0.25px;
 }
 
 .urun-table td {
-    padding: 6px 8px;
+    padding: 5px 7px;
     color: var(--ink-primary);
     border-bottom: 1px solid #eef2f7;
     font-weight: 600;
@@ -1035,12 +1087,12 @@ a.quick-inspect-btn:active {
    ========================================================================== */
 .review-console {
     background: #ffffff;
-    border: 1px solid rgba(249, 115, 22, 0.32);
+    border: 1px solid rgba(249, 115, 22, 0.34);
     border-top: 4px solid #f97316;
-    border-radius: 16px;
-    padding: 12px;
-    margin-top: 2px;
-    box-shadow: 0 14px 34px -8px rgba(15, 23, 42, 0.14);
+    border-radius: 14px;
+    padding: 11px;
+    margin-top: 6px;
+    box-shadow: var(--emboss-card);
 }
 
 .review-console-head {
@@ -1048,16 +1100,16 @@ a.quick-inspect-btn:active {
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    padding-bottom: 9px;
-    margin-bottom: 9px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
     border-bottom: 1px solid #eef2f7;
 }
 
 .review-console-title {
     display: flex;
     align-items: center;
-    gap: 7px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: 13.5px;
     font-weight: 800;
     color: var(--ink-primary);
     min-width: 0;
@@ -1071,22 +1123,22 @@ a.quick-inspect-btn:active {
     background: #fff7ed;
     color: #ea580c;
     border: 1px solid #fed7aa;
-    padding: 2px 7px;
-    border-radius: 7px;
-    font-size: 12.5px;
+    padding: 1.5px 6px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
 a.close-review-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     background: #f1f5fb;
     border: 1px solid rgba(15, 23, 42, 0.1);
     color: var(--ink-secondary) !important;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 800;
     text-decoration: none !important;
     flex-shrink: 0;
@@ -1095,9 +1147,9 @@ a.close-review-link {
 .onay-aksiyon-bar {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    margin-top: 12px;
-    padding-top: 11px;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px dashed rgba(15, 23, 42, 0.12);
     width: 100%;
 }
@@ -1107,16 +1159,15 @@ a.aksiyon-btn {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    height: 44px;
-    border-radius: 11px;
-    font-size: 12px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 11.5px;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.25px;
     text-decoration: none !important;
-    padding: 0 6px;
+    padding: 0 5px;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
-    transition: transform 0.12s ease;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 a.aksiyon-btn:active {
@@ -1124,17 +1175,17 @@ a.aksiyon-btn:active {
 }
 
 a.aksiyon-onayla {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
     color: #ffffff !important;
 }
 
 a.aksiyon-revize {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%) !important;
     color: #0f172a !important;
 }
 
 a.aksiyon-reddet {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
     color: #ffffff !important;
 }
 
@@ -1142,62 +1193,63 @@ a.aksiyon-reddet {
    GİRİŞ FORMU, BOŞ DURUM & SAYFALAMA
    ========================================================================== */
 div[data-testid="stForm"] {
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%) !important;
     border: 1px solid rgba(0, 82, 255, 0.14) !important;
-    border-radius: 16px !important;
-    padding: 16px !important;
-    box-shadow: var(--shadow-float) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    box-shadow: var(--emboss-tile) !important;
+    margin-top: 6px !important;
 }
 
 .empty-state-box {
-    background: #ffffff;
-    border: 1.5px dashed rgba(0, 82, 255, 0.22);
-    border-radius: 16px;
-    padding: 30px 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+    border: 1.5px dashed rgba(0, 82, 255, 0.24);
+    border-radius: 14px;
+    padding: 24px 14px;
     text-align: center;
-    margin: 8px 0;
-    box-shadow: var(--shadow-card);
+    margin: 6px 0;
+    box-shadow: var(--emboss-card);
 }
 
 .empty-state-icon {
-    font-size: 32px;
-    margin-bottom: 6px;
+    font-size: 28px;
+    margin-bottom: 5px;
 }
 
 .empty-state-title {
-    font-size: 14.5px;
+    font-size: 13.5px;
     font-weight: 800;
     color: var(--ink-primary);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .empty-state-desc {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--ink-muted);
 }
 
 .pagination-box {
-    background: #ffffff;
-    border: 1px solid var(--border-hairline);
-    border-radius: 13px;
-    padding: 10px 14px;
-    margin-top: 10px;
-    margin-bottom: 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 11px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    margin-bottom: 5px;
     text-align: center;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--emboss-card);
 }
 
 .pagination-text {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--ink-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     font-weight: 700;
 }
 
 .progress-track {
     width: 100%;
-    max-width: 260px;
-    height: 6px;
+    max-width: 240px;
+    height: 5px;
     background-color: #e2e8f0;
     border-radius: 999px;
     margin: 0 auto;
@@ -1214,13 +1266,13 @@ div[data-testid="stForm"] {
 /* Küçük Mobil Ekranlar (< 380px) Ek Koruma */
 @media (max-width: 380px) {
     .block-container {
-        padding-left: 0.45rem !important;
-        padding-right: 0.45rem !important;
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
     }
-    .kpi-num { font-size: 18px; }
-    .kpi-tag { font-size: 9.2px; }
+    .kpi-num { font-size: 15.5px; }
+    .kpi-tag { font-size: 8.8px; }
     .mini-op-pill { display: none; }
-    .brand-name { font-size: 13px; }
+    .brand-name { font-size: 12.2px; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1386,13 +1438,14 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div class="command-header">'
+            f'<div class="sy-sticky-top-shell">'
+            f'<div class="command-header" style="margin-bottom:0;">'
             f'<div class="brand-cluster">'
             f'{LOGO_HTML}'
             f'<div class="brand-text-wrap">'
             f'<div class="brand-title-row"><span class="brand-name">SAYAR YAPI</span><span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>GÜVENLİ</span></div>'
             f'<div class="brand-sub-row">Canlı Sipariş & Sevkiyat Telemetri Sistemi</div>'
-            f'</div></div></div>',
+            f'</div></div></div></div>',
             unsafe_allow_html=True
         )
 
@@ -1549,38 +1602,6 @@ def verileri_getir():
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 anlik_saat = datetime.now().strftime("%H:%M:%S")
-
-# İnceleme modunda üst bar gizlenir
-if not inceleme_aktif_mi:
-    if yetki_tipi == "MUSTERI":
-        baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
-        alt_metin = "Müşteri Canlı İzleme"
-    elif yetki_tipi == "SIPARIS_VEREN":
-        baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
-        alt_metin = "Saha & Personel Takip"
-    else:
-        baslik_metni = "SAYAR YAPI"
-        alt_metin = "Canlı Lojistik Radarı"
-
-    st.markdown(
-        f'<div class="command-header">'
-        f'<div class="brand-cluster">'
-        f'{LOGO_HTML}'
-        f'<div class="brand-text-wrap">'
-        f'<div class="brand-title-row">'
-        f'<span class="brand-name">{baslik_metni}</span>'
-        f'<span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>CANLI</span>'
-        f'</div>'
-        f'<div class="brand-sub-row"><span>{alt_metin}</span><span>•</span><span id="sy-live-clock" class="telemetry-clock">{anlik_saat}</span></div>'
-        f'</div>'
-        f'</div>'
-        f'<div class="header-actions">'
-        f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn" title="Verileri Yenile">↻</a>'
-        f'<a data-spa="1" href="?action=logout" target="_self" class="cmd-icon-btn cmd-icon-logout" title="Güvenli Çıkış">⏻</a>'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
 
 try:
     df_sip, df_kalem = verileri_getir()
@@ -1868,36 +1889,8 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# ANA LİSTE VE CANLI TELEMETRİ KPI GÖRÜNÜMÜ
+# SABİT ÜST KONSOLLAR (ÜST BAR + 3'LÜ KPI KARTLARI TEK SABİT BLOKTA)
 # ==============================================================================
-flash_msg = st.session_state.flash_mesaj
-if flash_msg:
-    toast_id = f"toast_{int(time.time() * 1000)}"
-    st.markdown(
-        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
-        unsafe_allow_html=True
-    )
-    components.html(
-        f"""
-        <script>
-        (function() {{
-            const doc = window.parent.document;
-            const el = doc.getElementById({json.dumps(toast_id)});
-            if (!el) return;
-            setTimeout(function() {{
-                el.style.opacity = '0';
-                setTimeout(function() {{
-                    if (el && el.parentNode) el.parentNode.removeChild(el);
-                }}, 350);
-            }}, 2500);
-        }})();
-        </script>
-        """,
-        height=0,
-        width=0
-    )
-    st.session_state.flash_mesaj = None
-
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
 sevk_bekleyen = len(
@@ -1917,7 +1910,34 @@ cls_tamamlandi = "kpi-selected" if kpi_mod == "TAMAMLANDI" else ""
 cls_onay = "kpi-selected" if kpi_mod == "ONAY" else ""
 cls_sevk = "kpi-selected" if kpi_mod == "SEVK" else ""
 
+if yetki_tipi == "MUSTERI":
+    baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
+    alt_metin = "Müşteri İzleme"
+elif yetki_tipi == "SIPARIS_VEREN":
+    baslik_metni = f"SAYAR YAPI · {html.escape(str(yetki_deger))}"
+    alt_metin = "Personel Takip"
+else:
+    baslik_metni = "SAYAR YAPI"
+    alt_metin = "Canlı Lojistik Radarı"
+
 st.markdown(
+    f'<div class="sy-sticky-top-shell">'
+    f'<div class="command-header">'
+    f'<div class="brand-cluster">'
+    f'{LOGO_HTML}'
+    f'<div class="brand-text-wrap">'
+    f'<div class="brand-title-row">'
+    f'<span class="brand-name">{baslik_metni}</span>'
+    f'<span class="live-pill"><span class="live-dot-wrap"><span class="live-dot-ring"></span><span class="live-dot-core"></span></span>CANLI</span>'
+    f'</div>'
+    f'<div class="brand-sub-row"><span>{alt_metin}</span><span>•</span><span id="sy-live-clock" class="telemetry-clock">{anlik_saat}</span></div>'
+    f'</div>'
+    f'</div>'
+    f'<div class="header-actions">'
+    f'<a data-spa="1" href="{refresh_href}" target="_self" class="cmd-icon-btn" title="Verileri Yenile">↻</a>'
+    f'<a data-spa="1" href="?action=logout" target="_self" class="cmd-icon-btn" title="Güvenli Çıkış">⏻</a>'
+    f'</div>'
+    f'</div>'
     f'<div class="kpi-deck">'
     f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="kpi-tile kpi-t-blue {cls_tamamlandi}" title="Tamamlanan siparişleri filtrele">'
     f'<div class="kpi-tile-top"><span class="kpi-tag">Tamamlanan</span><span class="kpi-badge-dot"></span></div>'
@@ -1934,10 +1954,14 @@ st.markdown(
     f'<div class="kpi-tile-mid"><span class="kpi-num">{sevk_bekleyen}</span><span class="kpi-pct">%{pct_sevk}</span></div>'
     f'<div class="kpi-mini-bar"><div class="kpi-mini-fill" style="width:{max(pct_sevk, 6)}%;"></div></div>'
     f'</a>'
+    f'</div>'
     f'</div>',
     unsafe_allow_html=True
 )
 
+# ==============================================================================
+# SABİT ARAMA & FİLTRE ÇUBUĞU
+# ==============================================================================
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
 musteri_listesi = ["[TÜMÜ]"] + sorted(df_sip["musteri"].dropna().unique().tolist())
@@ -1974,7 +1998,7 @@ with col_arama:
     arama = st.text_input(
         "Arama",
         key="arama_metni",
-        placeholder="🔎 Sipariş No, Firma, Müşteri veya Şantiye ara...",
+        placeholder="🔎 Sipariş No, Firma, Müşteri, Şantiye...",
         label_visibility="collapsed"
     )
 
@@ -1995,6 +2019,38 @@ with col_filtre:
         if ek_filtre_aktif or arama.strip():
             st.button("Filtreleri Sıfırla", on_click=filtreleri_sifirla, use_container_width=True)
 
+# Flash Bildirim Bandı
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
+    toast_id = f"toast_{int(time.time() * 1000)}"
+    st.markdown(
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
+        unsafe_allow_html=True
+    )
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const el = doc.getElementById({json.dumps(toast_id)});
+            if (!el) return;
+            setTimeout(function() {{
+                el.style.opacity = '0';
+                setTimeout(function() {{
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
+                }}, 350);
+            }}, 2500);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
+    )
+    st.session_state.flash_mesaj = None
+
+# ==============================================================================
+# FİLTRELEME VE KAYDIRILABİLİR SİPARİŞ AKIŞI
+# ==============================================================================
 filtered = df_sip
 
 if gizle_tamamlanan:
@@ -2047,9 +2103,11 @@ if toplam_filtrelenen == 0:
         st.button("↻ Tüm Filtreleri Temizle", on_click=filtreleri_sifirla, use_container_width=True, type="primary")
 else:
     st.markdown(
+        f'<div class="sy-sticky-feed-shell">'
         f'<div class="feed-status-bar">'
         f'<span class="feed-count-pill">Akış: <strong>{gosterilen_adet}</strong> / {toplam_filtrelenen}</span>'
         f'<span class="feed-mode-badge">{MOD_ETIKET.get(kpi_mod, "Canlı Akış")}</span>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True
     )
