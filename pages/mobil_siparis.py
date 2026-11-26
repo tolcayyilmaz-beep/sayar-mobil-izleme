@@ -540,7 +540,7 @@ div[data-baseweb="select"] > div:focus-within {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
 }
 
-div[data-baseweb="select"] span {
+div[data-testid="stSelectbox"] span {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -1032,8 +1032,7 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
         sip_no_etiket = f" #{sip['siparis_no']}" if sip.get("siparis_no") else ""
         baslik = f"Yeni Mobil Siparis{sip_no_etiket} - {sip.get('musteri') or '-'}"
-        mesaj = "
-".join([
+        mesaj = "\n".join([
             f"Firma: {sip.get('firma') or '-'}",
             f"Musteri: {sip.get('musteri') or '-'}",
             f"Santiye: {sip.get('santiye') or '-'} ({sip.get('sehir') or '-'})",
