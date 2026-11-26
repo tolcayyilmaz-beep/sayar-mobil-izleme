@@ -181,12 +181,18 @@ div[data-testid="stVerticalBlock"] > div:has(iframe[height="0"]) {
     padding: 0 !important;
 }
 
+div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"],
+div[data-testid="stVerticalBlock"] > div {
+    position: relative !important;
+    margin: 0 !important;
+}
+
 .sy-top-command-deck {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
     width: 100%;
-    margin: 0;
+    margin: 0 0 6px 0 !important;
     padding: 0;
 }
 
@@ -473,7 +479,9 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 7px !important;
-    margin-top: 0px !important;
+    margin-top: 2px !important;
+    margin-bottom: 4px !important;
+    min-height: 40px !important;
 }
 
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
@@ -621,9 +629,11 @@ button[kind="secondary"]:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 2px 4px 2px 4px;
+    padding: 4px 4px 6px 4px !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-secondary);
 }
 
@@ -636,8 +646,8 @@ button[kind="secondary"]:hover {
    KAYDIRILABİLİR SEVKİYAT AKIŞI BÖLÜMÜ (ÜST YAPI SABİT, KARTLAR İÇERİDE KAYAR)
    ============================================================================ */
 .sy-scroll-viewport {
-    max-height: calc(100dvh - 238px);
-    min-height: 220px;
+    max-height: calc(100dvh - 252px);
+    min-height: 210px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 3px;
