@@ -140,6 +140,12 @@ a[href*="streamlit.io/cloud"] {
 }
 
 /* Ana Tuval & Aydınlık Mimari Izgara Arka Planı */
+html, body, .stApp, [data-testid="stAppViewContainer"] {
+    overflow: hidden !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+}
+
 .stApp, [data-testid="stAppViewContainer"] {
     background-color: var(--bg-canvas) !important;
     background-image: 
@@ -165,44 +171,23 @@ a[href*="streamlit.io/cloud"] {
 }
 
 /* ============================================================================
-   SABİT ÜST KOMUTA ALANI (ÇAKIŞMASIZ TAM YÜKSEKLİK HİZALAMALI STICKY)
+   DOĞAL AKIŞLI SABİT ÜST KOMUTA ALANI (SIFIR ÇAKIŞMA GARANTİLİ)
    ============================================================================ */
-div[data-testid="stVerticalBlock"] > div:has(.sy-cmd-header),
-div[data-testid="stVerticalBlock"] > div:has(.sy-kpi-grid),
-div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]),
-div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
-    position: sticky !important;
-    background-color: var(--bg-canvas) !important;
+/* 0-yükseklikli script iframe kapsayıcılarının dikey boşluk oluşturmasını engelle */
+div[data-testid="stVerticalBlock"] > div:has(iframe[height="0"]) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-div[data-testid="stVerticalBlock"] > div:has(.sy-cmd-header) {
-    top: 0px !important;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
-    z-index: 99 !important;
-}
-
-div[data-testid="stVerticalBlock"] > div:has(.sy-kpi-grid) {
-    top: 64px !important;
-    padding-top: 3px !important;
-    padding-bottom: 4px !important;
-    z-index: 98 !important;
-}
-
-div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
-    top: 138px !important;
-    padding-top: 3px !important;
-    padding-bottom: 5px !important;
-    z-index: 97 !important;
-}
-
-div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
-    top: 184px !important;
-    padding-top: 2px !important;
-    padding-bottom: 5px !important;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
-    box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.14) !important;
-    z-index: 96 !important;
+.sy-top-command-deck {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 /* Bildirim Toast Banner */
@@ -230,13 +215,13 @@ div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 56px;
+    min-height: 56px;
     box-sizing: border-box;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid var(--border-strong);
     border-radius: 14px;
     padding: 8px 12px;
-    margin-bottom: 0px;
+    margin: 0;
     box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff;
     overflow: hidden;
     gap: 10px;
@@ -390,10 +375,8 @@ div[data-testid="stVerticalBlock"] > div:has(.sy-list-meta) {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    height: 67px;
     box-sizing: border-box;
-    margin-top: 0px;
-    margin-bottom: 0px;
+    margin: 0;
 }
 
 a.sy-kpi-card {
@@ -653,8 +636,8 @@ button[kind="secondary"]:hover {
    KAYDIRILABİLİR SEVKİYAT AKIŞI BÖLÜMÜ (ÜST YAPI SABİT, KARTLAR İÇERİDE KAYAR)
    ============================================================================ */
 .sy-scroll-viewport {
-    max-height: calc(100dvh - 224px);
-    min-height: 240px;
+    max-height: calc(100dvh - 238px);
+    min-height: 220px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 3px;
@@ -884,6 +867,9 @@ a.mini-onay-btn:active {
     padding: 12px 12px 14px 12px;
     margin-top: 4px;
     margin-bottom: 10px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
 }
 
@@ -1498,7 +1484,8 @@ def verileri_getir():
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
-# İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
+# Üst başlık HTML'ini hazırla (KPI kartlarıyla birlikte tek blokta basılacak)
+header_html = ""
 if not inceleme_aktif_mi:
     if yetki_tipi == "MUSTERI":
         baslik_metni = f'SAYAR YAPI • {html.escape(str(yetki_deger))}'
@@ -1513,7 +1500,7 @@ if not inceleme_aktif_mi:
     svg_refresh = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>'
     svg_logout = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
 
-    st.markdown(
+    header_html = (
         f'<div class="sy-cmd-header">'
         f'<div class="sy-brand-wrap">'
         f'<div class="sy-logo-box">{LOGO_HTML}</div>'
@@ -1529,8 +1516,7 @@ if not inceleme_aktif_mi:
         f'<a data-spa="1" href="{refresh_href}" target="_self" class="sy-cmd-btn" title="Verileri Yenile">{svg_refresh}</a>'
         f'<a data-spa="1" href="?action=logout" target="_self" class="sy-cmd-btn" title="Güvenli Çıkış">{svg_logout}</a>'
         f'</div>'
-        f'</div>',
-        unsafe_allow_html=True
+        f'</div>'
     )
 
 try:
@@ -1871,6 +1857,8 @@ cls_onay = "sy-kpi-active" if kpi_mod == "ONAY" else ""
 cls_sevk = "sy-kpi-active" if kpi_mod == "SEVK" else ""
 
 st.markdown(
+    f'<div class="sy-top-command-deck">'
+    f'{header_html}'
     f'<div class="sy-kpi-grid">'
     f'<a data-spa="1" href="?kpi=TAMAMLANDI{token_param}" target="_self" class="sy-kpi-card sy-kpi-cyan {cls_tamamlandi}" title="Sadece tamamlanan siparişleri göster">'
     f'<div class="sy-kpi-top"><span class="sy-kpi-label">Tamamlandı</span><span class="sy-kpi-dot"></span></div>'
@@ -1887,6 +1875,7 @@ st.markdown(
     f'<div class="sy-kpi-value">{sevk_bekleyen}</div>'
     f'<div class="sy-kpi-bar"><div class="sy-kpi-bar-fill"></div></div>'
     f'</a>'
+    f'</div>'
     f'</div>',
     unsafe_allow_html=True
 )
