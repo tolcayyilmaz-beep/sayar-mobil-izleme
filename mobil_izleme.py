@@ -51,7 +51,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Sabit Üst Alan & Akış Kilitleyici
+# iOS Ana Ekran İkonu + SPA Link Yakalayıcı + Canlı Saat + Akış Yüksekliği Hesaplayıcı
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -106,35 +106,25 @@ components.html(
             }}, 1000);
         }}
 
-        function layoutLockedShell() {{
-            const docEl = doc.documentElement;
+        function updateStreamHeight() {{
             const streamEl = doc.getElementById('sy-scroll-stream');
-            const loginForm = doc.querySelector('div[data-testid="stForm"]');
-            const reviewConsole = doc.querySelector('.review-console');
-
-            if (loginForm || reviewConsole || !streamEl) {{
-                docEl.classList.remove('sy-lock-viewport');
-                return;
-            }}
-
-            docEl.classList.add('sy-lock-viewport');
-
+            if (!streamEl) return;
             const rect = streamEl.getBoundingClientRect();
-            const vh = win.innerHeight || docEl.clientHeight;
-            const avail = Math.max(180, Math.floor(vh - rect.top - 6));
+            const vh = win.innerHeight || doc.documentElement.clientHeight;
+            const avail = Math.max(220, Math.floor(vh - rect.top - 8));
             streamEl.style.height = avail + 'px';
             streamEl.style.maxHeight = avail + 'px';
         }}
 
-        layoutLockedShell();
-        setTimeout(layoutLockedShell, 80);
-        setTimeout(layoutLockedShell, 250);
-        setTimeout(layoutLockedShell, 600);
-        if (!win.__lockedResizeHooked) {{
-            win.__lockedResizeHooked = true;
-            win.addEventListener('resize', layoutLockedShell);
-            win.addEventListener('orientationchange', layoutLockedShell);
-            const obs = new MutationObserver(layoutLockedShell);
+        updateStreamHeight();
+        setTimeout(updateStreamHeight, 100);
+        setTimeout(updateStreamHeight, 350);
+        setTimeout(updateStreamHeight, 800);
+        if (!win.__streamResizeHooked) {{
+            win.__streamResizeHooked = true;
+            win.addEventListener('resize', updateStreamHeight);
+            win.addEventListener('orientationchange', updateStreamHeight);
+            const obs = new MutationObserver(updateStreamHeight);
             obs.observe(doc.body, {{ childList: true, subtree: true }});
         }}
     }})();
@@ -145,7 +135,7 @@ components.html(
 )
 
 # ==============================================================================
-# ULTRA-KOMPAKT, KABARTMALI, ÜST ALAN TAM SABİT + SADECE KARTLAR KAYDIRMALI TASARIM
+# SIFIR ÇAKIŞMALI, KABARTMALI, ÜST ALAN SABİT + KARTLAR KAYDIRMALI MOBİL TASARIM
 # ==============================================================================
 st.markdown("""
 <style>
@@ -207,18 +197,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Ana Ekran Viewport Kilidi: Sayfa kaymaz, üst blok sabit durur, sadece #sy-scroll-stream kayar */
-html.sy-lock-viewport,
-html.sy-lock-viewport body,
-html.sy-lock-viewport .stApp,
-html.sy-lock-viewport [data-testid="stAppViewContainer"],
-html.sy-lock-viewport [data-testid="stMain"],
-html.sy-lock-viewport [data-testid="stMainBlockContainer"] {
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    overflow: hidden !important;
-}
-
 *, *::before, *::after {
     box-sizing: border-box !important;
 }
@@ -226,12 +204,16 @@ html.sy-lock-viewport [data-testid="stMainBlockContainer"] {
 .block-container {
     max-width: 720px !important;
     margin: 0 auto !important;
-    padding: 6px 0.55rem 0.5rem 0.55rem !important;
+    padding: 8px 0.55rem 0.5rem 0.55rem !important;
 }
 
-/* Streamlit dikey aralıklarını doğal ve çakışmasız tut (asla sticky/overlap yok) */
+/*
+   ÖNEMLİ: Streamlit'in kendi dikey konteynerlerinin height/overflow özelliklerine
+   ASLA müdahale edilmiyor. Her blok kendi doğal yüksekliğinde alt alta sıralanır,
+   böylece hiçbir üst bileşen bir diğerinin üzerine binmez.
+*/
 [data-testid="stVerticalBlock"] {
-    gap: 5px !important;
+    gap: 6px !important;
 }
 
 div[data-testid="stElementContainer"] {
@@ -239,7 +221,7 @@ div[data-testid="stElementContainer"] {
 }
 
 /* ==========================================================================
-   ÜST BAR (NORMAL AKIŞTA, SABİT ÜST BÖLGENİN EN ÜSTÜNDE)
+   ÜST BAR (KOMPAKT & CABARTMALI)
    ========================================================================== */
 @keyframes pulseRing {
     0% { transform: scale(0.85); opacity: 0.9; }
@@ -261,7 +243,7 @@ div[data-testid="stElementContainer"] {
     background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
     border: 1px solid rgba(15, 23, 42, 0.10);
     border-radius: 12px;
-    padding: 5px 8px;
+    padding: 6px 9px;
     box-shadow: var(--emboss-tile);
     overflow: hidden;
     margin: 0;
@@ -545,10 +527,9 @@ a.kpi-tile.kpi-selected.kpi-t-emerald {
 }
 
 /* ==========================================================================
-   ARAMA & FİLTRE SATIRI (NORMAL AKIŞTA - KARTLARIN ALTINDA KALMAZ)
+   ARAMA & FİLTRE SATIRI (DOĞAL AKIŞTA, HİÇBİR ŞEYLE ÇAKIŞMAZ)
    ========================================================================== */
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
-    position: relative !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -584,7 +565,7 @@ div[data-testid="stTextArea"] textarea {
 }
 
 div[data-testid="stTextInput"] input {
-    height: 34px !important;
+    height: 35px !important;
     padding: 0 10px !important;
 }
 
@@ -599,7 +580,7 @@ div[data-testid="stPopover"] > button {
     border: 1px solid rgba(15, 23, 42, 0.12) !important;
     border-radius: 9px !important;
     color: var(--ink-primary) !important;
-    height: 34px !important;
+    height: 35px !important;
     min-width: 48px !important;
     padding: 0 9px !important;
     font-weight: 700 !important;
@@ -608,14 +589,14 @@ div[data-testid="stPopover"] > button {
 }
 
 /* ==========================================================================
-   SABİT AKIŞ SAYACI ŞERİDİ ("Aktif Sevkiyat Akışı" YAZISININ OLDUĞU BAR)
+   AKIŞ SAYACI ŞERİDİ ("Aktif Sevkiyat Akışı" YAZISININ OLDUĞU BAR)
    ========================================================================== */
 .feed-header-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    padding: 2px 2px 4px 2px;
+    padding: 3px 2px 5px 2px;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     font-size: 10.5px;
     color: var(--ink-muted);
@@ -651,16 +632,17 @@ div[data-testid="stPopover"] > button {
 }
 
 /* ==========================================================================
-   KAYDIRILABİLİR SİPARİŞ LİSTESİ KONTEYNERİ (SADECE BURASI KAYAR)
+   KAYDIRILABİLİR SİPARİŞ LİSTESİ KONTEYNERİ
+   (ÜST BÖLGE SABİT KALIR, YALNIZCA BU ALAN KAYAR)
    ========================================================================== */
 .sy-scroll-stream {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    padding: 2px 1px 18px 1px;
-    height: calc(100dvh - 172px);
-    max-height: calc(100dvh - 172px);
+    padding: 2px 1px 16px 1px;
+    height: calc(100dvh - 188px);
+    max-height: calc(100dvh - 188px);
 }
 
 .sy-scroll-stream::-webkit-scrollbar {
@@ -1888,7 +1870,7 @@ if inceleme_aktif_mi and aktif_inceleme_no is not None:
     st.stop()
 
 # ==============================================================================
-# SABİT ÜST BÖLGE: 1) ÜST BAR + 3'LÜ KPI KARTLARI
+# ÜST BÖLGE: 1) ÜST BAR + 3'LÜ KPI KARTLARI
 # ==============================================================================
 tamamlandi_siparis = len(df_sip[df_sip["operasyon"].isin(["TAMAMLANDI", "MUHASEBEYE İLETİLDİ"])])
 onay_bekleyen = len(df_sip[df_sip["operasyon"] == "ONAY BEKLİYOR"])
@@ -1961,7 +1943,7 @@ st.markdown(
 )
 
 # ==============================================================================
-# SABİT ÜST BÖLGE: 2) ARAMA & FİLTRE ÇUBUĞU (KARTLARIN TAM ALTINDA, SIFIR ÇAKIŞMA)
+# ÜST BÖLGE: 2) ARAMA & FİLTRE ÇUBUĞU
 # ==============================================================================
 op_listesi = ["[TÜMÜ]"] + sorted(df_sip["operasyon"].dropna().unique().tolist())
 firma_listesi = ["[TÜMÜ]"] + sorted(df_sip["firma"].dropna().unique().tolist())
