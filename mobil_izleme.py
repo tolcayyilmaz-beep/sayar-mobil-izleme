@@ -150,25 +150,34 @@ a[href*="streamlit.io/cloud"] {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-left: 5px solid #f97316;
     border-radius: 10px;
-    padding: 9px 12px;
+    padding: 10px 13px;
     margin-bottom: 4px;
     color: #f8fafc;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
-    gap: 8px;
+    gap: 10px;
 }
 .header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex: 1;
+    min-width: 0;
+}
+.header-text-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     min-width: 0;
 }
 .header-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     margin: 0;
+    line-height: 1.15;
     color: #ffffff;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -179,34 +188,39 @@ a[href*="streamlit.io/cloud"] {
     white-space: nowrap;
 }
 .header-logo {
-    height: 26px;
+    height: 32px;
     width: auto;
     object-fit: contain;
-    border-radius: 4px;
+    border-radius: 5px;
     flex-shrink: 0;
 }
-.header-sub {
+.header-user {
     font-size: 11px;
+    font-weight: 500;
     color: #cbd5e1;
     margin-top: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .header-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
 }
 .icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 16px;
+    font-size: 19px;
     cursor: pointer;
 }
 .icon-btn:active {
@@ -783,8 +797,10 @@ def check_password():
     if not st.session_state.authenticated:
         st.markdown(
             f'<div class="header-banner"><div class="header-info">'
-            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
-            f'<div class="header-sub">Sipariş Takip ve İzleme Sistemi</div>'
+            f'{LOGO_HTML}'
+            f'<div class="header-text-col">'
+            f'<div class="header-title"><span>SAYAR YAPI</span></div>'
+            f'</div>'
             f'</div></div>',
             unsafe_allow_html=True
         )
@@ -944,19 +960,19 @@ refresh_href = f"?action=refresh{token_param}"
 
 # İnceleme modunda en üstteki SAYAR YAPI + yenile/çıkış barı kaldırılır
 if not inceleme_aktif_mi:
-    if yetki_tipi == "MUSTERI":
-        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
-        alt_metin = "Müşteri Sipariş İzleme Paneli"
-    elif yetki_tipi == "SIPARIS_VEREN":
-        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
-        alt_metin = "Personel Sipariş İzleme Paneli"
-    else:
-        baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Sipariş İzleme</span>'
-        alt_metin = "Yönetici Canlı Takip Paneli"
+    kullanici_satiri_html = ""
+    if yetki_tipi in ("MUSTERI", "SIPARIS_VEREN") and yetki_deger:
+        kullanici_satiri_html = f'<div class="header-user">{html.escape(str(yetki_deger))}</div>'
 
     st.markdown(
         f'<div class="header-banner">'
-        f'<div class="header-info"><div class="header-title">{baslik_metni}</div><div class="header-sub">{alt_metin}</div></div>'
+        f'<div class="header-info">'
+        f'{LOGO_HTML}'
+        f'<div class="header-text-col">'
+        f'<div class="header-title"><span>SAYAR YAPI</span></div>'
+        f'{kullanici_satiri_html}'
+        f'</div>'
+        f'</div>'
         f'<div class="header-actions">'
         f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Yenile">🔄</a>'
         f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
