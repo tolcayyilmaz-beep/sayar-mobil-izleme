@@ -166,9 +166,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
     padding-right: 0.75rem !important;
 }
 
-[data-testid="stVerticalBlock"] {
-    gap: 0.4rem !important;
-}
+
 
 /* ============================================================================
    DOĞAL AKIŞLI SABİT ÜST KOMUTA ALANI (SIFIR ÇAKIŞMA GARANTİLİ)
@@ -181,19 +179,41 @@ div[data-testid="stVerticalBlock"] > div:has(iframe[height="0"]) {
     padding: 0 !important;
 }
 
+[data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
 div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"],
 div[data-testid="stVerticalBlock"] > div {
     position: relative !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+div[data-testid="stVerticalBlock"] > div:has(.sy-top-command-deck) {
+    margin-bottom: 6px !important;
+    padding-bottom: 2px !important;
+}
+
+div[data-testid="stMarkdownContainer"]:has(.sy-top-command-deck) {
     margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
 }
 
 .sy-top-command-deck {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    width: 100%;
-    margin: 0 0 6px 0 !important;
-    padding: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
 }
 
 /* Bildirim Toast Banner */
@@ -390,10 +410,13 @@ a.sy-kpi-card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 62px;
+    box-sizing: border-box;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 12px;
     padding: 7px 10px;
+    margin: 0;
     text-decoration: none !important;
     transition: all 0.18s ease;
     overflow: hidden;
@@ -475,13 +498,24 @@ a.sy-kpi-card.sy-kpi-active .sy-kpi-label {
 }
 
 /* Arama ve Filtre Çubuğu */
+div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stPopover"]) {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+    padding-top: 2px !important;
+}
+
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) {
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 7px !important;
-    margin-top: 2px !important;
-    margin-bottom: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
     min-height: 40px !important;
+}
+
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) [data-testid="stColumn"] {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 div[data-testid="stHorizontalBlock"]:has(div[data-testid="stPopover"]) > div:first-child {
@@ -646,8 +680,8 @@ button[kind="secondary"]:hover {
    KAYDIRILABİLİR SEVKİYAT AKIŞI BÖLÜMÜ (ÜST YAPI SABİT, KARTLAR İÇERİDE KAYAR)
    ============================================================================ */
 .sy-scroll-viewport {
-    max-height: calc(100dvh - 252px);
-    min-height: 210px;
+    max-height: calc(100dvh - 266px);
+    min-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 3px;
