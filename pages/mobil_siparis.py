@@ -25,6 +25,7 @@ RAILWAY_DEFAULT_DB_URL = "postgresql://postgres:vRnqPZifPAhgHJkVconMThDtIillFNFN
 
 @st.cache_data(show_spinner=False)
 def logo_base64_getir(dosya_yolu="logo.png"):
+    """Logo dosyasını HTML img etiketi ve page_icon için Base64 formatına çevirir."""
     yol = dosya_yolu if os.path.exists(dosya_yolu) else os.path.join("static", dosya_yolu)
     if os.path.exists(yol):
         ext = os.path.splitext(yol)[1].lower()
@@ -36,15 +37,16 @@ def logo_base64_getir(dosya_yolu="logo.png"):
 
 
 LOGO_DATA_URI = logo_base64_getir("logo.png")
-LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="brand-logo" alt="Sayar Yapı">' if LOGO_DATA_URI else "🏗️"
+LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="header-logo" alt="Logo">' if LOGO_DATA_URI else "🏗️"
 
 st.set_page_config(
-    page_title="Sayar Yapı | Akıllı Sipariş Terminali",
+    page_title="Sayar Yapı | Mobil Sipariş",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
+# iOS Ana Ekran İkonu + Tam Sayfa Yenilemesiz SPA Link Yakalayıcı
 logo_hedef_url = ""
 try:
     if "LOGO_URL" in st.secrets:
@@ -71,6 +73,7 @@ components.html(
             l1.href = logoUrl;
             head.appendChild(l1);
         }}
+
         if (!win.__spaLinkHooked) {{
             win.__spaLinkHooked = true;
             doc.addEventListener('click', function(e) {{
@@ -90,29 +93,12 @@ components.html(
     width=0
 )
 
+# Özel CSS: Kurumsal Çelik & Beton (mobil_izleme Tasarım Dili + Sıkı Mobil Form)
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
-
-:root {
-    --bg-canvas: #eef2f6;
-    --surface-card: #ffffff;
-    --surface-subtle: #f8fafc;
-    --ink-primary: #0f172a;
-    --ink-secondary: #475569;
-    --ink-muted: #64748b;
-    --accent-primary: #2563eb;
-    --accent-amber: #f97316;
-    --accent-emerald: #10b981;
-    --border-soft: #e2e8f0;
-    --border-strong: #cbd5e1;
-}
-
 *, *::before, *::after {
     box-sizing: border-box !important;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
-
 header[data-testid="stHeader"],
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
@@ -132,421 +118,423 @@ a[href*="streamlit.io/cloud"] {
     opacity: 0 !important;
     pointer-events: none !important;
 }
-
 html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
-    background: var(--bg-canvas) !important;
-    color: var(--ink-primary) !important;
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
     overflow-x: hidden !important;
-    width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    width: 100% !important;
 }
-
-.block-container,
-[data-testid="stMainBlockContainer"] {
+.block-container {
     padding-top: 0.45rem !important;
     padding-bottom: 5.2rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    max-width: 460px !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    max-width: 560px !important;
     width: 100% !important;
     margin: 0 auto !important;
 }
-
-[data-testid="stVerticalBlock"],
-[data-testid="stVerticalBlockBorderWrapper"],
-[data-testid="element-container"],
-.stMarkdown,
-.stSelectbox,
-.stTextInput,
-.stDateInput,
-.stButton {
+[data-testid="stVerticalBlock"] {
+    gap: 0.36rem !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 0 !important;
-    margin: 0 !important;
 }
-
-[data-testid="stVerticalBlock"] {
-    gap: 0.34rem !important;
+[data-testid="element-container"] {
+    width: 100% !important;
+    max-width: 100% !important;
 }
-
-/* Yatay kolon kullanıldığında bile mobilde sıfır taşma */
+.auto-toast-banner {
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+    border-left: 4px solid #16a34a;
+    color: #14532d;
+    border-radius: 9px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.12);
+}
+/* mobil_izleme Üst Kurumsal Banner */
+.header-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-left: 5px solid #f97316;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 2px;
+    color: #f8fafc;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+    gap: 8px;
+    width: 100%;
+}
+.header-info {
+    flex: 1;
+    min-width: 0;
+}
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.header-logo {
+    height: 26px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.header-sub {
+    font-size: 11px;
+    color: #cbd5e1;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 16px;
+    cursor: pointer;
+}
+.icon-btn:active {
+    background-color: #f97316;
+}
+/* mobil_izleme 3'lü KPI Özet Şeridi */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    width: 100%;
+}
+.kpi-card {
+    display: block;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 6px 8px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    min-width: 0;
+}
+.kpi-blue { border-top: 3px solid #0284c7 !important; }
+.kpi-orange { border-top: 3px solid #f97316 !important; }
+.kpi-green { border-top: 3px solid #16a34a !important; }
+.kpi-label {
+    font-size: 10.5px;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kpi-value {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* mobil_izleme fullscreen-review-card Stili Form Kartı */
+.st-key-siparis-form-card {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-top: 4px solid #f97316 !important;
+    border-radius: 11px !important;
+    padding: 9px 10px 11px 10px !important;
+    margin-top: 2px !important;
+    margin-bottom: 8px !important;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.07) !important;
+}
+.st-key-siparis-form-card > div {
+    gap: 0.36rem !important;
+}
+.form-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+.form-card-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.form-card-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #c2410c;
+    background-color: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    padding: 2px 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+/* Yatay Sütunların Mobilde Taşmasını Önleyen Yapı */
 div[data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 5px !important;
+    align-items: center !important;
+    gap: 6px !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 0 !important;
     margin: 0 !important;
 }
-
-div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
-div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
-    flex: 1 1 0% !important;
-    width: auto !important;
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     min-width: 0 !important;
-    max-width: 100% !important;
     padding: 0 !important;
 }
-
-/* Üst Komuta Barı */
-.tech-topbar {
-    background: #ffffff;
-    border: 1px solid var(--border-soft);
-    border-radius: 13px;
-    padding: 8px 10px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-    width: 100%;
-    overflow: hidden;
+/* Input & Dropdown Kontrolleri */
+div[data-testid="stDateInput"] label,
+div[data-testid="stTextInput"] label,
+div[data-testid="stSelectbox"] label {
+    color: #475569 !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    margin-bottom: 2px !important;
 }
-
-.tech-topbar-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    width: 100%;
-}
-
-.brand-cluster {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    flex: 1;
-}
-
-.brand-logo-wrap {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    border: 1px solid var(--border-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
-.brand-logo {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-}
-
-.brand-meta {
-    min-width: 0;
-    flex: 1;
-}
-
-.brand-title-line {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.brand-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--ink-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.live-pulse {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: var(--accent-emerald);
-    animation: pulseRing 2s infinite;
-    flex-shrink: 0;
-}
-
-@keyframes pulseRing {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); }
-    70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.brand-sub {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--ink-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.action-cluster {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
-.nav-pill-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 30px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    border: 1px solid var(--border-strong);
-    color: var(--ink-primary) !important;
-    text-decoration: none !important;
-    font-size: 13px;
-}
-
-.telemetry-bar {
-    margin-top: 7px;
-    padding-top: 6px;
-    border-top: 1px dashed var(--border-soft);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    width: 100%;
-}
-
-.progress-track {
-    flex: 1;
-    min-width: 0;
-    height: 5px;
-    background: #e2e8f0;
-    border-radius: 999px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #2563eb 0%, #10b981 100%);
-    border-radius: 999px;
-}
-
-.telemetry-badge {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 9.5px;
-    font-weight: 700;
-    color: #1e40af;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    padding: 2px 6px;
-    border-radius: 5px;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.smart-toast {
-    background: #ecfdf5;
-    border: 1px solid #6ee7b7;
-    border-left: 4px solid #059669;
-    color: #064e3b;
-    border-radius: 10px;
-    padding: 7px 10px;
-    font-size: 12px;
-    font-weight: 700;
-    width: 100%;
-    word-break: break-word;
-}
-
-/* Kart Konteynerleri */
-.st-key-terminal-ana-kart,
-.st-key-urun-sepet-kart,
-.st-key-login-kart {
-    background: var(--surface-card) !important;
-    border: 1px solid var(--border-soft) !important;
-    border-radius: 13px !important;
-    padding: 9px !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
-}
-
-.st-key-urun-sepet-kart {
-    border-top: 3px solid var(--accent-primary) !important;
-}
-
-/* Form Elemanları: Tam genişlik, sıfır taşma */
-div[data-testid="stTextInput"],
-div[data-testid="stDateInput"],
-div[data-testid="stSelectbox"],
-div[data-baseweb="input"],
-div[data-baseweb="select"] {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-}
-
 div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
 div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
-    background-color: var(--surface-subtle) !important;
-    border: 1px solid var(--border-strong) !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 9px !important;
-    color: var(--ink-primary) !important;
+    color: #0f172a !important;
     min-height: 40px !important;
     height: 40px !important;
-    font-size: 13px !important;
+    font-size: 13.5px !important;
     font-weight: 600 !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 0 !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
 }
-
-div[data-baseweb="select"] > div {
-    padding-right: 26px !important;
+div[data-testid="stTextInput"] input:focus,
+div[data-testid="stDateInput"] input:focus,
+div[data-baseweb="select"] > div:focus-within {
+    background-color: #ffffff !important;
+    border-color: #f97316 !important;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.16) !important;
 }
-
 div[data-baseweb="select"] span,
 div[data-baseweb="select"] div {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    min-width: 0 !important;
 }
-
-.field-mini-label {
-    font-size: 9.5px;
-    font-weight: 800;
-    color: var(--ink-muted);
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    margin: 0 0 -2px 2px;
-    display: block;
+div[data-testid="stForm"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 14px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
 }
-
+/* Buton Stilleri */
 div[data-testid="stButton"] button {
     min-height: 40px !important;
     height: 40px !important;
-    padding: 0 4px !important;
-    font-size: 11.5px !important;
+    padding: 0 8px !important;
+    font-size: 12.5px !important;
     font-weight: 800 !important;
     border-radius: 9px !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 0 !important;
-    border: 1px solid var(--border-strong) !important;
-    background-color: #f8fafc !important;
-    color: var(--ink-primary) !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
 }
-
+div[data-testid="stButton"] button:hover {
+    border-color: #f97316 !important;
+    background-color: #fff7ed !important;
+}
 button[kind="primary"] {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-    border: 1px solid #1e40af !important;
+    background-color: #f97316 !important;
+    border: 1px solid #ea580c !important;
     color: #ffffff !important;
 }
-
-/* Kalem Listesi */
-.kalem-grid-head {
+button[kind="primary"]:hover {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+}
+/* Ürün Kalemleri Tablosu (mobil_izleme urun-table Stili) */
+.siparis-kalem-baslik {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 50px 58px;
-    gap: 4px;
-    background: #0f172a;
+    grid-template-columns: minmax(0, 1fr) 68px 72px;
+    gap: 6px;
+    background-color: #1e293b;
     color: #f8fafc;
-    border-radius: 8px;
-    padding: 6px 8px;
-    font-size: 9.5px;
-    font-weight: 800;
-    text-transform: uppercase;
+    border-radius: 8px 8px 0 0;
+    padding: 6px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
     width: 100%;
 }
-
-.kalem-grid-head span:nth-child(2),
-.kalem-grid-head span:nth-child(3) {
-    text-align: center;
-}
-
-.kalem-item-card {
+.siparis-kalem-baslik span:nth-child(2) { text-align: center; }
+.siparis-kalem-baslik span:nth-child(3) { text-align: right; }
+.eklenen-urun-satir {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 50px 58px;
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr) 68px 72px;
+    gap: 6px;
     align-items: center;
-    background: #f8fafc;
-    border: 1px solid var(--border-soft);
-    border-left: 3px solid var(--accent-amber);
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-left: 3px solid #f97316;
     border-radius: 8px;
-    padding: 6px 7px;
-    min-height: 38px;
+    padding: 6px 9px;
+    min-height: 40px;
     width: 100%;
     overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-
-.kalem-name {
-    font-size: 11.5px;
+.eklenen-urun-ad {
+    font-size: 12.5px;
     font-weight: 700;
-    color: var(--ink-primary);
+    color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
 }
-
-.kalem-unit {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--ink-secondary);
-    background: #e2e8f0;
-    border-radius: 5px;
-    padding: 2px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.kalem-qty {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #1d4ed8;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 5px;
-    padding: 2px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.empty-cart-box {
-    background: #f8fafc;
-    border: 1px dashed #cbd5e1;
-    border-radius: 9px;
-    padding: 9px 8px;
+.eklenen-urun-birim {
     text-align: center;
     font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    background-color: #f1f5f9;
+    border-radius: 5px;
+    padding: 2px 4px;
+    white-space: nowrap;
+}
+.eklenen-urun-miktar {
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+    text-align: right;
+    white-space: nowrap;
+}
+.bos-liste-kutusu {
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+    padding: 12px 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
     font-weight: 600;
-    color: var(--ink-muted);
     width: 100%;
 }
-
-/* Sabit Alt Komut Barı */
-div[data-testid="element-container"]:has(.sticky-dock-anchor) + div[data-testid="element-container"] {
+/* Sabit Alt Aksiyon Barı (mobil_izleme onay-aksiyon-bar Renk Kodu) */
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     width: 100% !important;
-    max-width: 460px !important;
-    margin: 0 auto !important;
-    padding: 7px 0.5rem 9px 0.5rem !important;
-    background: rgba(255, 255, 255, 0.96) !important;
-    backdrop-filter: blur(8px) !important;
-    border-top: 1px solid var(--border-soft) !important;
+    max-width: 560px !important;
+    padding: 8px 0.75rem 10px 0.75rem !important;
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.88) 0%, #f1f5f9 32%) !important;
+    backdrop-filter: blur(6px);
+    border-top: 1px solid #cbd5e1;
     z-index: 9999 !important;
+    margin: 0 !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(1) button {
+    background-color: #16a34a !important;
+    border: 1px solid #15803d !important;
+    color: #ffffff !important;
+    height: 42px !important;
+    box-shadow: 0 2px 5px rgba(22, 163, 74, 0.25) !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(1) button:hover {
+    background-color: #15803d !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(2) button {
+    background-color: #facc15 !important;
+    border: 1px solid #eab308 !important;
+    color: #0f172a !important;
+    height: 42px !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(2) button:hover {
+    background-color: #eab308 !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(3) button {
+    background-color: #dc2626 !important;
+    border: 1px solid #b91c1c !important;
+    color: #ffffff !important;
+    height: 42px !important;
+}
+div[data-testid="element-container"]:has(.sticky-gonder-isaret) + div[data-testid="element-container"] div[data-testid="column"]:nth-child(3) button:hover {
+    background-color: #b91c1c !important;
+}
+/* Kapalı Ekran Durum Kutusu */
+.empty-state-box {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 26px 16px;
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+.empty-state-icon {
+    font-size: 30px;
+    margin-bottom: 6px;
+}
+.empty-state-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.empty-state-desc {
+    font-size: 12.5px;
+    color: #64748b;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -559,7 +547,7 @@ def get_postgres_url() -> str:
         return env_url.replace("postgres://", "postgresql://", 1)
 
     try:
-        for secret_key in ("DATABASE_URL", "POSTGRES_URL", "RAILWAY_DB_URL"):
+        for secret_key in ("DATABASE_URL", "POSTGRES_URL", "RAILWAY_DB_URL", "RAILWAY_DATABASE_URL"):
             if secret_key in st.secrets and str(st.secrets[secret_key]).strip():
                 return str(st.secrets[secret_key]).strip().replace("postgres://", "postgresql://", 1)
     except Exception:
@@ -638,55 +626,50 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.markdown(
-            f'<div class="tech-topbar">'
-            f'<div class="tech-topbar-row">'
-            f'<div class="brand-cluster">'
-            f'<div class="brand-logo-wrap">{LOGO_HTML}</div>'
-            f'<div class="brand-meta">'
-            f'<div class="brand-title-line"><span class="brand-title">SAYAR YAPI</span><span class="live-pulse"></span></div>'
-            f'<div class="brand-sub">Saha Sipariş Terminali</div>'
-            f'</div></div></div></div>',
+            f'<div class="header-banner"><div class="header-info">'
+            f'<div class="header-title">{LOGO_HTML}<span>SAYAR YAPI</span></div>'
+            f'<div class="header-sub">Hızlı Mobil Sipariş Girişi</div>'
+            f'</div></div>',
             unsafe_allow_html=True
         )
-        with st.container(key="login-kart"):
-            if url_veren:
-                st.caption(f"Yetkili Personel: **{url_veren}**")
+        if url_veren:
+            st.caption(f"Personel Girişi: **{url_veren}**")
 
-            with st.form("login_form", clear_on_submit=False):
-                pin = st.text_input("Erişim Şifresi", placeholder="Güvenlik PIN / Şifre...", type="password", label_visibility="collapsed")
-                beni_hatirla = st.checkbox("Oturumu açık tut (90 Gün)", value=True)
-                giris_yapildi = st.form_submit_button("TERMİNALE BAĞLAN", use_container_width=True, type="primary")
+        with st.form("login_form", clear_on_submit=False):
+            pin = st.text_input("Erişim Şifresi:", placeholder="Erişim Şifresi...", type="password")
+            beni_hatirla = st.checkbox("Beni Hatırla", value=True)
+            giris_yapildi = st.form_submit_button("Giriş Yap", use_container_width=True, type="primary")
 
-            if giris_yapildi:
-                basarili_tip = None
+        if giris_yapildi:
+            basarili_tip = None
+            basarili_deger = None
+
+            if pin == st.secrets["APP_PASSWORD"]:
+                basarili_tip = "YONETICI"
                 basarili_deger = None
 
-                if pin == st.secrets["APP_PASSWORD"]:
-                    basarili_tip = "YONETICI"
-                    basarili_deger = None
+            if not basarili_tip:
+                veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
+                for v_adi, v_sifre in veren_map.items():
+                    if pin == str(v_sifre):
+                        if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
+                            basarili_tip = "SIPARIS_VEREN"
+                            basarili_deger = v_adi
+                            break
 
-                if not basarili_tip:
-                    veren_map = st.secrets.get("SIPARIS_VEREN_SIFRELERI", {})
-                    for v_adi, v_sifre in veren_map.items():
-                        if pin == str(v_sifre):
-                            if not url_veren or url_veren.strip().upper() == v_adi.strip().upper():
-                                basarili_tip = "SIPARIS_VEREN"
-                                basarili_deger = v_adi
-                                break
-
-                if basarili_tip:
-                    st.session_state.authenticated = True
-                    st.session_state.yetki_tipi = basarili_tip
-                    st.session_state.yetki_deger = basarili_deger
-                    if beni_hatirla:
-                        yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
-                        st.session_state.active_token = yeni_token
-                        st.query_params["token"] = yeni_token
-                    else:
-                        st.session_state.active_token = ""
-                    st.rerun()
+            if basarili_tip:
+                st.session_state.authenticated = True
+                st.session_state.yetki_tipi = basarili_tip
+                st.session_state.yetki_deger = basarili_deger
+                if beni_hatirla:
+                    yeni_token = token_olustur(basarili_tip, basarili_deger, gun=90)
+                    st.session_state.active_token = yeni_token
+                    st.query_params["token"] = yeni_token
                 else:
-                    st.error("Hatalı şifre veya yetkisiz giriş!")
+                    st.session_state.active_token = ""
+                st.rerun()
+            else:
+                st.error("Hatalı şifre veya yetkisiz giriş!")
         st.stop()
 
 
@@ -887,7 +870,7 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
 
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Tam genişlikli, dokunmatik arama destekli açılır kutu."""
+    """Açılır liste alanı; alan adı kutunun içinde yer tutucu olarak görünür."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
@@ -940,125 +923,162 @@ aktif_token = st.session_state.get("active_token") or st.query_params.get("token
 token_param = f"&token={aktif_token}" if aktif_token else ""
 refresh_href = f"?action=refresh{token_param}"
 
-if st.session_state.siparis_ekrani_kapali:
-    st.markdown(
-        f'<div class="tech-topbar"><div class="tech-topbar-row">'
-        f'<div class="brand-cluster"><div class="brand-logo-wrap">{LOGO_HTML}</div>'
-        f'<div class="brand-meta"><div class="brand-title">SAYAR YAPI</div>'
-        f'<div class="brand-sub">Oturum Beklemede</div></div></div>'
-        f'<div class="action-cluster"><a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn">🚪</a></div>'
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
-    if st.button("YENİ SİPARİŞ TERMİNALİNİ AÇ", type="primary", use_container_width=True):
-        st.session_state.siparis_ekrani_kapali = False
-        st.rerun()
-    st.stop()
-
-listeler = secim_listelerini_getir()
-fv = st.session_state.form_versiyon
-uv = st.session_state.urun_input_versiyon
-taslak = st.session_state.taslak_bilgi
-bugun = date.today()
-
-# Üst Komuta Barı (Ön okuma için session_state üzerinden hızlı doluluk hesabı)
+# 1. mobil_izleme Koyu Lacivert-Turuncu Üst Banner
 if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
-    mevcut_veren = str(yetki_deger).strip()
+    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | {html.escape(str(yetki_deger))}</span>'
+    alt_metin = "Personel Mobil Sipariş Paneli"
 else:
-    v_val = st.session_state.get(f"veren_{fv}", "")
-    mevcut_veren = "" if str(v_val).startswith("—") else str(v_val).strip()
+    baslik_metni = f'{LOGO_HTML}<span>SAYAR YAPI | Mobil Sipariş</span>'
+    alt_metin = "Hızlı Sipariş & Sevkiyat Girişi"
 
-zorunlu_keys = [f"firma_{fv}", f"musteri_{fv}", f"santiye_{fv}", f"fabrika_{fv}", f"nakliye_{fv}", f"arac_{fv}"]
-dolu_sayisi = (1 if mevcut_veren else 0) + sum(
-    1 for k in zorunlu_keys
-    if st.session_state.get(k) and not str(st.session_state.get(k)).startswith("—")
-)
-kalem_var = 1 if st.session_state.eklenen_urunler else 0
-ilerleme_yuzde = int(((dolu_sayisi + kalem_var) / 8) * 100)
-kalem_adet = len(st.session_state.eklenen_urunler)
-
-alt_baslik = f"Personel: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Mobil Saha Terminali"
 st.markdown(
-    f'<div class="tech-topbar">'
-    f'<div class="tech-topbar-row">'
-    f'<div class="brand-cluster">'
-    f'<div class="brand-logo-wrap">{LOGO_HTML}</div>'
-    f'<div class="brand-meta">'
-    f'<div class="brand-title-line"><span class="brand-title">SAYAR YAPI</span><span class="live-pulse"></span></div>'
-    f'<div class="brand-sub">{html.escape(str(alt_baslik))}</div>'
-    f'</div></div>'
-    f'<div class="action-cluster">'
-    f'<a data-spa="1" href="{refresh_href}" target="_self" class="nav-pill-btn" title="Yenile">🔄</a>'
-    f'<a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn" title="Çıkış">🚪</a>'
-    f'</div></div>'
-    f'<div class="telemetry-bar">'
-    f'<div class="progress-track"><div class="progress-fill" style="width:{ilerleme_yuzde}%;"></div></div>'
-    f'<span class="telemetry-badge">%{ilerleme_yuzde} • {kalem_adet} KALEM</span>'
+    f'<div class="header-banner">'
+    f'<div class="header-info">'
+    f'<div class="header-title">{baslik_metni}</div>'
+    f'<div class="header-sub">{alt_metin}</div>'
+    f'</div>'
+    f'<div class="header-actions">'
+    f'<a data-spa="1" href="{refresh_href}" target="_self" class="icon-btn" title="Listeleri Yenile">🔄</a>'
+    f'<a data-spa="1" href="?action=logout" target="_self" class="icon-btn" title="Çıkış">🚪</a>'
     f'</div></div>',
     unsafe_allow_html=True
 )
 
+# Otomatik Kaybolan Başarı Bildirimi
 flash_msg = st.session_state.flash_mesaj
 if flash_msg:
+    toast_id = f"toast_{int(time.time() * 1000)}"
     st.markdown(
-        f'<div class="smart-toast">✅ {html.escape(str(flash_msg))}</div>',
+        f'<div id="{toast_id}" class="auto-toast-banner">✅ {html.escape(str(flash_msg))}</div>',
         unsafe_allow_html=True
+    )
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent.document;
+            const el = doc.getElementById({json.dumps(toast_id)});
+            if (!el) return;
+            setTimeout(function() {{
+                el.style.opacity = '0';
+                setTimeout(function() {{
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
+                }}, 350);
+            }}, 2800);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0
     )
     st.session_state.flash_mesaj = None
 
-# 1. KART: TEK SÜTUN ALT ALTA MOBİL FORM ALANLARI (SIFIR YATAY TAŞMA)
-with st.container(key="terminal-ana-kart"):
+if st.session_state.siparis_ekrani_kapali:
+    st.markdown(
+        '<div class="empty-state-box">'
+        '<div class="empty-state-icon">📦</div>'
+        '<div class="empty-state-title">Sipariş Giriş Ekranı Kapatıldı</div>'
+        '<div class="empty-state-desc">Yeni bir sipariş oluşturmak için aşağıdaki butona dokunun.</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    if st.button("➕ YENİ SİPARİŞ OLUŞTUR", type="primary", use_container_width=True):
+        st.session_state.siparis_ekrani_kapali = False
+        st.rerun()
+    st.stop()
+
+# 2. mobil_izleme 3'lü KPI Durum Şeridi
+kalem_sayisi = len(st.session_state.eklenen_urunler)
+bugun_etiket = date.today().strftime("%d.%m.%Y")
+veren_ozet = str(yetki_deger) if (yetki_tipi == "SIPARIS_VEREN" and yetki_deger) else "Yönetici"
+
+st.markdown(
+    f'<div class="kpi-grid">'
+    f'<div class="kpi-card kpi-blue"><div class="kpi-label">Sipariş Tarihi</div><div class="kpi-value">{bugun_etiket}</div></div>'
+    f'<div class="kpi-card kpi-orange"><div class="kpi-label">Eklenen Kalem</div><div class="kpi-value">{kalem_sayisi}</div></div>'
+    f'<div class="kpi-card kpi-green"><div class="kpi-label">Yetkili</div><div class="kpi-value">{html.escape(veren_ozet)}</div></div>'
+    f'</div>',
+    unsafe_allow_html=True
+)
+
+# 3. mobil_izleme İnceleme Kartı Stilinde Kompakt Sipariş Formu
+with st.container(key="siparis-form-card"):
+    st.markdown(
+        '<div class="form-card-header">'
+        '<div class="form-card-title">🟠 YENİ SİPARİŞ KAYDI</div>'
+        '<div class="form-card-badge">ONAY BEKLİYOR</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    listeler = secim_listelerini_getir()
+    fv = st.session_state.form_versiyon
+    uv = st.session_state.urun_input_versiyon
+    taslak = st.session_state.taslak_bilgi
+    bugun = date.today()
+
     tarih_default = taslak.get("tarih_obj", bugun)
     sevk_default = taslak.get("sevk_tarihi_obj", bugun)
-
-    st.markdown('<span class="field-mini-label">Sipariş Tarihi</span>', unsafe_allow_html=True)
-    siparis_tarihi = st.date_input(
-        "Sipariş Tarihi", value=tarih_default, format="DD.MM.YYYY",
-        key=f"siparis_tarihi_{fv}", label_visibility="collapsed"
-    )
-
-    st.markdown('<span class="field-mini-label">Sevk Tarihi</span>', unsafe_allow_html=True)
-    sevk_tarihi = st.date_input(
-        "Sevk Tarihi", value=sevk_default, format="DD.MM.YYYY",
-        key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
-    )
-
-    if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
-        siparis_veren = st.text_input(
-            "Sipariş Veren", value=str(yetki_deger), disabled=True,
-            key=f"veren_kilit_{fv}", placeholder="Sipariş Veren",
-            label_visibility="collapsed"
-        ).strip()
-    else:
-        siparis_veren = secim_alani(
-            "Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"],
-            taslak.get("siparis_veren", "")
+    tarih_col, sevk_col = st.columns(2)
+    with tarih_col:
+        siparis_tarihi = st.date_input(
+            "Sipariş Tarihi", value=tarih_default, format="DD.MM.YYYY",
+            key=f"siparis_tarihi_{fv}"
+        )
+    with sevk_col:
+        sevk_tarihi = st.date_input(
+            "Sevk Tarihi", value=sevk_default, format="DD.MM.YYYY",
+            key=f"sevk_tarihi_{fv}"
         )
 
-    firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
-    musteri = secim_alani("Müşteri", f"musteri_{fv}", listeler["musteri"], taslak.get("musteri", ""))
-    santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
-    sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
-    fabrika = secim_alani("Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", ""))
-    nakliye = secim_alani("Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", ""))
-    arac = secim_alani("Araç Tipi", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )")
+    alan_sol, alan_sag = st.columns(2)
+    with alan_sol:
+        firma = secim_alani("Tedarikçi Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
+    with alan_sag:
+        musteri = secim_alani("Müşteri", f"musteri_{fv}", listeler["musteri"], taslak.get("musteri", ""))
 
-# 2. KART: ÜRÜN EKLEME VE SEPET (ALT ALTA DÜZEN, TAŞMA YOK)
-with st.container(key="urun-sepet-kart"):
+    alan_sol, alan_sag = st.columns(2)
+    with alan_sol:
+        santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
+    with alan_sag:
+        sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
+
+    alan_sol, alan_sag = st.columns(2)
+    with alan_sol:
+        fabrika = secim_alani("Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", ""))
+    with alan_sag:
+        nakliye = secim_alani("Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", ""))
+
+    alan_sol, alan_sag = st.columns(2)
+    with alan_sol:
+        arac = secim_alani("Araç", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )")
+    with alan_sag:
+        if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
+            siparis_veren = st.text_input(
+                "Sipariş Veren", value=str(yetki_deger), disabled=True,
+                key=f"veren_kilit_{fv}", placeholder="Sipariş Veren",
+                label_visibility="collapsed"
+            ).strip()
+        else:
+            siparis_veren = secim_alani(
+                "Sipariş Veren", f"veren_{fv}", listeler["siparis_veren"],
+                taslak.get("siparis_veren", "")
+            )
+
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
         u["deger"] for u in listeler["urunler_detay"]
         if not firma_aktif or not u.get("firma") or u["firma"].upper() == firma_aktif.upper()
     ]
-    urun_secimi = secim_alani("Listeden Ürün Seç", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
-    urun_serbest = st.text_input(
-        "Özel Ürün Adı", key=f"urun_serbest_{fv}_{uv}",
-        placeholder="Veya özel ürün / malzeme yazın...", label_visibility="collapsed"
-    ).strip()
-    u_ad = urun_serbest or urun_secimi
+    urun_secimi = secim_alani("Kayıtlı Ürün Seçin", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
 
-    miktar_key = f"miktar_giris_{fv}_{uv}"
-    birim_col, miktar_col = st.columns([1, 1.3])
+    urun_col, birim_col, miktar_col, ekle_col = st.columns([4, 2, 3, 1])
+    with urun_col:
+        urun_serbest = st.text_input(
+            "Ürün Adı", key=f"urun_serbest_{fv}_{uv}",
+            placeholder="Veya ürün adı yazın...", label_visibility="collapsed"
+        ).strip()
+        u_ad = urun_serbest or urun_secimi
     with birim_col:
         birim_opsiyon = list(dict.fromkeys(listeler["birim"] or ["ADET", "TON", "KG"]))
         u_birim = st.selectbox(
@@ -1067,27 +1087,17 @@ with st.container(key="urun-sepet-kart"):
         )
     with miktar_col:
         u_miktar = st.text_input(
-            "Miktar", key=miktar_key,
-            placeholder="Miktar (Sayı / Tonaj)", label_visibility="collapsed"
+            "Miktar", key=f"miktar_giris_{fv}_{uv}",
+            placeholder="Miktar / TONAJ", label_visibility="collapsed"
         ).strip()
-
-    t1_col, t2_col, ekle_col = st.columns([1, 1.1, 1.3])
-    with t1_col:
-        if st.button("TONAJ", key=f"chip_tonaj_{fv}_{uv}", use_container_width=True):
-            st.session_state[miktar_key] = "TONAJ"
-            st.rerun()
-    with t2_col:
-        if st.button("Y.TONAJ", key=f"chip_ytonaj_{fv}_{uv}", use_container_width=True):
-            st.session_state[miktar_key] = "Y.TONAJ"
-            st.rerun()
     with ekle_col:
-        ekle_tiklandi = st.button("＋ EKLE", key=f"btn_urun_ekle_{fv}_{uv}", type="primary", use_container_width=True)
+        ekle_tiklandi = st.button("＋", key=f"btn_urun_ekle_{fv}_{uv}", type="primary", use_container_width=True)
 
     if ekle_tiklandi:
         if not u_ad:
-            st.warning("Lütfen listeden ürün seçin veya ürün adı yazın.")
+            st.warning("Lütfen ürün seçin veya yazın.")
         elif not miktar_metni_gecerli_mi(u_miktar):
-            st.warning("Geçerli bir sayı, TONAJ veya Y.TONAJ giriniz.")
+            st.warning("Lütfen geçerli bir adet veya tonaj (TONAJ / Y.TONAJ) giriniz.")
         else:
             st.session_state.eklenen_urunler.append({
                 "urun": u_ad, "miktar": u_miktar, "birim": u_birim
@@ -1097,19 +1107,19 @@ with st.container(key="urun-sepet-kart"):
 
     if st.session_state.eklenen_urunler:
         st.markdown(
-            '<div class="kalem-grid-head">'
-            '<span>Malzeme</span><span>Birim</span><span>Miktar</span>'
+            '<div class="siparis-kalem-baslik">'
+            '<span>Malzeme / Ürün</span><span>Birim</span><span>Miktar</span>'
             '</div>',
             unsafe_allow_html=True
         )
         for idx, item in enumerate(st.session_state.eklenen_urunler):
-            satir_col, sil_col = st.columns([5.5, 1])
+            satir_col, sil_col = st.columns([6, 1])
             with satir_col:
                 st.markdown(
-                    f'<div class="kalem-item-card">'
-                    f'<span class="kalem-name">{idx + 1}. {html.escape(str(item["urun"]))}</span>'
-                    f'<span class="kalem-unit">{html.escape(str(item["birim"]))}</span>'
-                    f'<span class="kalem-qty">{html.escape(str(item["miktar"]))}</span>'
+                    f'<div class="eklenen-urun-satir">'
+                    f'<span class="eklenen-urun-ad">{idx + 1}. {html.escape(str(item["urun"]))}</span>'
+                    f'<span class="eklenen-urun-birim">{html.escape(str(item["birim"]))}</span>'
+                    f'<span class="eklenen-urun-miktar">{html.escape(str(item["miktar"]))}</span>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -1119,15 +1129,15 @@ with st.container(key="urun-sepet-kart"):
                     st.rerun()
     else:
         st.markdown(
-            '<div class="empty-cart-box">Sepette ürün yok — Yukarıdan ürün ve miktar girip <b>＋ EKLE</b> butonuna basın.</div>',
+            '<div class="bos-liste-kutusu">Henüz ürün eklenmedi. Ürün, birim ve miktar girerek ＋ butonuna dokunun.</div>',
             unsafe_allow_html=True
         )
 
-# Sabit Alt Komut Konsolu
-st.markdown('<div class="sticky-dock-anchor"></div>', unsafe_allow_html=True)
-alt_kaydet, alt_temizle, alt_kapat = st.columns([2, 1, 1])
+# 4. Sabit Alt Aksiyon Barı (mobil_izleme Yeşil / Sarı / Kırmızı Paleti)
+st.markdown('<div class="sticky-gonder-isaret"></div>', unsafe_allow_html=True)
+alt_kaydet, alt_temizle, alt_kapat = st.columns(3)
 with alt_kaydet:
-    kaydet_tiklandi = st.button("KAYDET", key=f"btn_kaydet_{fv}", type="primary", use_container_width=True)
+    kaydet_tiklandi = st.button("KAYDET", key=f"btn_kaydet_{fv}", use_container_width=True)
 with alt_temizle:
     temizle_tiklandi = st.button("TEMİZLE", key=f"btn_temizle_{fv}", use_container_width=True)
 with alt_kapat:
@@ -1149,7 +1159,7 @@ if kapat_tiklandi:
 if kaydet_tiklandi:
     eksikler = []
     for alan_adi, alan_degeri in [
-        ("Sipariş Veren", siparis_veren), ("Firma", firma), ("Müşteri", musteri),
+        ("Sipariş Veren", siparis_veren), ("Tedarikçi Firma", firma), ("Müşteri", musteri),
         ("Şantiye", santiye), ("Fabrika", fabrika), ("Nakliye", nakliye), ("Araç", arac)
     ]:
         if not str(alan_degeri or "").strip():
