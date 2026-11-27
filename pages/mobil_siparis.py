@@ -41,7 +41,7 @@ LOGO_HTML = f'<img src="{LOGO_DATA_URI}" class="brand-logo" alt="Sayar Yapı">' 
 st.set_page_config(
     page_title="Sayar Yapı | Akıllı Sipariş Terminali",
     page_icon=LOGO_DATA_URI if LOGO_DATA_URI else "🏗️",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -102,7 +102,6 @@ st.markdown("""
     --ink-secondary: #475569;
     --ink-muted: #64748b;
     --accent-primary: #2563eb;
-    --accent-primary-dark: #1d4ed8;
     --accent-amber: #f97316;
     --accent-emerald: #10b981;
     --border-soft: #e2e8f0;
@@ -135,80 +134,96 @@ a[href*="streamlit.io/cloud"] {
 }
 
 html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
-    background: radial-gradient(circle at 50% 0%, #f8fafc 0%, var(--bg-canvas) 100%) !important;
+    background: var(--bg-canvas) !important;
     color: var(--ink-primary) !important;
     overflow-x: hidden !important;
-    max-width: 100vw !important;
     width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.block-container {
+.block-container,
+[data-testid="stMainBlockContainer"] {
     padding-top: 0.45rem !important;
-    padding-bottom: 5.4rem !important;
-    padding-left: 0.55rem !important;
-    padding-right: 0.55rem !important;
-    max-width: 480px !important;
+    padding-bottom: 5.2rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    max-width: 460px !important;
     width: 100% !important;
     margin: 0 auto !important;
 }
 
-[data-testid="stVerticalBlock"] {
-    gap: 0.34rem !important;
+[data-testid="stVerticalBlock"],
+[data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="element-container"],
+.stMarkdown,
+.stSelectbox,
+.stTextInput,
+.stDateInput,
+.stButton {
     width: 100% !important;
     max-width: 100% !important;
-}
-
-[data-testid="element-container"] {
-    width: 100% !important;
-    max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 !important;
 }
 
+[data-testid="stVerticalBlock"] {
+    gap: 0.34rem !important;
+}
+
+/* Yatay kolon kullanıldığında bile mobilde sıfır taşma */
 div[data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    gap: 6px !important;
+    gap: 5px !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 !important;
 }
 
-div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"],
+div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+    flex: 1 1 0% !important;
+    width: auto !important;
     min-width: 0 !important;
+    max-width: 100% !important;
     padding: 0 !important;
 }
 
+/* Üst Komuta Barı */
 .tech-topbar {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    background: #ffffff;
     border: 1px solid var(--border-soft);
-    border-radius: 14px;
-    padding: 9px 11px;
-    box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.06);
-    margin-bottom: 4px;
+    border-radius: 13px;
+    padding: 8px 10px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+    width: 100%;
+    overflow: hidden;
 }
 
 .tech-topbar-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
+    width: 100%;
 }
 
 .brand-cluster {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 8px;
     min-width: 0;
     flex: 1;
 }
 
 .brand-logo-wrap {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: #f1f5f9;
     border: 1px solid var(--border-soft);
     display: flex;
@@ -219,8 +234,8 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
 }
 
 .brand-logo {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
 }
 
@@ -232,14 +247,13 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
 .brand-title-line {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .brand-title {
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 800;
     color: var(--ink-primary);
-    letter-spacing: -0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -250,31 +264,29 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     height: 7px;
     border-radius: 50%;
     background-color: var(--accent-emerald);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
     animation: pulseRing 2s infinite;
     flex-shrink: 0;
 }
 
 @keyframes pulseRing {
     0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); }
-    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
     100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .brand-sub {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--ink-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-top: 1px;
 }
 
 .action-cluster {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex-shrink: 0;
 }
 
@@ -282,35 +294,29 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 32px;
-    padding: 0 9px;
-    border-radius: 9px;
+    width: 32px;
+    height: 30px;
+    border-radius: 8px;
     background: #f1f5f9;
     border: 1px solid var(--border-strong);
     color: var(--ink-primary) !important;
     text-decoration: none !important;
-    font-size: 12px;
-    font-weight: 700;
-    transition: all 0.15s ease;
-}
-
-.nav-pill-btn:active {
-    transform: scale(0.96);
-    background: #e2e8f0;
+    font-size: 13px;
 }
 
 .telemetry-bar {
-    margin-top: 8px;
-    padding-top: 7px;
+    margin-top: 7px;
+    padding-top: 6px;
     border-top: 1px dashed var(--border-soft);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    gap: 7px;
+    width: 100%;
 }
 
 .progress-track {
     flex: 1;
+    min-width: 0;
     height: 5px;
     background: #e2e8f0;
     border-radius: 999px;
@@ -321,47 +327,61 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     height: 100%;
     background: linear-gradient(90deg, #2563eb 0%, #10b981 100%);
     border-radius: 999px;
-    transition: width 0.3s ease;
 }
 
 .telemetry-badge {
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     color: #1e40af;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
-    padding: 2px 7px;
-    border-radius: 6px;
+    padding: 2px 6px;
+    border-radius: 5px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .smart-toast {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    background: #ecfdf5;
     border: 1px solid #6ee7b7;
     border-left: 4px solid #059669;
     color: #064e3b;
-    border-radius: 11px;
-    padding: 8px 11px;
+    border-radius: 10px;
+    padding: 7px 10px;
     font-size: 12px;
     font-weight: 700;
-    box-shadow: 0 3px 10px rgba(5, 150, 105, 0.12);
+    width: 100%;
+    word-break: break-word;
 }
 
+/* Kart Konteynerleri */
 .st-key-terminal-ana-kart,
 .st-key-urun-sepet-kart,
 .st-key-login-kart {
     background: var(--surface-card) !important;
     border: 1px solid var(--border-soft) !important;
-    border-radius: 14px !important;
-    padding: 10px 10px 11px 10px !important;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 13px !important;
+    padding: 9px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
     width: 100% !important;
     max-width: 100% !important;
+    overflow: hidden !important;
 }
 
 .st-key-urun-sepet-kart {
     border-top: 3px solid var(--accent-primary) !important;
+}
+
+/* Form Elemanları: Tam genişlik, sıfır taşma */
+div[data-testid="stTextInput"],
+div[data-testid="stDateInput"],
+div[data-testid="stSelectbox"],
+div[data-baseweb="input"],
+div[data-baseweb="select"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
 }
 
 div[data-testid="stTextInput"] input,
@@ -369,90 +389,78 @@ div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
     background-color: var(--surface-subtle) !important;
     border: 1px solid var(--border-strong) !important;
-    border-radius: 10px !important;
+    border-radius: 9px !important;
     color: var(--ink-primary) !important;
-    min-height: 41px !important;
+    min-height: 40px !important;
+    height: 40px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     width: 100% !important;
     max-width: 100% !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    min-width: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
 }
 
-div[data-testid="stTextInput"] input:focus,
-div[data-testid="stDateInput"] input:focus,
-div[data-baseweb="select"] > div:focus-within {
-    background-color: #ffffff !important;
-    border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+div[data-baseweb="select"] > div {
+    padding-right: 26px !important;
 }
 
-div[data-baseweb="select"] span {
-    font-size: 13px !important;
-    font-weight: 600 !important;
+div[data-baseweb="select"] span,
+div[data-baseweb="select"] div {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    min-width: 0 !important;
 }
 
-.date-chip-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: -2px;
-}
-.date-chip {
-    flex: 1;
+.field-mini-label {
     font-size: 9.5px;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
     color: var(--ink-muted);
-    padding-left: 3px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    margin: 0 0 -2px 2px;
+    display: block;
 }
 
 div[data-testid="stButton"] button {
     min-height: 40px !important;
-    padding: 0 6px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
+    height: 40px !important;
+    padding: 0 4px !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     border: 1px solid var(--border-strong) !important;
     background-color: #f8fafc !important;
     color: var(--ink-primary) !important;
-    transition: all 0.14s ease !important;
-}
-
-div[data-testid="stButton"] button:active {
-    transform: scale(0.97);
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 button[kind="primary"] {
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
     border: 1px solid #1e40af !important;
     color: #ffffff !important;
-    font-weight: 800 !important;
-    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25) !important;
 }
 
-button[kind="primary"]:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-}
-
+/* Kalem Listesi */
 .kalem-grid-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 58px 64px;
-    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) 50px 58px;
+    gap: 4px;
     background: #0f172a;
     color: #f8fafc;
-    border-radius: 9px;
-    padding: 7px 9px;
-    font-size: 10px;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 9.5px;
     font-weight: 800;
-    letter-spacing: 0.3px;
     text-transform: uppercase;
+    width: 100%;
 }
 
 .kalem-grid-head span:nth-child(2),
@@ -462,35 +470,36 @@ button[kind="primary"]:hover {
 
 .kalem-item-card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 58px 64px;
-    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) 50px 58px;
+    gap: 4px;
     align-items: center;
     background: #f8fafc;
     border: 1px solid var(--border-soft);
     border-left: 3px solid var(--accent-amber);
-    border-radius: 9px;
-    padding: 7px 8px;
-    min-height: 40px;
+    border-radius: 8px;
+    padding: 6px 7px;
+    min-height: 38px;
     width: 100%;
     overflow: hidden;
 }
 
 .kalem-name {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     color: var(--ink-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .kalem-unit {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--ink-secondary);
     background: #e2e8f0;
-    border-radius: 6px;
-    padding: 2px 4px;
+    border-radius: 5px;
+    padding: 2px;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -499,13 +508,13 @@ button[kind="primary"]:hover {
 
 .kalem-qty {
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #1d4ed8;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
-    border-radius: 6px;
-    padding: 2px 4px;
+    border-radius: 5px;
+    padding: 2px;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -514,30 +523,30 @@ button[kind="primary"]:hover {
 
 .empty-cart-box {
     background: #f8fafc;
-    border: 1.5px dashed #cbd5e1;
-    border-radius: 10px;
-    padding: 11px 8px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 9px;
+    padding: 9px 8px;
     text-align: center;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--ink-muted);
+    width: 100%;
 }
 
+/* Sabit Alt Komut Barı */
 div[data-testid="element-container"]:has(.sticky-dock-anchor) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
-    max-width: 480px !important;
-    padding: 8px 0.55rem 10px 0.55rem !important;
-    background: rgba(255, 255, 255, 0.92) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    max-width: 460px !important;
+    margin: 0 auto !important;
+    padding: 7px 0.5rem 9px 0.5rem !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(8px) !important;
     border-top: 1px solid var(--border-soft) !important;
-    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06) !important;
     z-index: 9999 !important;
-    margin: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -635,7 +644,7 @@ def check_password():
             f'<div class="brand-logo-wrap">{LOGO_HTML}</div>'
             f'<div class="brand-meta">'
             f'<div class="brand-title-line"><span class="brand-title">SAYAR YAPI</span><span class="live-pulse"></span></div>'
-            f'<div class="brand-sub">Saha &amp; Lojistik Sipariş Terminali</div>'
+            f'<div class="brand-sub">Saha Sipariş Terminali</div>'
             f'</div></div></div></div>',
             unsafe_allow_html=True
         )
@@ -645,7 +654,7 @@ def check_password():
 
             with st.form("login_form", clear_on_submit=False):
                 pin = st.text_input("Erişim Şifresi", placeholder="Güvenlik PIN / Şifre...", type="password", label_visibility="collapsed")
-                beni_hatirla = st.checkbox("Bu cihazda oturumu açık tut (90 Gün)", value=True)
+                beni_hatirla = st.checkbox("Oturumu açık tut (90 Gün)", value=True)
                 giris_yapildi = st.form_submit_button("TERMİNALE BAĞLAN", use_container_width=True, type="primary")
 
             if giris_yapildi:
@@ -878,12 +887,12 @@ def yeni_siparis_ntfy_gonder(sip: dict):
 
 
 def secim_alani(etiket: str, key: str, secenekler: list, varsayilan: str = ""):
-    """Dokunmatik arama destekli, başlıksız açılır kutu."""
+    """Tam genişlikli, dokunmatik arama destekli açılır kutu."""
     temiz = [str(x).strip() for x in secenekler if str(x).strip() and str(x).strip() != "-"]
     secenekler = list(dict.fromkeys(temiz))
     if varsayilan and varsayilan not in secenekler:
         secenekler.insert(0, varsayilan)
-    secimler = [f"{etiket} seçin..."] + secenekler
+    secimler = [f"— {etiket} —"] + secenekler
     if key not in st.session_state:
         st.session_state[key] = varsayilan if varsayilan in secenekler else secimler[0]
     secim = st.selectbox(
@@ -937,7 +946,7 @@ if st.session_state.siparis_ekrani_kapali:
         f'<div class="brand-cluster"><div class="brand-logo-wrap">{LOGO_HTML}</div>'
         f'<div class="brand-meta"><div class="brand-title">SAYAR YAPI</div>'
         f'<div class="brand-sub">Oturum Beklemede</div></div></div>'
-        f'<div class="action-cluster"><a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn">Çıkış</a></div>'
+        f'<div class="action-cluster"><a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn">🚪</a></div>'
         f'</div></div>',
         unsafe_allow_html=True
     )
@@ -952,24 +961,67 @@ uv = st.session_state.urun_input_versiyon
 taslak = st.session_state.taslak_bilgi
 bugun = date.today()
 
-with st.container(key="terminal-ana-kart"):
+# Üst Komuta Barı (Ön okuma için session_state üzerinden hızlı doluluk hesabı)
+if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
+    mevcut_veren = str(yetki_deger).strip()
+else:
+    v_val = st.session_state.get(f"veren_{fv}", "")
+    mevcut_veren = "" if str(v_val).startswith("—") else str(v_val).strip()
+
+zorunlu_keys = [f"firma_{fv}", f"musteri_{fv}", f"santiye_{fv}", f"fabrika_{fv}", f"nakliye_{fv}", f"arac_{fv}"]
+dolu_sayisi = (1 if mevcut_veren else 0) + sum(
+    1 for k in zorunlu_keys
+    if st.session_state.get(k) and not str(st.session_state.get(k)).startswith("—")
+)
+kalem_var = 1 if st.session_state.eklenen_urunler else 0
+ilerleme_yuzde = int(((dolu_sayisi + kalem_var) / 8) * 100)
+kalem_adet = len(st.session_state.eklenen_urunler)
+
+alt_baslik = f"Personel: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Mobil Saha Terminali"
+st.markdown(
+    f'<div class="tech-topbar">'
+    f'<div class="tech-topbar-row">'
+    f'<div class="brand-cluster">'
+    f'<div class="brand-logo-wrap">{LOGO_HTML}</div>'
+    f'<div class="brand-meta">'
+    f'<div class="brand-title-line"><span class="brand-title">SAYAR YAPI</span><span class="live-pulse"></span></div>'
+    f'<div class="brand-sub">{html.escape(str(alt_baslik))}</div>'
+    f'</div></div>'
+    f'<div class="action-cluster">'
+    f'<a data-spa="1" href="{refresh_href}" target="_self" class="nav-pill-btn" title="Yenile">🔄</a>'
+    f'<a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn" title="Çıkış">🚪</a>'
+    f'</div></div>'
+    f'<div class="telemetry-bar">'
+    f'<div class="progress-track"><div class="progress-fill" style="width:{ilerleme_yuzde}%;"></div></div>'
+    f'<span class="telemetry-badge">%{ilerleme_yuzde} • {kalem_adet} KALEM</span>'
+    f'</div></div>',
+    unsafe_allow_html=True
+)
+
+flash_msg = st.session_state.flash_mesaj
+if flash_msg:
     st.markdown(
-        '<div class="date-chip-row"><span class="date-chip">Sipariş Tarihi</span><span class="date-chip">Sevk Tarihi</span></div>',
+        f'<div class="smart-toast">✅ {html.escape(str(flash_msg))}</div>',
         unsafe_allow_html=True
     )
+    st.session_state.flash_mesaj = None
+
+# 1. KART: TEK SÜTUN ALT ALTA MOBİL FORM ALANLARI (SIFIR YATAY TAŞMA)
+with st.container(key="terminal-ana-kart"):
     tarih_default = taslak.get("tarih_obj", bugun)
     sevk_default = taslak.get("sevk_tarihi_obj", bugun)
-    tarih_col, sevk_col = st.columns(2)
-    with tarih_col:
-        siparis_tarihi = st.date_input(
-            "Sipariş Tarihi", value=tarih_default, format="DD.MM.YYYY",
-            key=f"siparis_tarihi_{fv}", label_visibility="collapsed"
-        )
-    with sevk_col:
-        sevk_tarihi = st.date_input(
-            "Sevk Tarihi", value=sevk_default, format="DD.MM.YYYY",
-            key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
-        )
+
+    st.markdown('<span class="field-mini-label">Sipariş Tarihi</span>', unsafe_allow_html=True)
+    siparis_tarihi = st.date_input(
+        "Sipariş Tarihi", value=tarih_default, format="DD.MM.YYYY",
+        key=f"siparis_tarihi_{fv}", label_visibility="collapsed"
+    )
+
+    st.markdown('<span class="field-mini-label">Sevk Tarihi</span>', unsafe_allow_html=True)
+    sevk_tarihi = st.date_input(
+        "Sevk Tarihi", value=sevk_default, format="DD.MM.YYYY",
+        key=f"sevk_tarihi_{fv}", label_visibility="collapsed"
+    )
 
     if yetki_tipi == "SIPARIS_VEREN" and yetki_deger:
         siparis_veren = st.text_input(
@@ -985,21 +1037,13 @@ with st.container(key="terminal-ana-kart"):
 
     firma = secim_alani("Firma", f"firma_{fv}", listeler["firma"], taslak.get("firma", ""))
     musteri = secim_alani("Müşteri", f"musteri_{fv}", listeler["musteri"], taslak.get("musteri", ""))
-
-    santiye_col, sehir_col = st.columns([3, 2])
-    with santiye_col:
-        santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
-    with sehir_col:
-        sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
-
-    fab_col, nak_col = st.columns(2)
-    with fab_col:
-        fabrika = secim_alani("Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", ""))
-    with nak_col:
-        nakliye = secim_alani("Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", ""))
-
+    santiye = secim_alani("Şantiye", f"santiye_{fv}", listeler["santiye"], taslak.get("santiye", ""))
+    sehir = secim_alani("Şehir", f"sehir_{fv}", listeler["sehir"], taslak.get("sehir") or "İSTANBUL")
+    fabrika = secim_alani("Fabrika", f"fabrika_{fv}", listeler["fabrika"], taslak.get("fabrika", ""))
+    nakliye = secim_alani("Nakliye", f"nakliye_{fv}", listeler["nakliye"], taslak.get("nakliye", ""))
     arac = secim_alani("Araç Tipi", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )")
 
+# 2. KART: ÜRÜN EKLEME VE SEPET (ALT ALTA DÜZEN, TAŞMA YOK)
 with st.container(key="urun-sepet-kart"):
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
@@ -1009,31 +1053,35 @@ with st.container(key="urun-sepet-kart"):
     urun_secimi = secim_alani("Listeden Ürün Seç", f"urun_giris_{fv}_{uv}", filtrelenmis_urunler)
     urun_serbest = st.text_input(
         "Özel Ürün Adı", key=f"urun_serbest_{fv}_{uv}",
-        placeholder="Veya özel ürün / malzeme adı yazın...", label_visibility="collapsed"
+        placeholder="Veya özel ürün / malzeme yazın...", label_visibility="collapsed"
     ).strip()
     u_ad = urun_serbest or urun_secimi
 
     miktar_key = f"miktar_giris_{fv}_{uv}"
-    birim_col, miktar_col, hizli_t1, hizli_t2, ekle_col = st.columns([2.2, 2.5, 1.5, 1.7, 1.3])
+    birim_col, miktar_col = st.columns([1, 1.3])
     with birim_col:
         birim_opsiyon = list(dict.fromkeys(listeler["birim"] or ["ADET", "TON", "KG"]))
         u_birim = st.selectbox(
             "Birim", birim_opsiyon, key=f"birim_giris_{fv}_{uv}",
             label_visibility="collapsed"
         )
-    with hizli_t1:
-        if st.button("TONAJ", key=f"chip_tonaj_{fv}_{uv}", use_container_width=True):
-            st.session_state[miktar_key] = "TONAJ"
-    with hizli_t2:
-        if st.button("Y.TONAJ", key=f"chip_ytonaj_{fv}_{uv}", use_container_width=True):
-            st.session_state[miktar_key] = "Y.TONAJ"
     with miktar_col:
         u_miktar = st.text_input(
             "Miktar", key=miktar_key,
-            placeholder="Miktar...", label_visibility="collapsed"
+            placeholder="Miktar (Sayı / Tonaj)", label_visibility="collapsed"
         ).strip()
+
+    t1_col, t2_col, ekle_col = st.columns([1, 1.1, 1.3])
+    with t1_col:
+        if st.button("TONAJ", key=f"chip_tonaj_{fv}_{uv}", use_container_width=True):
+            st.session_state[miktar_key] = "TONAJ"
+            st.rerun()
+    with t2_col:
+        if st.button("Y.TONAJ", key=f"chip_ytonaj_{fv}_{uv}", use_container_width=True):
+            st.session_state[miktar_key] = "Y.TONAJ"
+            st.rerun()
     with ekle_col:
-        ekle_tiklandi = st.button("＋", key=f"btn_urun_ekle_{fv}_{uv}", type="primary", use_container_width=True)
+        ekle_tiklandi = st.button("＋ EKLE", key=f"btn_urun_ekle_{fv}_{uv}", type="primary", use_container_width=True)
 
     if ekle_tiklandi:
         if not u_ad:
@@ -1055,7 +1103,7 @@ with st.container(key="urun-sepet-kart"):
             unsafe_allow_html=True
         )
         for idx, item in enumerate(st.session_state.eklenen_urunler):
-            satir_col, sil_col = st.columns([6.5, 1])
+            satir_col, sil_col = st.columns([5.5, 1])
             with satir_col:
                 st.markdown(
                     f'<div class="kalem-item-card">'
@@ -1071,83 +1119,15 @@ with st.container(key="urun-sepet-kart"):
                     st.rerun()
     else:
         st.markdown(
-            '<div class="empty-cart-box">Sepette ürün yok — Yukarıdan ürün ve miktar seçip <b>＋</b> ile ekleyin.</div>',
+            '<div class="empty-cart-box">Sepette ürün yok — Yukarıdan ürün ve miktar girip <b>＋ EKLE</b> butonuna basın.</div>',
             unsafe_allow_html=True
         )
 
-zorunlu_alanlar = [siparis_veren, firma, musteri, santiye, fabrika, nakliye, arac]
-dolu_sayisi = sum(1 for x in zorunlu_alanlar if str(x or "").strip())
-kalem_var = 1 if st.session_state.eklenen_urunler else 0
-ilerleme_yuzde = int(((dolu_sayisi + kalem_var) / 8) * 100)
-kalem_adet = len(st.session_state.eklenen_urunler)
-
-alt_baslik = f"Personel: {yetki_deger}" if yetki_tipi == "SIPARIS_VEREN" else "Yönetici Modu • Canlı Sync"
-st.markdown(
-    f"""
-    <div id="top-telemetry-source" style="display:none;">
-        <div class="tech-topbar">
-            <div class="tech-topbar-row">
-                <div class="brand-cluster">
-                    <div class="brand-logo-wrap">{LOGO_HTML}</div>
-                    <div class="brand-meta">
-                        <div class="brand-title-line">
-                            <span class="brand-title">SAYAR YAPI</span>
-                            <span class="live-pulse"></span>
-                        </div>
-                        <div class="brand-sub">{html.escape(str(alt_baslik))}</div>
-                    </div>
-                </div>
-                <div class="action-cluster">
-                    <a data-spa="1" href="{refresh_href}" target="_self" class="nav-pill-btn" title="Yenile">🔄</a>
-                    <a data-spa="1" href="?action=logout" target="_self" class="nav-pill-btn" title="Çıkış">🚪</a>
-                </div>
-            </div>
-            <div class="telemetry-bar">
-                <div class="progress-track">
-                    <div class="progress-fill" style="width:{ilerleme_yuzde}%;"></div>
-                </div>
-                <span class="telemetry-badge">%{ilerleme_yuzde} • {kalem_adet} KALEM</span>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-components.html(
-    """
-    <script>
-    (function() {
-        const doc = window.parent.document;
-        const src = doc.getElementById('top-telemetry-source');
-        const container = doc.querySelector('.block-container');
-        if (!src || !container) return;
-        let mount = doc.getElementById('top-telemetry-mount');
-        if (!mount) {
-            mount = doc.createElement('div');
-            mount.id = 'top-telemetry-mount';
-            container.insertBefore(mount, container.firstChild);
-        }
-        mount.innerHTML = src.innerHTML;
-    })();
-    </script>
-    """,
-    height=0,
-    width=0
-)
-
-flash_msg = st.session_state.flash_mesaj
-if flash_msg:
-    st.markdown(
-        f'<div class="smart-toast">✅ {html.escape(str(flash_msg))}</div>',
-        unsafe_allow_html=True
-    )
-    st.session_state.flash_mesaj = None
-
+# Sabit Alt Komut Konsolu
 st.markdown('<div class="sticky-dock-anchor"></div>', unsafe_allow_html=True)
-alt_kaydet, alt_temizle, alt_kapat = st.columns([2.2, 1.1, 1])
+alt_kaydet, alt_temizle, alt_kapat = st.columns([2, 1, 1])
 with alt_kaydet:
-    kaydet_tiklandi = st.button("SİPARİŞİ KAYDET", key=f"btn_kaydet_{fv}", type="primary", use_container_width=True)
+    kaydet_tiklandi = st.button("KAYDET", key=f"btn_kaydet_{fv}", type="primary", use_container_width=True)
 with alt_temizle:
     temizle_tiklandi = st.button("TEMİZLE", key=f"btn_temizle_{fv}", use_container_width=True)
 with alt_kapat:
