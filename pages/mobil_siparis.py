@@ -1,34 +1,3 @@
-
-Gemini
-Yeni sohbet
-Kitaplık
-Resimler
-Planlandı
-Öğrenciler
-
-Daha fazla
-Yeni not defteri
-Sayar Yapı Mobil Sipariş Terminali Tasarımı
-Program Kullanıcı Kolaylığı Önerileri
-Sayar Yapı Mobil Sipariş Arayüzü
-Sayar Yapı Mobil Lojistik Radarı
-Lojistik Komuta Merkezi Arayüz Tasarımı
-Bu programın çalışma mantığını hiç bozmadan. sadece görsel tamamen yepyeni bir tasarım yaparmısın. d
-Gemini ile sohbet
-Bu programın çalışma mantığını hiç bozmadan. sadece görselde tamamen yepyeni bir tasarım yaparmısın. daha yenilikçi, daha kurumsal, daha teknolojik, bambaşka bir tasarım. görsel olarak herşeyi değiştirebilirsin. Senden bambaşka yepyeni bir tasarım bekliyorum. beni çoook şaşırtmalısın. özellikle cep telefonunda kullanılacak mobil uyum ve kolay girişler çok önemli, taşma olmamamlı indirilebilir tam dosya olarak verBu programın çalışma mantığını hiç bozmadan. sadece görselde tamamen yepyeni bir tasarım yaparmısın. daha yenilikçi, daha kurumsal, daha teknolojik, bambaşka bir tasarım. görsel olarak herşeyi değiştirebilirsin. Senden bambaşka yepyeni bir tasarım bekliyorum. beni çoook şaşırtmalısın. özellikle cep telefonunda kullanılacak mobil uyum ve kolay girişler çok önemli, veri giriş yöntemlerinide değiştirebilirsin taşma olmamamlı. indirilebilir tam dosya olarak ver
-
-mobil_siparis.py için çalışma mantığını, veritabanı işlemlerini (yeni_siparis_pg_kaydet), kimlik doğrulamayı ve ntfy bildirim sistemini birebir koruyarak; açık tonlu, kurumsal, teknolojik ve tamamen mobil odaklı (sıfır yatay taşma garantili) yepyeni bir arayüz tasarladım.
-
-Tasarımda Yapılan Yenilikler
-Sıfır Taşmalı Teknolojik Kart Mimarisi: Yan yana daralan kutular yerine mobilde parmakla tek dokunuşta hata payını sıfıra indiren tam genişlikli, mikro-gölgeli modern kart düzenine geçildi; başlık kalabalıkları kaldırıldı.
-
-Akıllı Veri Giriş Yöntemleri: Buton açılırları yerine dokunmatik arama destekli açılır seçim kutularına (selectbox) geçildi. Miktar girişi için standart sayısal alana ek olarak tek dokunuşla TONAJ ve Y.TONAJ seçimi sağlayan hızlı çip (pill) düğmeleri eklendi.
-
-Canlı İlerleme Çubuğu (Progress Bar) & Durum Göstergesi: Üst barda canlı sistem göstergesi ile doldurulan zorunlu alanların oranını ve eklenen kalem sayısını anlık gösteren ilerleme çubuğu yerleştirildi.
-
-Sabit Alt Komut Konsolu: Ekranın en altına sabitlenen (sticky) ve cam efekti (backdrop-blur) uygulanan panel ile KAYDET, TEMİZLE ve KAPAT işlemlerine her an tek parmakla erişim sağlandı.
-
-Python
 import os
 import re
 import json
@@ -197,7 +166,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
     margin: 0 !important;
 }
 
-/* Yatay kolonların mobilde taşmasını kesin olarak engelleyen yapı */
 div[data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-direction: row !important;
@@ -213,7 +181,6 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     padding: 0 !important;
 }
 
-/* Üst Kurumsal Komuta Merkezi Barı */
 .tech-topbar {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid var(--border-soft);
@@ -332,7 +299,6 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     background: #e2e8f0;
 }
 
-/* İlerleme Çubuğu & Telemetri Şeridi */
 .telemetry-bar {
     margin-top: 8px;
     padding-top: 7px;
@@ -370,7 +336,6 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     white-space: nowrap;
 }
 
-/* Bildirim Toast */
 .smart-toast {
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
     border: 1px solid #6ee7b7;
@@ -383,7 +348,6 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     box-shadow: 0 3px 10px rgba(5, 150, 105, 0.12);
 }
 
-/* Ana Kart Konteynerleri */
 .st-key-terminal-ana-kart,
 .st-key-urun-sepet-kart,
 .st-key-login-kart {
@@ -400,7 +364,6 @@ div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
     border-top: 3px solid var(--accent-primary) !important;
 }
 
-/* Form Input ve Selectbox Stilleri */
 div[data-testid="stTextInput"] input,
 div[data-testid="stDateInput"] input,
 div[data-baseweb="select"] > div {
@@ -432,7 +395,6 @@ div[data-baseweb="select"] span {
     text-overflow: ellipsis !important;
 }
 
-/* Tarih Alanı Kompakt Etiket Rozeti */
 .date-chip-row {
     display: flex;
     justify-content: space-between;
@@ -449,7 +411,6 @@ div[data-baseweb="select"] span {
     padding-left: 3px;
 }
 
-/* Hızlı Tonaj Çip Butonları */
 div[data-testid="stButton"] button {
     min-height: 40px !important;
     padding: 0 6px !important;
@@ -480,7 +441,6 @@ button[kind="primary"]:hover {
     background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
 }
 
-/* Sepet / Kalem Listesi */
 .kalem-grid-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 58px 64px;
@@ -563,7 +523,6 @@ button[kind="primary"]:hover {
     color: var(--ink-muted);
 }
 
-/* Sabit Alt Komut Konsolu (Sticky Dock) */
 div[data-testid="element-container"]:has(.sticky-dock-anchor) + div[data-testid="element-container"] {
     position: fixed !important;
     bottom: 0 !important;
@@ -993,7 +952,6 @@ uv = st.session_state.urun_input_versiyon
 taslak = st.session_state.taslak_bilgi
 bugun = date.today()
 
-# Form Alanları Kartı
 with st.container(key="terminal-ana-kart"):
     st.markdown(
         '<div class="date-chip-row"><span class="date-chip">Sipariş Tarihi</span><span class="date-chip">Sevk Tarihi</span></div>',
@@ -1042,7 +1000,6 @@ with st.container(key="terminal-ana-kart"):
 
     arac = secim_alani("Araç Tipi", f"arac_{fv}", listeler["arac"], taslak.get("arac") or "TIR ( 27 TON )")
 
-# Ürün Giriş ve Kalem Listesi Kartı
 with st.container(key="urun-sepet-kart"):
     firma_aktif = firma or taslak.get("firma", "")
     filtrelenmis_urunler = [
@@ -1118,7 +1075,6 @@ with st.container(key="urun-sepet-kart"):
             unsafe_allow_html=True
         )
 
-# Dinamik İlerleme Hesabı ve Üst Komuta Barı (En üstte görünmesi için boşluk tutucu üzerinden render)
 zorunlu_alanlar = [siparis_veren, firma, musteri, santiye, fabrika, nakliye, arac]
 dolu_sayisi = sum(1 for x in zorunlu_alanlar if str(x or "").strip())
 kalem_var = 1 if st.session_state.eklenen_urunler else 0
@@ -1188,7 +1144,6 @@ if flash_msg:
     )
     st.session_state.flash_mesaj = None
 
-# Sabit Alt Komut Konsolu
 st.markdown('<div class="sticky-dock-anchor"></div>', unsafe_allow_html=True)
 alt_kaydet, alt_temizle, alt_kapat = st.columns([2.2, 1.1, 1])
 with alt_kaydet:
@@ -1260,9 +1215,3 @@ if kaydet_tiklandi:
             st.rerun()
         except Exception as err:
             st.error(f"Sipariş PostgreSQL veritabanına yazılamadı: {err}")
-
-
-
-
-Gemini bir yapay zeka modeli olduğu için hata yapabilir.
-
